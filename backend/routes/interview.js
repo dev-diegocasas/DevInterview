@@ -20,10 +20,16 @@ const {
 
 const MAX_QUESTIONS = 5;
 
-async function tryGenerateOrQuiz(area, difficulty, userId) {
+async function tryChatMode(area, difficulty, userId) {
   try {
-    const questionText = await generateFirstQuestion(area.name, difficulty);
-    return { mode: 'chat', text: questionText };
+    var result = await generateFirstQuestion(area.name, difficulty);
+    if (result.fromBank) {
+      return {
+        mode: 'chat', text: result.text,
+        fromBank: true, rateLimited: result.rateLimited
+      };
+    }
+    return { mode: 'chat', text: result.text, fromBank: false, rateLimited: false };
   } catch (aiError) {
     const questions = await getQuizQuestions(area.id, difficulty, MAX_QUESTIONS);
     if (questions.length > 0) {
@@ -43,6 +49,24 @@ async function tryGenerateOrQuiz(area, difficulty, userId) {
   }
 }
 
+async function tryQuizMode(area, difficulty, userId) {
+  const questions = await getQuizQuestions(area.id, difficulty, MAX_QUESTIONS);
+  if (questions.length > 0) {
+    return {
+      mode: 'quiz',
+      quizData: {
+        area: area.name,
+        difficulty: difficulty,
+        totalQuestions: questions.length,
+        questions: questions.map(function (q) {
+          return { id: q.id, text: q.question_text, options: q.options };
+        })
+      }
+    };
+  }
+  throw new Error('No hay preguntas de quiz para esta area y dificultad');
+}
+
 async function authGuard(req, res) {
   const session = await requireAuth(req);
   if (!session) {
@@ -58,12 +82,13 @@ async function startInterview(req, res) {
     if (!session) return;
 
     const body = await parseRequestBody(req);
-    const { areaId, difficultyLevel } = body;
+    const { areaId, difficultyLevel, mode } = body;
 
     if (!areaId) {
       return sendJSON(res, 400, { success: false, error: 'areaId es requerido' });
     }
 
+    const chatMode = mode === 'quiz' ? 'quiz' : 'chat';
     const difficulty = difficultyLevel || session.tech_level || 'mid';
     if (!['junior', 'mid', 'senior'].includes(difficulty)) {
       return sendJSON(res, 400, { success: false, error: 'Nivel de dificultad invalido. Usa: junior, mid, senior' });
@@ -74,6 +99,15 @@ async function startInterview(req, res) {
       return sendJSON(res, 404, { success: false, error: 'Area no encontrada' });
     }
 
+    // ── QUIZ MODE: directo sin IA ────────────────────
+    if (chatMode === 'quiz') {
+      const quizResult = await tryQuizMode(area, difficulty, session.user_id);
+      return sendJSON(res, 200, {
+        success: true, data: { quizMode: true, quiz: quizResult.quizData }
+      });
+    }
+
+    // ── CHAT MODE: intenta IA, fallback a banco ─────
     const existing = await getInProgressInterview(session.user_id, areaId);
     if (existing) {
       const questions = await getInterviewQuestions(existing.id);
@@ -83,7 +117,7 @@ async function startInterview(req, res) {
 
       if (questions.length === 0) {
         const interview = await createInterview(areaId, session.user_id, difficulty);
-        var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+        var aiResult = await tryChatMode(area, difficulty, session.user_id);
         if (aiResult.mode === 'quiz') {
           return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
         }
@@ -91,7 +125,8 @@ async function startInterview(req, res) {
         return sendJSON(res, 200, {
           success: true, data: {
             interviewId: interview.id, area: area.name, difficulty: difficulty,
-            resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
+            resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
+            fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
           }
         });
       }
@@ -110,7 +145,7 @@ async function startInterview(req, res) {
       }
 
       const interview = await createInterview(areaId, session.user_id, difficulty);
-      var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+      var aiResult = await tryChatMode(area, difficulty, session.user_id);
       if (aiResult.mode === 'quiz') {
         return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
       }
@@ -118,13 +153,14 @@ async function startInterview(req, res) {
       return sendJSON(res, 200, {
         success: true, data: {
           interviewId: interview.id, area: area.name, difficulty: difficulty,
-          resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
+          resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
+          fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
         }
       });
     }
 
     const interview = await createInterview(areaId, session.user_id, difficulty);
-    var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+    var aiResult = await tryChatMode(area, difficulty, session.user_id);
     if (aiResult.mode === 'quiz') {
       return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
     }
@@ -132,7 +168,8 @@ async function startInterview(req, res) {
     sendJSON(res, 200, {
       success: true, data: {
         interviewId: interview.id, area: area.name, difficulty: difficulty,
-        resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
+        resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
+        fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
       }
     });
   } catch (error) {

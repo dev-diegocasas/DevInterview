@@ -301,6 +301,20 @@
                     </div>
                 </header>
 
+                <!-- Mode Selector -->
+                <div id="mode-selector" class="flex items-center gap-md mb-xl p-md bg-surface-container rounded-lg border border-outline-variant" style="background:#20242D">
+                    <span class="font-label-uppercase text-label-uppercase text-on-surface-variant" style="font-size:11px">Modo:</span>
+                    <button id="mode-btn-chat" class="mode-btn px-lg py-sm rounded-lg text-body-sm font-semibold transition-all duration-150" style="background:#5B7CFA;color:#E6E8EE;border:none;cursor:pointer">
+                        <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">chat</span> Chat con IA
+                    </button>
+                    <button id="mode-btn-quiz" class="mode-btn px-lg py-sm rounded-lg text-body-sm font-semibold transition-all duration-150" style="background:transparent;color:#A7ADB8;border:1px solid #2B313C;cursor:pointer">
+                        <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">quiz</span> Cuestionario
+                    </button>
+                    <div id="mode-info-badge" class="ml-auto font-body-sm text-body-sm" style="color:#7D8593">
+                        <span id="mode-description-text">Practica con IA generativa. Recibe feedback en cada respuesta.</span>
+                    </div>
+                </div>
+
                 <div id="areas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-lg"></div>
             </div>
 
@@ -315,6 +329,11 @@
                         <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
                             <span class="material-symbols-outlined">close</span>
                         </button>
+                    </div>
+                    <div id="chat-token-banner" class="hidden items-center gap-md mb-md p-sm rounded-lg" style="background:rgba(214,165,74,0.12);border:1px solid rgba(214,165,74,0.3);display:none">
+                        <span class="material-symbols-outlined" style="color:#D6A54A;font-size:20px">info</span>
+                        <span style="color:#D6A54A;font-size:13px">Tokens de IA agotados. Usando preguntas de respaldo — el limite se renueva cada 24 horas. Las respuestas se evaluaran localmente.</span>
+                        <button onclick="this.parentElement.classList.add('hidden');this.parentElement.style.display='none'" style="margin-left:auto;background:transparent;border:none;color:#7D8593;cursor:pointer;font-size:18px">&times;</button>
                     </div>
                     <div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
                         <div id="chat-progress-bar" class="h-full w-1/5 bg-primary transition-all duration-300"></div>

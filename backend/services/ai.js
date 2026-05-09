@@ -142,6 +142,10 @@ var QUESTION_BANK = {
   }
 };
 
+// ─── Contador secuencial para evitar repeticion ──────
+
+var bankIndex = {};
+
 function getFallbackQuestion(areaName, difficulty) {
   var area = areaName ? areaName.toLowerCase() : '';
   var diff = difficulty || 'mid';
@@ -153,7 +157,11 @@ function getFallbackQuestion(areaName, difficulty) {
   else bank = QUESTION_BANK.frontend;
 
   var questions = bank[diff] || bank.mid;
-  return questions[Math.floor(Math.random() * questions.length)] || 'Describe tu experiencia tecnica con ' + areaName + '.';
+  var key = areaName + ':' + diff;
+  if (!bankIndex[key]) bankIndex[key] = 0;
+  var idx = bankIndex[key] % questions.length;
+  bankIndex[key]++;
+  return questions[idx] || 'Describe tu experiencia tecnica con ' + areaName + '.';
 }
 
 // ─── Call with multi-tier fallback ───────────────────
@@ -164,11 +172,14 @@ async function callWithFallback(messages, areaName, difficulty) {
     prompt = messages.map(function (m) { return m.role + ': ' + m.content; }).join('\n');
   }
 
+  var sawRateLimit = false;
+
   // Tier 1: OpenRouter primario
   try {
     return await callOpenRouter(messages, PRIMARY_MODEL, API_KEY);
   } catch (e) {
-    if (e.message && e.message.startsWith('RATE_LIMIT')) {
+    if (e.message && (e.message === 'RATE_LIMIT' || e.message.startsWith('RATE_LIMIT'))) {
+      sawRateLimit = true;
       console.log('Rate limit en nemotron, intentando Llama...');
     } else {
       console.log('Error primario: ' + e.message + ', intentando fallback...');
@@ -179,6 +190,7 @@ async function callWithFallback(messages, areaName, difficulty) {
   try {
     return await callOpenRouter(messages, FALLBACK_MODEL, API_KEY);
   } catch (e) {
+    if (e.message === 'RATE_LIMIT') sawRateLimit = true;
     console.log('Fallback OpenRouter fallo, intentando Hugging Face...');
   }
 
@@ -193,6 +205,9 @@ async function callWithFallback(messages, areaName, difficulty) {
 
   // Tier 4: Banco de preguntas estatico (siempre funciona)
   var fallbackQ = getFallbackQuestion(areaName, difficulty);
+  if (sawRateLimit) {
+    throw new Error('RATE_LIMITED_Q:' + fallbackQ);
+  }
   throw new Error('FALLBACK_Q:' + fallbackQ);
 }
 
@@ -226,9 +241,8 @@ async function generateQuestion(areaName, difficulty) {
   try {
     return await callWithFallback(messages, areaName, level);
   } catch (e) {
-    if (e.message && e.message.startsWith('FALLBACK_Q:')) {
-      return e.message.replace('FALLBACK_Q:', '');
-    }
+    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) return e.message.replace('RATE_LIMITED_Q:', '');
+    if (e.message && e.message.startsWith('FALLBACK_Q:')) return e.message.replace('FALLBACK_Q:', '');
     throw e;
   }
 }
@@ -241,9 +255,15 @@ async function generateFirstQuestion(areaName, difficulty) {
     { role: 'user', content: 'Genera la PRIMERA pregunta de una entrevista tecnica de nivel ' + level + ' sobre ' + areaName + '. Debe ser introductoria. Solo responde con la pregunta.' }
   ];
   try {
-    return await callWithFallback(messages, areaName, level);
+    var result = await callWithFallback(messages, areaName, level);
+    return { text: result, fromBank: false, rateLimited: false };
   } catch (e) {
-    if (e.message && e.message.startsWith('FALLBACK_Q:')) return e.message.replace('FALLBACK_Q:', '');
+    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) {
+      return { text: e.message.replace('RATE_LIMITED_Q:', ''), fromBank: true, rateLimited: true };
+    }
+    if (e.message && e.message.startsWith('FALLBACK_Q:')) {
+      return { text: e.message.replace('FALLBACK_Q:', ''), fromBank: true, rateLimited: false };
+    }
     throw e;
   }
 }
@@ -258,6 +278,7 @@ async function generateFollowUpQuestion(areaName, difficulty, previousAnswer) {
   try {
     return await callWithFallback(messages, areaName, level);
   } catch (e) {
+    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) return e.message.replace('RATE_LIMITED_Q:', '');
     if (e.message && e.message.startsWith('FALLBACK_Q:')) return e.message.replace('FALLBACK_Q:', '');
     throw e;
   }
@@ -273,7 +294,7 @@ async function evaluateAnswer(question, answer, areaName) {
     var cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
-    return { score: 50, feedback: 'Evaluacion generada con fallback.' };
+    return localEvaluateAnswer(question, answer);
   }
 }
 
@@ -288,16 +309,147 @@ async function generateFinalEvaluation(questionsAndAnswers, areaName) {
     var cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
+    return localFinalEvaluation(questionsAndAnswers, areaName);
+  }
+}
+
+// ─── Evaluacion local (cuando IA falla) ──────────────
+
+function extractKeywords(question) {
+  var stopwords = ['que', 'es', 'como', 'cual', 'para', 'con', 'una', 'del', 'las', 'los',
+    'mas', 'pero', 'esta', 'este', 'entre', 'por', 'cada', 'debe', 'puede', 'hace',
+    'tiene', 'explica', 'describe', 'diferencia', 'funciona', 'sirve', 'usarias',
+    'implementarias', 'manejarias', 'diseniarias', 'resolverias', 'explica', 'da',
+    'un', 'una', 'el', 'la', 'en', 'y', 'a', 'al', 'su', 'se', 'no', 'lo'];
+  return question.toLowerCase()
+    .replace(/[¿?¡!,.:;"]/g, '')
+    .split(/\s+/)
+    .filter(function (w) { return w.length > 2 && stopwords.indexOf(w) === -1; });
+}
+
+function localEvaluateAnswer(question, answer) {
+  if (!answer || answer.trim().length < 10) {
+    return { score: 20, feedback: 'Respuesta demasiado corta. Intenta desarrollar mas tu respuesta con ejemplos concretos.' };
+  }
+
+  var keywords = extractKeywords(question);
+  var ans = answer.toLowerCase();
+
+  // Puntaje por longitud (20%)
+  var lengthScore = Math.min(20, Math.round((answer.length / 300) * 20));
+
+  // Puntaje por cobertura de keywords (30%)
+  var matchedKw = keywords.filter(function (kw) { return ans.includes(kw); });
+  var kwScore = keywords.length > 0 ? Math.round((matchedKw.length / keywords.length) * 30) : 15;
+
+  // Puntaje por profundidad tecnica (30%)
+  var techTerms = ['codigo', 'ejemplo', 'funcion', 'variable', 'metodo', 'clase', 'objeto',
+    'array', 'objeto', 'promesa', 'async', 'await', 'callback', 'evento', 'dom', 'api',
+    'rest', 'http', 'json', 'sql', 'base', 'datos', 'indice', 'join', 'select', 'insert',
+    'update', 'delete', 'query', 'middleware', 'ruta', 'controlador', 'modelo', 'vista',
+    'componente', 'estado', 'prop', 'hook', 'effect', 'contexto', 'reducer', 'redux',
+    'patron', 'diseno', 'arquitectura', 'microservicio', 'escalabilidad', 'rendimiento',
+    'cache', 'redis', 'sesion', 'token', 'jwt', 'auth', 'seguridad', 'xss', 'csrf',
+    'testing', 'prueba', 'debug', 'log', 'error', 'excepcion', 'try', 'catch'];
+  var matchedTech = techTerms.filter(function (t) { return ans.includes(t); });
+  var techScore = Math.min(30, matchedTech.length * 6);
+
+  // Puntaje por estructura (20%)
+  var hasCode = ans.includes('```') || ans.includes('<') && ans.includes('>') || /\b(function|const|let|var|class|def|import|export)\b/.test(ans);
+  var hasStructure = (answer.split('.').length > 2) || (answer.split('\n').length > 2);
+  var structScore = 0;
+  if (hasCode) structScore += 12;
+  if (hasStructure) structScore += 8;
+
+  var totalScore = Math.min(100, Math.max(5, lengthScore + kwScore + techScore + structScore));
+
+  // Feedback generado localmente
+  var feedback = '';
+  if (totalScore < 30) {
+    feedback = 'La respuesta necesita mas desarrollo. Incluye conceptos tecnicos, ejemplos y estructura.';
+  } else if (totalScore < 50) {
+    feedback = 'Respuesta basica. Para mejorarla, profundiza en los conceptos clave y agrega ejemplos practicos.';
+  } else if (totalScore < 70) {
+    feedback = 'Respuesta adecuada con algunos conceptos correctos. Puedes mejorar incluyendo ejemplos de codigo y casos de uso.';
+  } else if (totalScore < 85) {
+    feedback = 'Buena respuesta. Demuestras comprension del tema. Considera mencionar variantes o casos limites.';
+  } else {
+    feedback = 'Excelente respuesta. Cubres los conceptos con claridad y profundidad.';
+  }
+
+  // Afinar feedback segun keywords faltantes
+  var missingKw = keywords.filter(function (kw) { return !ans.includes(kw); });
+  if (missingKw.length > 0 && totalScore < 70) {
+    feedback += ' No se mencionaron aspectos como: ' + missingKw.slice(0, 3).join(', ') + '.';
+  }
+
+  return { score: totalScore, feedback: feedback };
+}
+
+function localFinalEvaluation(qaPairs, areaName) {
+  if (!qaPairs || qaPairs.length === 0) {
     return {
-      score: 65, feedback: 'Evaluacion generada con recursos limitados.',
-      strengths: 'Conceptos basicos demostrados.', improvements: 'Profundizar en temas avanzados.',
-      criteriaScores: { precision: 60, claridad: 65, profundidad: 55, comunicacion: 60 },
-      tags: ['Evaluacion con fallback']
+      score: 0, feedback: 'No se encontraron respuestas para evaluar.',
+      strengths: '', improvements: 'Completa todas las preguntas de la entrevista.',
+      criteriaScores: { precision: 0, claridad: 0, profundidad: 0, comunicacion: 0 },
+      tags: []
     };
   }
+
+  var perQuestion = qaPairs.map(function (qa) {
+    return localEvaluateAnswer(qa.question, qa.answer);
+  });
+
+  var avgScore = Math.round(perQuestion.reduce(function (s, e) { return s + e.score; }, 0) / perQuestion.length);
+  var allFeedbacks = perQuestion.map(function (e) { return e.feedback; });
+
+  // Determinar fortalezas y mejoras
+  var strengths = [];
+  var improvements = [];
+  if (avgScore >= 70) strengths.push('Buena comprension de los conceptos presentados.');
+  if (avgScore >= 50) strengths.push('Capacidad para estructurar respuestas tecnicas.');
+  if (avgScore < 50) improvements.push('Profundizar en conceptos fundamentales del area.');
+  if (avgScore < 70) improvements.push('Incluir ejemplos de codigo y casos practicos.');
+  if (avgScore < 60) improvements.push('Desarrollar respuestas mas completas y estructuradas.');
+
+  var overallFeedback = 'Evaluacion local generada. ';
+  if (avgScore >= 80) {
+    overallFeedback += 'Desempeno destacado. Demuestras solidez en ' + areaName + '.';
+  } else if (avgScore >= 60) {
+    overallFeedback += 'Desempeno aceptable. Tienes bases solidas pero puedes seguir mejorando.';
+  } else if (avgScore >= 40) {
+    overallFeedback += 'Desempeno basico. Te recomendamos repasar los fundamentos y practicar mas.';
+  } else {
+    overallFeedback += 'Desempeno insuficiente. Te sugerimos estudiar los conceptos basicos antes de continuar.';
+  }
+
+  // Calcular criteriaScores
+  var avgLen = qaPairs.reduce(function (s, qa) { return s + qa.answer.length; }, 0) / qaPairs.length;
+  var criteriaScores = {
+    precision: Math.min(100, avgScore + 5),
+    claridad: Math.min(100, avgScore),
+    profundidad: Math.min(100, Math.max(10, avgScore - 10)),
+    comunicacion: Math.min(100, avgScore + 3)
+  };
+
+  var tags = [];
+  if (avgScore >= 70) tags.push('Dominio conceptual');
+  if (avgScore >= 50 && avgScore < 80) tags.push('Conocimiento intermedio');
+  if (avgScore >= 30) tags.push('Practica recomendada');
+  if (avgLen > 150) tags.push('Respuestas elaboradas');
+
+  return {
+    score: avgScore,
+    feedback: overallFeedback,
+    strengths: strengths.join(' ') || 'Ninguna destacada.',
+    improvements: improvements.join(' ') || 'Continua practicando para mantener el nivel.',
+    criteriaScores: criteriaScores,
+    tags: tags.length > 0 ? tags : ['Evaluacion local']
+  };
 }
 
 module.exports = {
   testConnection, generateQuestion, generateFirstQuestion,
-  generateFollowUpQuestion, evaluateAnswer, generateFinalEvaluation
+  generateFollowUpQuestion, evaluateAnswer, generateFinalEvaluation,
+  localEvaluateAnswer, localFinalEvaluation
 };

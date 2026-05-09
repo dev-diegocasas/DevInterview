@@ -10,6 +10,7 @@
     areaId: null,
     areaName: '',
     difficultyLevel: 'mid',
+    mode: 'chat',
     interviewId: null,
     currentQuestion: null,
     questionNumber: 0,
@@ -587,6 +588,7 @@
       showLoading('Cargando areas...');
       var areas = await apiRequest('/areas');
       renderAreas(areas);
+      initModeSelector();
       window.setDifficultyJS(state.difficultyLevel);
     } catch (error) {
       showToast('Error al cargar areas: ' + error.message);
@@ -659,12 +661,91 @@
       btn.addEventListener('click', function () {
         var areaId = parseInt(this.getAttribute('data-area-id'), 10);
         var areaName = this.getAttribute('data-area-name');
-        startInterview(areaId, areaName);
+        if (state.mode === 'quiz') {
+          startQuizDirect(areaId, areaName);
+        } else {
+          startInterview(areaId, areaName);
+        }
       });
     });
   }
 
+  // ─── Mode Selector ──────────────────────────────────
+  function initModeSelector() {
+    var chatBtn = document.getElementById('mode-btn-chat');
+    var quizBtn = document.getElementById('mode-btn-quiz');
+    var descEl = document.getElementById('mode-description-text');
+
+    function setMode(mode) {
+      state.mode = mode;
+      if (mode === 'chat') {
+        chatBtn.style.background = '#5B7CFA';
+        chatBtn.style.color = '#E6E8EE';
+        chatBtn.style.border = 'none';
+        quizBtn.style.background = 'transparent';
+        quizBtn.style.color = '#A7ADB8';
+        quizBtn.style.border = '1px solid #2B313C';
+        descEl.textContent = 'Practica con IA generativa. Recibe feedback en cada respuesta.';
+      } else {
+        quizBtn.style.background = '#5B7CFA';
+        quizBtn.style.color = '#E6E8EE';
+        quizBtn.style.border = 'none';
+        chatBtn.style.background = 'transparent';
+        chatBtn.style.color = '#A7ADB8';
+        chatBtn.style.border = '1px solid #2B313C';
+        descEl.textContent = 'Cuestionario de opcion multiple. Evaluacion automatica al finalizar.';
+      }
+      document.querySelectorAll('.start-interview-btn').forEach(function (b) {
+        b.textContent = mode === 'quiz' ? 'Iniciar Cuestionario' : 'Iniciar Entrevista';
+      });
+    }
+
+    if (chatBtn && quizBtn) {
+      chatBtn.addEventListener('click', function () { setMode('chat'); });
+      quizBtn.addEventListener('click', function () { setMode('quiz'); });
+      setMode(state.mode || 'chat');
+    }
+  }
+
+  // ─── Quiz Direct Mode ─────────────────────────────
+
+  async function startQuizDirect(areaId, areaName) {
+    try {
+      showLoading('Preparando cuestionario...');
+      state.areaId = areaId;
+      state.areaName = areaName;
+
+      var result = await apiRequest('/interview/start', 'POST', {
+        areaId: areaId,
+        difficultyLevel: state.difficultyLevel,
+        mode: 'quiz'
+      });
+
+      if (result.quizMode) {
+        startQuiz(result.quiz);
+      } else {
+        showToast('No hay preguntas de cuestionario disponibles.');
+      }
+    } catch (error) {
+      showToast('Error: ' + error.message);
+    } finally {
+      hideLoading();
+    }
+  }
+
   // ─── Interview Flow ─────────────────────────────────
+
+  function showTokenBanner(rateLimited) {
+    var banner = document.getElementById('chat-token-banner');
+    if (!banner) return;
+    if (rateLimited) {
+      banner.classList.remove('hidden');
+      banner.style.display = 'flex';
+    } else {
+      banner.classList.add('hidden');
+      banner.style.display = '';
+    }
+  }
 
   async function startInterview(areaId, areaName) {
     try {
@@ -674,7 +755,8 @@
 
       var result = await apiRequest('/interview/start', 'POST', {
         areaId: areaId,
-        difficultyLevel: state.difficultyLevel
+        difficultyLevel: state.difficultyLevel,
+        mode: 'chat'
       });
 
       if (result.quizMode) {
@@ -683,6 +765,8 @@
       }
 
       state.interviewId = result.interviewId;
+
+      showTokenBanner(result.rateLimited);
 
       if (result.resumed) {
         state.currentQuestion = result.currentQuestion;
@@ -947,35 +1031,76 @@
     showAppView('quizResults');
 
     var scoreColor = result.score >= 70 ? '#4CAF7A' : result.score >= 40 ? '#D6A54A' : '#D96B6B';
-    document.getElementById('quiz-results-summary').textContent =
-      result.correctCount + ' de ' + result.totalQuestions + ' correctas — Puntaje: ' + result.score + '/100';
+    var gradeLabel = result.score >= 90 ? 'Excelente' : result.score >= 70 ? 'Bueno' : result.score >= 50 ? 'Regular' : result.score >= 30 ? 'Deficiente' : 'Muy deficiente';
+
+    document.getElementById('quiz-results-summary').innerHTML =
+      '<span style="font-size:14px;color:#A7ADB8">' + result.correctCount + ' de ' + result.totalQuestions + ' correctas</span>';
+
+    var correctResults = result.results.filter(function (r) { return r.isCorrect; });
+    var incorrectResults = result.results.filter(function (r) { return !r.isCorrect; });
 
     var html = '';
-    result.results.forEach(function (r, i) {
-      var isCorrect = r.isCorrect;
-      var borderColor = isCorrect ? '#4CAF7A' : '#D96B6B';
-      var icon = isCorrect ? 'check_circle' : 'cancel';
-      var iconColor = isCorrect ? '#4CAF7A' : '#D96B6B';
-      var statusLabel = isCorrect ? 'Correcta' : 'Incorrecta';
 
-      html +=
-        '<div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="border-left:4px solid ' + borderColor + '">' +
-          '<div class="flex items-center gap-sm mb-md">' +
-            '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:20px">' + icon + '</span>' +
-            '<span class="font-label-uppercase" style="color:' + iconColor + '">Pregunta ' + (i + 1) + ' — ' + statusLabel + '</span>' +
-          '</div>' +
-          '<p class="font-body-md text-body-md text-on-surface mb-md" style="font-weight:500">' + escapeHTML(r.questionText) + '</p>' +
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
-            renderOptionBlock(r.options, r.selected, r.correctAnswer) +
-          '</div>' +
-          '<div style="padding:12px;background:#171A21;border-radius:8px;border:1px solid #2B313C">' +
-            '<span class="font-label-uppercase" style="color:#5B7CFA;font-size:10px">EXPLICACION</span>' +
-            '<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs" style="margin:4px 0 0">' + escapeHTML(r.explanation) + '</p>' +
-          '</div>' +
-        '</div>';
-    });
+    // Score gauge
+    html +=
+      '<div class="bg-surface-container border border-outline-variant rounded-xl p-lg text-center mb-lg" style="background:#20242D">' +
+        '<div style="font-size:56px;font-weight:700;background:linear-gradient(135deg, ' + scoreColor + ', ' + (result.score >= 70 ? '#2b8252' : result.score >= 40 ? '#a07820' : '#a04040') + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1">' +
+          result.score +
+        '</div>' +
+        '<div style="font-size:16px;color:' + scoreColor + ';font-weight:600;margin-bottom:4px">' + gradeLabel + '</div>' +
+        '<div style="height:8px;background:#2B313C;border-radius:4px;overflow:hidden;max-width:300px;margin:12px auto">' +
+          '<div style="height:100%;width:' + result.score + '%;background:' + scoreColor + ';border-radius:4px;transition:width 0.5s ease"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:center;gap:24px;margin-top:16px">' +
+          '<div><span style="color:#4CAF7A;font-size:18px;font-weight:600">' + correctResults.length + '</span><span style="color:#A7ADB8;font-size:13px;margin-left:4px">correctas</span></div>' +
+          '<div><span style="color:#D96B6B;font-size:18px;font-weight:600">' + incorrectResults.length + '</span><span style="color:#A7ADB8;font-size:13px;margin-left:4px">incorrectas</span></div>' +
+        '</div>' +
+      '</div>';
+
+    // Incorrectas primero
+    if (incorrectResults.length > 0) {
+      html += '<h3 style="color:#D96B6B;font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">cancel</span> Repasa estas preguntas (' + incorrectResults.length + ')</h3>';
+      incorrectResults.forEach(function (r, idx) {
+        var realIdx = result.results.indexOf(r) + 1;
+        html += renderQuizResultCard(r, realIdx, false);
+      });
+    }
+
+    // Correctas despues
+    if (correctResults.length > 0) {
+      html += '<h3 style="color:#4CAF7A;font-size:15px;font-weight:600;margin-bottom:12px;margin-top:24px;display:flex;align-items:center;gap:8px">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">check_circle</span> Respuestas correctas (' + correctResults.length + ')</h3>';
+      correctResults.forEach(function (r, idx) {
+        var realIdx = result.results.indexOf(r) + 1;
+        html += renderQuizResultCard(r, realIdx, true);
+      });
+    }
 
     document.getElementById('quiz-results-content').innerHTML = html;
+  }
+
+  function renderQuizResultCard(r, index, isCorrect) {
+    var borderColor = isCorrect ? '#4CAF7A' : '#D96B6B';
+    var icon = isCorrect ? 'check_circle' : 'cancel';
+    var iconColor = isCorrect ? '#4CAF7A' : '#D96B6B';
+    var statusLabel = isCorrect ? 'Correcta' : 'Incorrecta';
+    return (
+      '<div style="border:1px solid ' + borderColor + ';border-radius:10px;padding:16px;margin-bottom:14px;background:#171A21">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+          '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:18px">' + icon + '</span>' +
+          '<span style="font-size:11px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.05em;color:' + iconColor + '">Pregunta ' + index + ' — ' + statusLabel + '</span>' +
+        '</div>' +
+        '<p style="font-size:15px;color:#E6E8EE;font-weight:500;margin-bottom:12px;line-height:1.5">' + escapeHTML(r.questionText) + '</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+          renderOptionBlock(r.options, r.selected, r.correctAnswer) +
+        '</div>' +
+        '<div style="padding:12px;background:#20242D;border-radius:8px;border:1px solid #2B313C">' +
+          '<span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.05em;color:#5B7CFA">Explicacion</span>' +
+          '<p style="font-size:13px;color:#A7ADB8;margin:6px 0 0;line-height:1.5">' + escapeHTML(r.explanation) + '</p>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   function renderOptionBlock(options, selected, correct) {
