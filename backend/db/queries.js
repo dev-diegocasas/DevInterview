@@ -1,14 +1,27 @@
 const { pool } = require('./connection');
 
+// ====================================================================
+// ÁREAS TÉCNICAS
+// ====================================================================
+
 async function getAreas() {
-  const result = await pool.query('SELECT id, name, description, slug FROM technical_areas WHERE is_active = true ORDER BY id');
+  const result = await pool.query(
+    'SELECT id, name, description, slug, icon, popular FROM technical_areas WHERE is_active = true ORDER BY popular DESC, id'
+  );
   return result.rows;
 }
 
 async function getAreaById(id) {
-  const result = await pool.query('SELECT id, name, description, slug FROM technical_areas WHERE id = $1', [id]);
+  const result = await pool.query(
+    'SELECT id, name, description, slug, icon, popular FROM technical_areas WHERE id = $1',
+    [id]
+  );
   return result.rows[0] || null;
 }
+
+// ====================================================================
+// USUARIOS
+// ====================================================================
 
 async function createUser(fullName, email, passwordHash) {
   const result = await pool.query(
@@ -24,13 +37,70 @@ async function getUserByEmail(email) {
 }
 
 async function getUserById(id) {
-  const result = await pool.query('SELECT id, full_name, email, photo_url, bio, tech_level, account_status, created_at FROM users WHERE id = $1', [id]);
+  const result = await pool.query(
+    'SELECT id, full_name, email, photo_url, bio, tech_level, account_status, created_at FROM users WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+async function getUserProfile(id) {
+  const result = await pool.query(
+    `SELECT u.id, u.full_name, u.email, u.photo_url, u.bio, u.tech_level,
+            COALESCE(ug.weekly_target, 5) AS weekly_target
+     FROM users u
+     LEFT JOIN user_goals ug ON ug.user_id = u.id
+     WHERE u.id = $1`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+async function updateUserProfile(userId, fields) {
+  const setClauses = [];
+  const values = [];
+  let paramIndex = 1;
+
+  if (fields.fullName !== undefined) {
+    setClauses.push(`full_name = $${paramIndex++}`);
+    values.push(fields.fullName);
+  }
+  if (fields.bio !== undefined) {
+    setClauses.push(`bio = $${paramIndex++}`);
+    values.push(fields.bio);
+  }
+  if (fields.photoUrl !== undefined) {
+    setClauses.push(`photo_url = $${paramIndex++}`);
+    values.push(fields.photoUrl);
+  }
+  if (fields.techLevel !== undefined) {
+    setClauses.push(`tech_level = $${paramIndex++}`);
+    values.push(fields.techLevel);
+  }
+
+  if (setClauses.length === 0) return null;
+
+  values.push(userId);
+  const query = `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, full_name, email, photo_url, bio, tech_level`;
+  const result = await pool.query(query, values);
+  return result.rows[0] || null;
+}
+
+async function updateUserPassword(userId, newHash) {
+  const result = await pool.query(
+    'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id',
+    [newHash, userId]
+  );
   return result.rows[0] || null;
 }
 
 async function updateLastLogin(userId) {
   await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [userId]);
 }
+
+// ====================================================================
+// SESIONES / AUTENTICACIÓN
+// ====================================================================
 
 async function createSession(userId, token, expiresAt) {
   await pool.query(
@@ -41,7 +111,10 @@ async function createSession(userId, token, expiresAt) {
 
 async function getSessionByToken(token) {
   const result = await pool.query(
-    'SELECT s.*, u.id AS user_id, u.full_name, u.email, u.tech_level FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = $1 AND s.expires_at > NOW() AND u.account_status = $2',
+    `SELECT s.*, u.id AS user_id, u.full_name, u.email, u.tech_level
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token = $1 AND s.expires_at > NOW() AND u.account_status = $2`,
     [token, 'active']
   );
   return result.rows[0] || null;
@@ -51,21 +124,60 @@ async function deleteSession(token) {
   await pool.query('DELETE FROM sessions WHERE token = $1', [token]);
 }
 
-async function createInterview(areaId, userId) {
+// ====================================================================
+// ENTREVISTAS
+// ====================================================================
+
+async function createInterview(areaId, userId, difficultyLevel) {
   const result = await pool.query(
-    'INSERT INTO interviews (area_id, user_id) VALUES ($1, $2) RETURNING id, area_id, user_id, started_at, finished_at, score',
-    [areaId, userId]
+    `INSERT INTO interviews (area_id, user_id, difficulty_level)
+     VALUES ($1, $2, $3)
+     RETURNING id, area_id, user_id, difficulty_level, questions_total, started_at, finished_at, score`,
+    [areaId, userId, difficultyLevel || 'mid']
   );
   return result.rows[0];
 }
 
-async function finishInterview(interviewId, score) {
+async function finishInterview(interviewId, score, durationSeconds) {
   const result = await pool.query(
-    "UPDATE interviews SET finished_at = NOW(), score = $2, status = 'completed', questions_answered = (SELECT COUNT(*) FROM questions WHERE interview_id = $1) WHERE id = $1 RETURNING *",
-    [interviewId, score]
+    `UPDATE interviews
+     SET finished_at = NOW(),
+         score = $2,
+         duration_seconds = $3,
+         status = 'completed',
+         questions_answered = (SELECT COUNT(*) FROM questions WHERE interview_id = $1)
+     WHERE id = $1
+     RETURNING *`,
+    [interviewId, score, durationSeconds]
   );
   return result.rows[0];
 }
+
+async function getInProgressInterview(userId, areaId) {
+  const result = await pool.query(
+    `SELECT id, area_id, user_id, difficulty_level, questions_total, started_at
+     FROM interviews
+     WHERE user_id = $1 AND area_id = $2 AND status = 'in_progress'
+     ORDER BY started_at DESC LIMIT 1`,
+    [userId, areaId]
+  );
+  return result.rows[0] || null;
+}
+
+async function getInterviewById(interviewId) {
+  const result = await pool.query(
+    `SELECT i.*, ta.name AS area_name, ta.slug AS area_slug
+     FROM interviews i
+     JOIN technical_areas ta ON ta.id = i.area_id
+     WHERE i.id = $1`,
+    [interviewId]
+  );
+  return result.rows[0] || null;
+}
+
+// ====================================================================
+// PREGUNTAS Y RESPUESTAS
+// ====================================================================
 
 async function saveQuestion(interviewId, questionText, questionOrder) {
   const result = await pool.query(
@@ -83,43 +195,216 @@ async function saveAnswer(questionId, answerText) {
   return result.rows[0];
 }
 
+async function saveAnswerWithFeedback(questionId, answerText, aiFeedback, aiScore) {
+  const result = await pool.query(
+    'INSERT INTO answers (question_id, answer_text, ai_feedback, ai_score) VALUES ($1, $2, $3, $4) RETURNING *',
+    [questionId, answerText, aiFeedback, aiScore]
+  );
+  return result.rows[0];
+}
+
+async function getInterviewQuestions(interviewId) {
+  const result = await pool.query(
+    `SELECT q.id AS question_id, q.question_text, q.question_order,
+            a.id AS answer_id, a.answer_text, a.ai_feedback, a.ai_score
+     FROM questions q
+     LEFT JOIN answers a ON a.question_id = q.id
+     WHERE q.interview_id = $1
+     ORDER BY q.question_order`,
+    [interviewId]
+  );
+  return result.rows;
+}
+
+async function getInterviewAnswers(interviewId) {
+  const result = await pool.query(
+    `SELECT q.question_text, a.answer_text, a.ai_feedback, a.ai_score, q.question_order
+     FROM questions q
+     JOIN answers a ON a.question_id = q.id
+     WHERE q.interview_id = $1
+     ORDER BY q.question_order`,
+    [interviewId]
+  );
+  return result.rows;
+}
+
+async function getInterviewTranscript(interviewId) {
+  const result = await pool.query(
+    `SELECT q.id AS question_id, q.question_text, q.question_order,
+            a.id AS answer_id, a.answer_text, a.ai_feedback, a.ai_score,
+            a.created_at AS answered_at
+     FROM questions q
+     LEFT JOIN answers a ON a.question_id = q.id
+     WHERE q.interview_id = $1
+     ORDER BY q.question_order`,
+    [interviewId]
+  );
+  return result.rows;
+}
+
+// ====================================================================
+// EVALUACIONES
+// ====================================================================
+
 async function saveEvaluation(interviewId, feedback, score, strengths, improvements) {
   const result = await pool.query(
-    'INSERT INTO evaluations (interview_id, feedback, score, strengths, improvements) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+    `INSERT INTO evaluations (interview_id, feedback, score, strengths, improvements)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
     [interviewId, feedback, score, strengths, improvements]
   );
   return result.rows[0];
 }
 
-async function getInterviewHistory(userId) {
-  const result = await pool.query(`
-    SELECT i.id, i.area_id, i.started_at, i.finished_at, i.score, i.status, ta.name AS area_name
-    FROM interviews i
-    JOIN technical_areas ta ON i.area_id = ta.id
-    WHERE i.user_id = $1
-    ORDER BY i.started_at DESC
-    LIMIT 50
-  `, [userId]);
-  return result.rows;
+async function saveEvaluationFull(interviewId, score, feedback, strengths, improvements, criteriaScores, tags) {
+  const result = await pool.query(
+    `INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements, criteria_scores, tags)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [interviewId, score, feedback, strengths, improvements,
+     criteriaScores ? JSON.stringify(criteriaScores) : null,
+     tags || null]
+  );
+  return result.rows[0];
 }
 
-async function getInProgressInterview(userId, areaId) {
+async function getEvaluationByInterviewId(interviewId) {
   const result = await pool.query(
-    "SELECT id, area_id, user_id, started_at FROM interviews WHERE user_id = $1 AND area_id = $2 AND status = 'in_progress' ORDER BY started_at DESC LIMIT 1",
-    [userId, areaId]
+    'SELECT * FROM evaluations WHERE interview_id = $1',
+    [interviewId]
   );
   return result.rows[0] || null;
 }
 
-async function getInterviewQuestions(interviewId) {
-  const result = await pool.query(`
-    SELECT q.id AS question_id, q.question_text, q.question_order, a.id AS answer_id, a.answer_text
-    FROM questions q
-    LEFT JOIN answers a ON a.question_id = q.id
-    WHERE q.interview_id = $1
-    ORDER BY q.question_order
-  `, [interviewId]);
+// ====================================================================
+// HISTORIAL
+// ====================================================================
+
+async function getInterviewHistory(userId) {
+  const result = await pool.query(
+    `SELECT i.id, i.area_id, i.difficulty_level, i.started_at, i.finished_at,
+            i.score, i.status, i.questions_answered, i.questions_total,
+            ta.name AS area_name, ta.icon AS area_icon
+     FROM interviews i
+     JOIN technical_areas ta ON i.area_id = ta.id
+     WHERE i.user_id = $1
+     ORDER BY i.started_at DESC
+     LIMIT 50`,
+    [userId]
+  );
   return result.rows;
+}
+
+async function getHistoryPaginated(userId, filters) {
+  const conditions = ['i.user_id = $1'];
+  const values = [userId];
+  let paramIndex = 2;
+
+  if (filters.search) {
+    conditions.push(`ta.name ILIKE $${paramIndex++}`);
+    values.push(`%${filters.search}%`);
+  }
+
+  if (filters.areaId) {
+    conditions.push(`i.area_id = $${paramIndex++}`);
+    values.push(Number(filters.areaId));
+  }
+
+  if (filters.difficulty) {
+    conditions.push(`i.difficulty_level = $${paramIndex++}`);
+    values.push(filters.difficulty);
+  }
+
+  if (filters.status) {
+    conditions.push(`i.status = $${paramIndex++}`);
+    values.push(filters.status);
+  }
+
+  if (filters.scoreMin !== undefined) {
+    conditions.push(`i.score >= $${paramIndex++}`);
+    values.push(Number(filters.scoreMin));
+  }
+
+  if (filters.scoreMax !== undefined) {
+    conditions.push(`i.score <= $${paramIndex++}`);
+    values.push(Number(filters.scoreMax));
+  }
+
+  const whereClause = conditions.join(' AND ');
+
+  const sortColumns = {
+    started_at: 'i.started_at',
+    score: 'i.score',
+    area: 'ta.name'
+  };
+  const sortCol = sortColumns[filters.sort] || 'i.started_at';
+  const sortOrder = filters.order === 'asc' ? 'ASC' : 'DESC';
+
+  const page = Math.max(1, Number(filters.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(filters.limit) || 10));
+  const offset = (page - 1) * limit;
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*) FROM interviews i
+     JOIN technical_areas ta ON i.area_id = ta.id
+     WHERE ${whereClause}`,
+    values
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  const dataResult = await pool.query(
+    `SELECT i.id, i.area_id, i.difficulty_level, i.started_at, i.finished_at,
+            i.score, i.status, i.questions_answered, i.questions_total,
+            ta.name AS area_name, ta.icon AS area_icon
+     FROM interviews i
+     JOIN technical_areas ta ON i.area_id = ta.id
+     WHERE ${whereClause}
+     ORDER BY ${sortCol} ${sortOrder}
+     LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+    [...values, limit, offset]
+  );
+
+  return {
+    data: dataResult.rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
+}
+
+async function getHistoryStats(userId) {
+  const result = await pool.query(
+    `SELECT
+       COUNT(i.id) AS total_interviews,
+       COUNT(i.id) FILTER (WHERE i.status = 'completed') AS completed_interviews,
+       ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
+       MAX(i.score) FILTER (WHERE i.status = 'completed') AS best_score,
+       MIN(i.score) FILTER (WHERE i.status = 'completed') AS worst_score
+     FROM interviews i
+     WHERE i.user_id = $1`,
+    [userId]
+  );
+  return result.rows[0];
+}
+
+async function getSessionDetail(interviewId, userId) {
+  const result = await pool.query(
+    `SELECT i.id, i.area_id, i.difficulty_level, i.status, i.questions_answered,
+            i.questions_total, i.score, i.duration_seconds,
+            i.started_at, i.finished_at,
+            ta.name AS area_name, ta.slug AS area_slug, ta.icon AS area_icon,
+            e.id AS evaluation_id, e.feedback, e.strengths, e.improvements,
+            e.criteria_scores, e.tags, e.score AS evaluation_score
+     FROM interviews i
+     JOIN technical_areas ta ON ta.id = i.area_id
+     LEFT JOIN evaluations e ON e.interview_id = i.id
+     WHERE i.id = $1 AND i.user_id = $2`,
+    [interviewId, userId]
+  );
+  return result.rows[0] || null;
 }
 
 async function deleteInterview(interviewId, userId) {
@@ -130,35 +415,189 @@ async function deleteInterview(interviewId, userId) {
   return result.rows[0] || null;
 }
 
-async function getInterviewAnswers(interviewId) {
-  const result = await pool.query(`
-    SELECT q.question_text, a.answer_text, q.question_order
-    FROM questions q
-    JOIN answers a ON a.question_id = q.id
-    WHERE q.interview_id = $1
-    ORDER BY q.question_order
-  `, [interviewId]);
+// ====================================================================
+// DASHBOARD
+// ====================================================================
+
+async function getDashboardStats(userId) {
+  const result = await pool.query(
+    `SELECT
+       COUNT(i.id) AS total_interviews,
+       COUNT(i.id) FILTER (WHERE i.status = 'completed') AS completed_interviews,
+       ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
+       MAX(i.score) FILTER (WHERE i.status = 'completed') AS best_score,
+       MIN(i.score) FILTER (WHERE i.status = 'completed') AS worst_score
+     FROM interviews i
+     WHERE i.user_id = $1`,
+    [userId]
+  );
+  return result.rows[0];
+}
+
+async function getDashboardByArea(userId) {
+  const result = await pool.query(
+    `SELECT ta.name AS area_name, ta.icon AS area_icon,
+            COUNT(i.id) AS total,
+            ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score
+     FROM technical_areas ta
+     LEFT JOIN interviews i ON i.area_id = ta.id AND i.user_id = $1
+     GROUP BY ta.id, ta.name, ta.icon
+     HAVING COUNT(i.id) > 0
+     ORDER BY total DESC`,
+    [userId]
+  );
   return result.rows;
 }
 
+// ====================================================================
+// METAS Y RACHAS
+// ====================================================================
+
+async function getUserGoals(userId) {
+  const result = await pool.query(
+    `SELECT ug.weekly_target,
+            COALESCE(wp.weekly_count, 0) AS weekly_progress
+     FROM user_goals ug
+     LEFT JOIN user_weekly_progress wp ON wp.user_id = ug.user_id
+     WHERE ug.user_id = $1`,
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function createDefaultGoals(userId) {
+  const result = await pool.query(
+    'INSERT INTO user_goals (user_id, weekly_target) VALUES ($1, 5) ON CONFLICT (user_id) DO NOTHING RETURNING *',
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function updateUserGoals(userId, weeklyTarget) {
+  const result = await pool.query(
+    `UPDATE user_goals
+     SET weekly_target = $1, updated_at = NOW()
+     WHERE user_id = $2
+     RETURNING *`,
+    [weeklyTarget, userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function getCurrentStreak(userId) {
+  const result = await pool.query(
+    `WITH ranked AS (
+       SELECT practice_date,
+              practice_date - ROW_NUMBER() OVER (ORDER BY practice_date DESC)::INTEGER AS grp
+       FROM practice_days
+       WHERE user_id = $1
+     ),
+     latest_group AS (
+       SELECT grp FROM ranked LIMIT 1
+     )
+     SELECT COUNT(*) AS current_streak
+     FROM ranked
+     WHERE grp = (SELECT grp FROM latest_group)`,
+    [userId]
+  );
+  return result.rows[0] || { current_streak: 0 };
+}
+
+async function getLongestStreak(userId) {
+  const result = await pool.query(
+    `WITH ranked AS (
+       SELECT practice_date,
+              practice_date - ROW_NUMBER() OVER (ORDER BY practice_date)::INTEGER AS grp
+       FROM practice_days
+       WHERE user_id = $1
+     )
+     SELECT COUNT(*) AS streak_days
+     FROM ranked
+     GROUP BY grp
+     ORDER BY streak_days DESC
+     LIMIT 1`,
+    [userId]
+  );
+  return result.rows[0] || { streak_days: 0 };
+}
+
+async function getLastPracticeDate(userId) {
+  const result = await pool.query(
+    `SELECT practice_date FROM practice_days
+     WHERE user_id = $1
+     ORDER BY practice_date DESC LIMIT 1`,
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function recordPracticeDay(userId, practiceDate) {
+  const result = await pool.query(
+    'INSERT INTO practice_days (user_id, practice_date) VALUES ($1, $2) ON CONFLICT (user_id, practice_date) DO NOTHING RETURNING *',
+    [userId, practiceDate || new Date().toISOString().slice(0, 10)]
+  );
+  return result.rows[0] || null;
+}
+
+// ====================================================================
+// EXPORTACIÓN
+// ====================================================================
+
 module.exports = {
+  // Áreas
   getAreas,
   getAreaById,
+
+  // Usuarios
   createUser,
   getUserByEmail,
   getUserById,
+  getUserProfile,
+  updateUserProfile,
+  updateUserPassword,
   updateLastLogin,
+
+  // Sesiones
   createSession,
   getSessionByToken,
   deleteSession,
+
+  // Entrevistas
   createInterview,
   finishInterview,
+  getInProgressInterview,
+  getInterviewById,
+
+  // Preguntas y respuestas
   saveQuestion,
   saveAnswer,
-  saveEvaluation,
-  getInterviewHistory,
-  getInterviewAnswers,
-  getInProgressInterview,
+  saveAnswerWithFeedback,
   getInterviewQuestions,
-  deleteInterview
+  getInterviewAnswers,
+  getInterviewTranscript,
+
+  // Evaluaciones
+  saveEvaluation,
+  saveEvaluationFull,
+  getEvaluationByInterviewId,
+
+  // Historial
+  getInterviewHistory,
+  getHistoryPaginated,
+  getHistoryStats,
+  getSessionDetail,
+  deleteInterview,
+
+  // Dashboard
+  getDashboardStats,
+  getDashboardByArea,
+
+  // Metas y rachas
+  getUserGoals,
+  createDefaultGoals,
+  updateUserGoals,
+  getCurrentStreak,
+  getLongestStreak,
+  getLastPracticeDate,
+  recordPracticeDay
 };

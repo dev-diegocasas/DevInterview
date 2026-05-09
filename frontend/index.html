@@ -183,9 +183,27 @@
             <!-- Home View -->
             <div id="view-home" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-xl">
-                    <h1 class="font-h1 text-h1 text-on-surface mb-xs">Bienvenido de nuevo, <span id="nav-user-name">Usuario</span> 👋</h1>
+                    <h1 class="font-h1 text-h1 text-on-surface mb-xs">Bienvenido de nuevo, <span id="nav-user-name">Usuario</span></h1>
                     <p class="font-body-md text-body-md text-on-surface-variant">Tu preparación técnica está en progreso.</p>
                 </header>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter mb-xl">
+                    <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
+                        <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">ENTREVISTAS</div>
+                        <div class="font-h2 text-h2 text-primary" id="stat-total">—</div>
+                    </div>
+                    <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
+                        <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">PROMEDIO</div>
+                        <div class="font-h2 text-h2 text-tertiary" id="stat-avg">—</div>
+                    </div>
+                    <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
+                        <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">RACHA</div>
+                        <div class="font-h2 text-h2 text-on-surface" id="stat-streak">—</div>
+                    </div>
+                    <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
+                        <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">S. SEMANAL</div>
+                        <div class="font-h2 text-h2 text-on-surface" id="stat-weekly">—</div>
+                    </div>
+                </div>
                 <div class="flex flex-col gap-xl">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
                         <div class="bg-surface-container-high border border-outline-variant p-lg rounded-lg">
@@ -219,6 +237,13 @@
                         <p class="font-body-md text-body-md text-on-surface-variant">Selecciona el tema en el que deseas practicar.</p>
                     </div>
                 </header>
+                <div class="flex items-center gap-md mb-lg p-md bg-surface-container-low rounded-lg border border-outline-variant">
+                    <span class="font-label-uppercase text-label-uppercase text-on-surface-variant">DIFICULTAD</span>
+                    <button class="difficulty-btn px-md py-xs rounded border border-primary bg-primary/10 text-primary text-body-sm font-semibold" data-level="junior" onclick="window.setDifficultyJS('junior')">Junior</button>
+                    <button class="difficulty-btn px-md py-xs rounded border border-outline-variant text-body-sm text-on-surface-variant hover:bg-surface-bright transition-colors" data-level="mid" onclick="window.setDifficultyJS('mid')">Mid</button>
+                    <button class="difficulty-btn px-md py-xs rounded border border-outline-variant text-body-sm text-on-surface-variant hover:bg-surface-bright transition-colors" data-level="senior" onclick="window.setDifficultyJS('senior')">Senior</button>
+                    <span class="font-body-sm text-body-sm text-on-surface-variant ml-auto" id="selected-difficulty-label">Nivel: Junior</span>
+                </div>
                 <div id="areas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-lg"></div>
             </div>
 
@@ -235,7 +260,7 @@
                         </button>
                     </div>
                     <div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                        <div class="h-full w-1/5 bg-primary transition-all duration-300"></div>
+                        <div id="chat-progress-bar" class="h-full w-1/5 bg-primary transition-all duration-300"></div>
                     </div>
                 </header>
                 <div id="chat-messages" class="flex-grow overflow-y-auto mb-lg bg-surface-container rounded-lg p-lg border border-outline-variant"></div>
@@ -261,7 +286,7 @@
             <!-- History View -->
             <div id="view-history" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-xl flex items-center gap-md">
-                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home'); loadDashboardStats()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div>
@@ -269,9 +294,43 @@
                         <p class="font-body-md text-body-md text-on-surface-variant">Revisa tu progreso y analiza tus sesiones anteriores.</p>
                     </div>
                 </header>
+                <div class="mb-lg flex flex-wrap gap-md items-center bg-surface-container-low p-md rounded-lg border border-outline-variant">
+                    <div class="flex items-center gap-sm bg-surface-container border border-outline-variant rounded-lg px-md py-xs flex-grow max-w-xs">
+                        <span class="material-symbols-outlined text-outline text-[20px]">search</span>
+                        <input id="history-filter-search" type="text" class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface placeholder-outline w-full outline-none" placeholder="Buscar área..."/>
+                    </div>
+                    <select id="history-filter-difficulty" class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary px-md py-xs outline-none">
+                        <option value="">Dificultad: Todas</option>
+                        <option value="junior">Junior</option>
+                        <option value="mid">Mid</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                    <button id="history-filter-apply" class="bg-primary hover:bg-[#4C6EF5] text-on-surface text-body-sm font-semibold px-md py-xs rounded-lg transition-all">Filtrar</button>
+                </div>
                 <div id="history-list" class="space-y-md"></div>
+                <div id="history-pagination" class="mt-md"></div>
                 <div class="mt-lg text-center">
-                    <button class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95" onclick="showAppView('home')">Volver al inicio</button>
+                    <button class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95" onclick="showAppView('home'); loadDashboardStats()">Volver al inicio</button>
+                </div>
+            </div>
+
+            <!-- Session Detail View -->
+            <div id="view-session-detail" class="view-hidden max-w-4xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-lg flex items-center gap-md">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('history'); loadHistory()">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div>
+                        <h1 class="font-h1 text-h1 text-on-surface mb-xs" id="session-detail-title">Detalle de Sesión</h1>
+                    </div>
+                </header>
+                <div id="session-meta" class="bg-surface-container p-lg rounded-lg border border-outline-variant mb-lg"></div>
+                <div id="session-evaluation"></div>
+                <h2 class="font-h2 text-h2 text-on-surface mb-lg">Transcripción de la Sesión</h2>
+                <div id="session-transcript" class="space-y-lg"></div>
+                <div class="mt-lg flex gap-md">
+                    <button id="btn-back-to-history" class="flex-1 bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Volver al historial</button>
+                    <button id="btn-close-session" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant">Ir al inicio</button>
                 </div>
             </div>
         </main>

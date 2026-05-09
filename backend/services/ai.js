@@ -3,7 +3,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const API_KEY = process.env.API_KEY;
-const MODEL = 'google/gemini-2.0-flash-exp:free';
+const MODEL = 'nvidia/nemotron-nano-9b-v2:free';
 
 function callOpenRouter(messages) {
   return new Promise((resolve, reject) => {
@@ -49,15 +49,69 @@ function callOpenRouter(messages) {
   });
 }
 
-async function generateQuestion(areaName) {
+async function testConnection() {
+  const messages = [
+    { role: 'user', content: 'Responde SOLO con la palabra: OK' }
+  ];
+  const response = await callOpenRouter(messages);
+  return response.includes('OK');
+}
+
+function difficultyPrompt(difficulty) {
+  const prompts = {
+    junior: 'basico, sobre conceptos fundamentales y sintaxis',
+    mid: 'intermedio, sobre patrones de diseno, optimizacion y buenas practicas',
+    senior: 'avanzado, sobre escalabilidad, trade-offs, arquitectura y diseno de sistemas'
+  };
+  return prompts[difficulty] || prompts.mid;
+}
+
+async function generateQuestion(areaName, difficulty) {
+  const level = difficulty || 'mid';
+  const levelDesc = difficultyPrompt(level);
+
   const messages = [
     {
       role: 'system',
-      content: 'Eres un entrevistador tecnico profesional. Genera preguntas claras, relevantes y de nivel intermedio. Responde UNICAMENTE con la pregunta, sin introducciones ni explicaciones adicionales. No uses markdown. Maximo 2 oraciones.'
+      content: `Eres un entrevistador tecnico profesional. Genera preguntas claras, relevantes y de nivel ${level} (${levelDesc}). Responde UNICAMENTE con la pregunta, sin introducciones ni explicaciones adicionales. No uses markdown. Maximo 3 oraciones.`
     },
     {
       role: 'user',
-      content: `Genera una pregunta tecnica de nivel intermedio sobre ${areaName}. La pregunta debe evaluar conocimiento practico. Solo responde con la pregunta.`
+      content: `Genera una pregunta tecnica de nivel ${level} sobre ${areaName}. La pregunta debe evaluar conocimiento practico de ${levelDesc}. Solo responde con la pregunta.`
+    }
+  ];
+  return callOpenRouter(messages);
+}
+
+async function generateFirstQuestion(areaName, difficulty) {
+  const level = difficulty || 'mid';
+  const levelDesc = difficultyPrompt(level);
+
+  const messages = [
+    {
+      role: 'system',
+      content: `Eres un entrevistador tecnico profesional. Genera preguntas de nivel ${level} (${levelDesc}). Esta es la PRIMERA pregunta de la entrevista, debe ser una pregunta de calentamiento que evalue conocimientos fundamentales del area. Responde UNICAMENTE con la pregunta, sin introducciones ni explicaciones adicionales. No uses markdown.`
+    },
+    {
+      role: 'user',
+      content: `Genera la PRIMERA pregunta de una entrevista tecnica de nivel ${level} sobre ${areaName}. Debe ser introductoria, sobre ${levelDesc}. Solo responde con la pregunta.`
+    }
+  ];
+  return callOpenRouter(messages);
+}
+
+async function generateFollowUpQuestion(areaName, difficulty, previousAnswer) {
+  const level = difficulty || 'mid';
+  const levelDesc = difficultyPrompt(level);
+
+  const messages = [
+    {
+      role: 'system',
+      content: `Eres un entrevistador tecnico profesional. Genera preguntas de nivel ${level} (${levelDesc}). Adapta la dificultad segun la calidad de la respuesta anterior. Responde UNICAMENTE con la pregunta, sin introducciones. No uses markdown.`
+    },
+    {
+      role: 'user',
+      content: `La respuesta anterior del candidato fue: "${previousAnswer}". Genera una pregunta de seguimiento sobre ${areaName} de nivel ${level}. Si la respuesta fue buena, profundiza mas. Si fue debil, haz una pregunta relacionada mas accesible. Solo responde con la pregunta.`
     }
   ];
   return callOpenRouter(messages);
@@ -107,7 +161,7 @@ async function generateFinalEvaluation(questionsAndAnswers, areaName) {
   const messages = [
     {
       role: 'system',
-      content: 'Eres un evaluador tecnico senior. Evalua entrevistas completas. Responde UNICAMENTE en formato JSON valido. No uses markdown.'
+      content: 'Eres un evaluador tecnico senior. Evalua entrevistas completas. Responde UNICAMENTE en formato JSON valido. No uses markdown. No incluyas ni una sola palabra fuera del JSON.'
     },
     {
       role: 'user',
@@ -115,14 +169,20 @@ async function generateFinalEvaluation(questionsAndAnswers, areaName) {
 
 ${qaText}
 
-Proporciona una evaluacion general con:
-- Puntuacion global (0-100)
-- Fortalezas identificadas
-- Areas de mejora
-- Recomendaciones
+Proporciona una evaluacion general con los siguientes campos:
+1. "score": puntuacion global (numero 0-100)
+2. "feedback": evaluacion completa en texto (3-5 oraciones)
+3. "strengths": fortalezas identificadas del candidato
+4. "improvements": areas de mejora sugeridas
+5. "criteriaScores": objeto JSON con puntuaciones por competencia (0-100 cada una):
+   - "precision": precision tecnica de las respuestas
+   - "claridad": claridad en la comunicacion
+   - "profundidad": profundidad del conocimiento demostrado
+   - "comunicacion": capacidad de expresar ideas tecnicas
+6. "tags": array de strings con 3-5 etiquetas de habilidades demostradas (ej: ["React Hooks", "Arquitectura Limpia"])
 
-Responde UNICAMENTE con un JSON:
-{"score": <numero>, "feedback": "<evaluacion completa>", "strengths": "<fortalezas>", "improvements": "<areas de mejora>"}`
+Responde UNICAMENTE con este JSON exacto:
+{"score": <numero>, "feedback": "<texto>", "strengths": "<texto>", "improvements": "<texto>", "criteriaScores": {"precision": <numero>, "claridad": <numero>, "profundidad": <numero>, "comunicacion": <numero>}, "tags": ["<tag1>", "<tag2>", "<tag3>"]}`
     }
   ];
   const response = await callOpenRouter(messages);
@@ -134,9 +194,18 @@ Responde UNICAMENTE con un JSON:
       score: 50,
       feedback: `Evaluacion generada. ${response.substring(0, 500)}`,
       strengths: 'No se pudo determinar',
-      improvements: 'Revisar respuestas'
+      improvements: 'Revisar respuestas',
+      criteriaScores: { precision: 50, claridad: 50, profundidad: 50, comunicacion: 50 },
+      tags: ['General']
     };
   }
 }
 
-module.exports = { generateQuestion, evaluateAnswer, generateFinalEvaluation };
+module.exports = {
+  testConnection,
+  generateQuestion,
+  generateFirstQuestion,
+  generateFollowUpQuestion,
+  evaluateAnswer,
+  generateFinalEvaluation
+};

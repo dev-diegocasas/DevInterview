@@ -13,6 +13,22 @@ function parseRequestBody(req) {
   });
 }
 
+function parseQueryParams(parsedUrl) {
+  const params = parsedUrl.query || {};
+  return {
+    page: params.page,
+    limit: params.limit,
+    search: params.search,
+    areaId: params.areaId,
+    difficulty: params.difficulty,
+    status: params.status,
+    scoreMin: params.scoreMin,
+    scoreMax: params.scoreMax,
+    sort: params.sort,
+    order: params.order
+  };
+}
+
 function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
@@ -26,4 +42,8 @@ function extractToken(req) {
   return null;
 }
 
-module.exports = { parseRequestBody, sendJSON, extractToken };
+function getPathSegments(parsedUrl) {
+  return parsedUrl.pathname.replace(/^\/+|\/+$/g, '').split('/');
+}
+
+module.exports = { parseRequestBody, parseQueryParams, sendJSON, extractToken, getPathSegments };

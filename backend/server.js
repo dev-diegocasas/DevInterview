@@ -7,8 +7,10 @@ require('dotenv').config();
 const { testConnection } = require('./db/connection');
 const { setupDatabase } = require('./db/setup');
 const { areasRoute } = require('./routes/areas');
-const { startInterview, submitAnswer, finishInterviewRoute } = require('./routes/interview');
-const { historyRoute, deleteInterviewRoute } = require('./routes/history');
+const { startInterview, submitAnswer, finishInterviewRoute, getInterviewDetailRoute, getInterviewTranscriptRoute } = require('./routes/interview');
+const { historyRoute, deleteInterviewRoute, historyStatsRoute, sessionDetailRoute } = require('./routes/history');
+const { dashboardStatsRoute } = require('./routes/dashboard');
+const { getProfile, updateProfile, changePassword } = require('./routes/user');
 const { register, login, logout, me } = require('./routes/auth');
 
 const PORT = process.env.PORT || 3000;
@@ -47,7 +49,7 @@ function serveStaticFile(res, filePath) {
 
 function setCORSHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
@@ -95,12 +97,44 @@ const server = http.createServer(async (req, res) => {
     return finishInterviewRoute(req, res);
   }
 
+  if (pathname.startsWith('/api/interview/') && pathname.endsWith('/transcript') && req.method === 'GET') {
+    return getInterviewTranscriptRoute(req, res);
+  }
+
+  if (pathname.startsWith('/api/interview/') && req.method === 'GET') {
+    return getInterviewDetailRoute(req, res);
+  }
+
+  if (pathname === '/api/history/stats' && req.method === 'GET') {
+    return historyStatsRoute(req, res);
+  }
+
+  if (pathname.startsWith('/api/history/') && req.method === 'GET') {
+    return sessionDetailRoute(req, res);
+  }
+
   if (pathname === '/api/history' && req.method === 'GET') {
     return historyRoute(req, res);
   }
 
   if (pathname.startsWith('/api/history/') && req.method === 'DELETE') {
     return deleteInterviewRoute(req, res);
+  }
+
+  if (pathname === '/api/dashboard/stats' && req.method === 'GET') {
+    return dashboardStatsRoute(req, res);
+  }
+
+  if (pathname === '/api/user/profile' && req.method === 'GET') {
+    return getProfile(req, res);
+  }
+
+  if (pathname === '/api/user/profile' && req.method === 'PUT') {
+    return updateProfile(req, res);
+  }
+
+  if (pathname === '/api/user/password' && req.method === 'PUT') {
+    return changePassword(req, res);
   }
 
   if (pathname.startsWith('/api/')) {

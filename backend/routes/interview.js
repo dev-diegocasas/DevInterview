@@ -1,15 +1,20 @@
 const { parseRequestBody, sendJSON } = require('./helpers');
 const { requireAuth } = require('./auth');
-const { generateQuestion, evaluateAnswer, generateFinalEvaluation } = require('../services/ai');
+const { generateQuestion, generateFirstQuestion, generateFollowUpQuestion, evaluateAnswer, generateFinalEvaluation } = require('../services/ai');
 const {
   getAreaById,
   createInterview,
   finishInterview,
   saveQuestion,
   saveAnswer,
-  saveEvaluation,
+  saveAnswerWithFeedback,
+  saveEvaluationFull,
   getInProgressInterview,
-  getInterviewQuestions
+  getInterviewQuestions,
+  getInterviewAnswers,
+  getInterviewTranscript,
+  getInterviewById,
+  recordPracticeDay
 } = require('../db/queries');
 
 const MAX_QUESTIONS = 5;
@@ -29,10 +34,15 @@ async function startInterview(req, res) {
     if (!session) return;
 
     const body = await parseRequestBody(req);
-    const { areaId } = body;
+    const { areaId, difficultyLevel } = body;
 
     if (!areaId) {
       return sendJSON(res, 400, { success: false, error: 'areaId es requerido' });
+    }
+
+    const difficulty = difficultyLevel || session.tech_level || 'mid';
+    if (!['junior', 'mid', 'senior'].includes(difficulty)) {
+      return sendJSON(res, 400, { success: false, error: 'Nivel de dificultad invalido. Usa: junior, mid, senior' });
     }
 
     const area = await getAreaById(areaId);
@@ -48,8 +58,8 @@ async function startInterview(req, res) {
       const qaPairs = answered.map(q => ({ question: q.question_text, answer: q.answer_text }));
 
       if (questions.length === 0) {
-        const interview = await createInterview(areaId, session.user_id);
-        const questionText = await generateQuestion(area.name);
+        const interview = await createInterview(areaId, session.user_id, difficulty);
+        const questionText = await generateFirstQuestion(area.name, difficulty);
         const question = await saveQuestion(interview.id, questionText, 1);
 
         return sendJSON(res, 200, {
@@ -57,6 +67,7 @@ async function startInterview(req, res) {
           data: {
             interviewId: interview.id,
             area: area.name,
+            difficulty: difficulty,
             resumed: false,
             question: { id: question.id, text: questionText, order: 1 }
           }
@@ -70,6 +81,8 @@ async function startInterview(req, res) {
           data: {
             interviewId: existing.id,
             area: area.name,
+            difficulty: existing.difficulty_level || difficulty,
+            totalQuestions: existing.questions_total,
             resumed: true,
             questionsAndAnswers: qaPairs,
             questionNumber: answered.length + 1,
@@ -78,8 +91,8 @@ async function startInterview(req, res) {
         });
       }
 
-      const interview = await createInterview(areaId, session.user_id);
-      const questionText = await generateQuestion(area.name);
+      const interview = await createInterview(areaId, session.user_id, difficulty);
+      const questionText = await generateFirstQuestion(area.name, difficulty);
       const question = await saveQuestion(interview.id, questionText, 1);
 
       return sendJSON(res, 200, {
@@ -87,14 +100,15 @@ async function startInterview(req, res) {
         data: {
           interviewId: interview.id,
           area: area.name,
+          difficulty: difficulty,
           resumed: false,
           question: { id: question.id, text: questionText, order: 1 }
         }
       });
     }
 
-    const interview = await createInterview(areaId, session.user_id);
-    const questionText = await generateQuestion(area.name);
+    const interview = await createInterview(areaId, session.user_id, difficulty);
+    const questionText = await generateFirstQuestion(area.name, difficulty);
     const question = await saveQuestion(interview.id, questionText, 1);
 
     sendJSON(res, 200, {
@@ -102,6 +116,7 @@ async function startInterview(req, res) {
       data: {
         interviewId: interview.id,
         area: area.name,
+        difficulty: difficulty,
         resumed: false,
         question: { id: question.id, text: questionText, order: 1 }
       }
@@ -117,13 +132,29 @@ async function submitAnswer(req, res) {
     if (!session) return;
 
     const body = await parseRequestBody(req);
-    const { interviewId, questionId, answer, questionNumber, areaName } = body;
+    const { interviewId, questionId, answer, questionNumber, areaName, difficulty, previousAnswer } = body;
 
     if (!interviewId || !questionId || !answer) {
       return sendJSON(res, 400, { success: false, error: 'interviewId, questionId y answer son requeridos' });
     }
 
-    await saveAnswer(questionId, answer);
+    const questions = await getInterviewQuestions(interviewId);
+    const currentQuestion = questions.find(q => q.question_id === questionId);
+    const questionText = currentQuestion ? currentQuestion.question_text : 'Pregunta';
+
+    let aiEval = null;
+    try {
+      aiEval = await evaluateAnswer(questionText, answer, areaName || 'tecnologia');
+    } catch (e) {
+      aiEval = { score: null, feedback: null };
+    }
+
+    await saveAnswerWithFeedback(
+      questionId,
+      answer,
+      aiEval.feedback || null,
+      aiEval.score != null ? Math.round(aiEval.score) : null
+    );
 
     const currentQ = questionNumber || 0;
 
@@ -135,14 +166,17 @@ async function submitAnswer(req, res) {
       return;
     }
 
-    const newQuestionText = await generateQuestion(areaName || 'tecnologia');
+    const lastAnswer = previousAnswer || answer;
+    const diffLevel = difficulty || 'mid';
+    const newQuestionText = await generateFollowUpQuestion(areaName || 'tecnologia', diffLevel, lastAnswer);
     const newQuestion = await saveQuestion(interviewId, newQuestionText, currentQ + 1);
 
     sendJSON(res, 200, {
       success: true,
       data: {
         finished: false,
-        question: { id: newQuestion.id, text: newQuestionText, order: currentQ + 1 }
+        question: { id: newQuestion.id, text: newQuestionText, order: currentQ + 1 },
+        lastFeedback: aiEval.score != null ? { score: Math.round(aiEval.score), feedback: aiEval.feedback } : null
       }
     });
   } catch (error) {
@@ -162,7 +196,6 @@ async function finishInterviewRoute(req, res) {
       return sendJSON(res, 400, { success: false, error: 'interviewId es requerido' });
     }
 
-    const { getInterviewAnswers, getAreaById } = require('../db/queries');
     const area = await getAreaById(areaId);
     const answers = await getInterviewAnswers(interviewId);
 
@@ -182,14 +215,25 @@ async function finishInterviewRoute(req, res) {
     const evaluation = await generateFinalEvaluation(qaPairs, area ? area.name : 'tecnologia');
     const finalScore = evaluation.score || 50;
 
-    await finishInterview(interviewId, finalScore);
-    await saveEvaluation(
+    const interview = await getInterviewById(interviewId);
+    let durationSeconds = null;
+    if (interview && interview.started_at) {
+      const started = new Date(interview.started_at).getTime();
+      const now = Date.now();
+      durationSeconds = Math.round((now - started) / 1000);
+    }
+
+    await finishInterview(interviewId, finalScore, durationSeconds);
+    await saveEvaluationFull(
       interviewId,
-      evaluation.feedback || 'Evaluacion completada',
       finalScore,
+      evaluation.feedback || 'Evaluacion completada',
       evaluation.strengths || '',
-      evaluation.improvements || ''
+      evaluation.improvements || '',
+      evaluation.criteriaScores || null,
+      evaluation.tags || null
     );
+    await recordPracticeDay(session.user_id);
 
     sendJSON(res, 200, {
       success: true,
@@ -197,7 +241,10 @@ async function finishInterviewRoute(req, res) {
         score: finalScore,
         feedback: evaluation.feedback || 'Evaluacion completada',
         strengths: evaluation.strengths || '',
-        improvements: evaluation.improvements || ''
+        improvements: evaluation.improvements || '',
+        criteriaScores: evaluation.criteriaScores || null,
+        tags: evaluation.tags || null,
+        durationSeconds
       }
     });
   } catch (error) {
@@ -205,4 +252,72 @@ async function finishInterviewRoute(req, res) {
   }
 }
 
-module.exports = { startInterview, submitAnswer, finishInterviewRoute };
+async function getInterviewDetailRoute(req, res) {
+  try {
+    const session = await authGuard(req, res);
+    if (!session) return;
+
+    const urlParts = require('url').parse(req.url, true).pathname.split('/');
+    const interviewId = Number(urlParts[urlParts.length - 1]);
+
+    if (!interviewId || isNaN(interviewId)) {
+      return sendJSON(res, 400, { success: false, error: 'ID de entrevista invalido' });
+    }
+
+    const interview = await getInterviewById(interviewId);
+    if (!interview || interview.user_id !== session.user_id) {
+      return sendJSON(res, 404, { success: false, error: 'Entrevista no encontrada' });
+    }
+
+    const questions = await getInterviewQuestions(interviewId);
+
+    sendJSON(res, 200, {
+      success: true,
+      data: { interview, questions }
+    });
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
+async function getInterviewTranscriptRoute(req, res) {
+  try {
+    const session = await authGuard(req, res);
+    if (!session) return;
+
+    const urlParts = require('url').parse(req.url, true).pathname.split('/');
+    const interviewId = Number(urlParts[urlParts.length - 1]);
+
+    if (!interviewId || isNaN(interviewId)) {
+      return sendJSON(res, 400, { success: false, error: 'ID de entrevista invalido' });
+    }
+
+    const interview = await getInterviewById(interviewId);
+    if (!interview || interview.user_id !== session.user_id) {
+      return sendJSON(res, 404, { success: false, error: 'Entrevista no encontrada' });
+    }
+
+    const transcript = await getInterviewTranscript(interviewId);
+
+    sendJSON(res, 200, {
+      success: true,
+      data: {
+        interview: {
+          id: interview.id,
+          areaName: interview.area_name,
+          difficulty: interview.difficulty_level,
+          status: interview.status,
+          score: interview.score,
+          durationSeconds: interview.duration_seconds,
+          startedAt: interview.started_at,
+          finishedAt: interview.finished_at
+        },
+        transcript
+      }
+    });
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
+module.exports = { startInterview, submitAnswer, finishInterviewRoute, getInterviewDetailRoute, getInterviewTranscriptRoute };

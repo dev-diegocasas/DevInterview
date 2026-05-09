@@ -1,13 +1,7 @@
 -- ====================================================================
--- DevInterview — Schema de Base de Datos
--- Motor: PostgreSQL (hosteado en Neon, SSL obligatorio)
--- Versión: 2.0
+-- DevInterview — Schema de Base de Datos v3.0
+-- Motor: PostgreSQL (Neon, SSL obligatorio)
 -- ====================================================================
-
--- ....................................................................
--- NOTA: Para Neon, ejecutar con sslmode=require
--- psql "postgresql://..." -f schema.sql
--- ....................................................................
 
 BEGIN;
 
@@ -15,10 +9,6 @@ BEGIN;
 -- MÓDULO 1: Autenticación y perfil de usuario
 -- ====================================================================
 
--- Tabla: users
--- Propósito: Almacena cuentas de usuario con datos de perfil y
--- credenciales. El password se guarda con hash bcrypt. El nivel
--- técnico define el seniority del candidato.
 CREATE TABLE IF NOT EXISTS users (
     id              SERIAL PRIMARY KEY,
     full_name       VARCHAR(150)    NOT NULL,
@@ -35,18 +25,14 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 COMMENT ON TABLE users IS 'Cuentas de usuario con perfil y credenciales';
-COMMENT ON COLUMN users.password_hash IS 'Hash bcrypt de la contraseña';
+COMMENT ON COLUMN users.password_hash IS 'Hash scrypt de la contraseña (salt:hash)';
 COMMENT ON COLUMN users.tech_level IS 'Nivel técnico: junior, mid, senior';
 COMMENT ON COLUMN users.account_status IS 'Estado: active, inactive';
-COMMENT ON COLUMN users.last_login IS 'Último inicio de sesión exitoso';
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_tech_level ON users (tech_level);
 CREATE INDEX IF NOT EXISTS idx_users_account_status ON users (account_status);
 
--- Tabla: sessions
--- Propósito: Maneja tokens de sesión para autenticación persistente.
--- Cada login genera un nuevo token con fecha de expiración.
 CREATE TABLE IF NOT EXISTS sessions (
     id          SERIAL PRIMARY KEY,
     user_id     INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -56,8 +42,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 COMMENT ON TABLE sessions IS 'Tokens de sesión para autenticación';
-COMMENT ON COLUMN sessions.token IS 'Token único tipo UUID';
-COMMENT ON COLUMN sessions.expires_at IS 'Fecha de expiración del token';
+COMMENT ON COLUMN sessions.token IS 'Token UUID v4';
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions (token);
@@ -67,9 +52,6 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at);
 -- MÓDULO 2: Áreas técnicas
 -- ====================================================================
 
--- Tabla: technical_areas
--- Propósito: Catálogo de áreas técnicas disponibles para entrevistas.
--- El slug se usa en URLs amigables.
 CREATE TABLE IF NOT EXISTS technical_areas (
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(100)    NOT NULL UNIQUE,
@@ -79,18 +61,19 @@ CREATE TABLE IF NOT EXISTS technical_areas (
     created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
+-- v3.0: Migración de nuevas columnas para tablas existentes
+ALTER TABLE technical_areas ADD COLUMN IF NOT EXISTS icon    VARCHAR(50);
+ALTER TABLE technical_areas ADD COLUMN IF NOT EXISTS popular BOOLEAN NOT NULL DEFAULT FALSE;
+
 COMMENT ON TABLE technical_areas IS 'Catálogo de áreas técnicas para entrevistas';
 COMMENT ON COLUMN technical_areas.slug IS 'Identificador para URLs (ej: frontend, backend)';
-COMMENT ON COLUMN technical_areas.is_active IS 'TRUE si el área está disponible para entrevistas';
+COMMENT ON COLUMN technical_areas.icon IS 'Nombre del icono Material Symbols';
+COMMENT ON COLUMN technical_areas.popular IS 'TRUE si el área tiene badge de popular';
 
 -- ====================================================================
 -- MÓDULO 3: Sesiones de entrevista
 -- ====================================================================
 
--- Tabla: interviews
--- Propósito: Registra cada sesión de entrevista iniciada por un
--- usuario. El estado refleja si está en curso, completada o
--- abandonada. El puntaje global se actualiza al finalizar.
 CREATE TABLE IF NOT EXISTS interviews (
     id                  SERIAL PRIMARY KEY,
     user_id             INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -104,24 +87,36 @@ CREATE TABLE IF NOT EXISTS interviews (
     finished_at         TIMESTAMPTZ
 );
 
+-- v3.0: Migración de nuevas columnas para interviews
+ALTER TABLE interviews ADD COLUMN IF NOT EXISTS difficulty_level VARCHAR(20) NOT NULL DEFAULT 'mid'
+    CHECK (difficulty_level IN ('junior', 'mid', 'senior'));
+ALTER TABLE interviews ADD COLUMN IF NOT EXISTS questions_total INTEGER NOT NULL DEFAULT 5
+    CHECK (questions_total > 0 AND questions_total <= 20);
+ALTER TABLE interviews ADD COLUMN IF NOT EXISTS duration_seconds INTEGER CHECK (duration_seconds >= 0);
+
 COMMENT ON TABLE interviews IS 'Sesiones de entrevista técnica';
+COMMENT ON COLUMN interviews.difficulty_level IS 'Nivel de dificultad configurado al iniciar';
 COMMENT ON COLUMN interviews.status IS 'Estado: in_progress, completed, abandoned';
-COMMENT ON COLUMN interviews.questions_answered IS 'Cantidad de preguntas respondidas en la sesión';
+COMMENT ON COLUMN interviews.questions_total IS 'Cantidad total de preguntas configuradas para esta sesión';
+COMMENT ON COLUMN interviews.questions_answered IS 'Cantidad de preguntas respondidas';
 COMMENT ON COLUMN interviews.score IS 'Puntaje global (0-100), se llena al finalizar';
+COMMENT ON COLUMN interviews.duration_seconds IS 'Duración real en segundos';
 COMMENT ON COLUMN interviews.finished_at IS 'NULL mientras la entrevista está en curso';
 
 CREATE INDEX IF NOT EXISTS idx_interviews_user_id ON interviews (user_id);
 CREATE INDEX IF NOT EXISTS idx_interviews_area_id ON interviews (area_id);
 CREATE INDEX IF NOT EXISTS idx_interviews_status ON interviews (status);
 CREATE INDEX IF NOT EXISTS idx_interviews_started_at ON interviews (started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interviews_user_status ON interviews (user_id, status);
+CREATE INDEX IF NOT EXISTS idx_interviews_user_date ON interviews (user_id, started_at DESC);
+-- v3.0: Nuevos índices
+CREATE INDEX IF NOT EXISTS idx_interviews_difficulty ON interviews (difficulty_level);
+CREATE INDEX IF NOT EXISTS idx_interviews_score ON interviews (score);
 
 -- ====================================================================
 -- MÓDULO 4: Preguntas y respuestas
 -- ====================================================================
 
--- Tabla: questions
--- Propósito: Almacena las preguntas generadas por IA para cada
--- entrevista, en el orden en que se presentaron al usuario.
 CREATE TABLE IF NOT EXISTS questions (
     id              SERIAL PRIMARY KEY,
     interview_id    INTEGER         NOT NULL REFERENCES interviews(id) ON DELETE CASCADE,
@@ -134,10 +129,8 @@ COMMENT ON TABLE questions IS 'Preguntas generadas por IA en cada entrevista';
 COMMENT ON COLUMN questions.question_order IS 'Orden de aparición en la entrevista';
 
 CREATE INDEX IF NOT EXISTS idx_questions_interview_id ON questions (interview_id);
+CREATE INDEX IF NOT EXISTS idx_questions_order ON questions (interview_id, question_order);
 
--- Tabla: answers
--- Propósito: Guarda las respuestas escritas por el usuario para
--- cada pregunta. Cada respuesta tiene su timestamp individual.
 CREATE TABLE IF NOT EXISTS answers (
     id          SERIAL PRIMARY KEY,
     question_id INTEGER         NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
@@ -145,8 +138,13 @@ CREATE TABLE IF NOT EXISTS answers (
     created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
+-- v3.0: Migración de nuevas columnas para answers
+ALTER TABLE answers ADD COLUMN IF NOT EXISTS ai_feedback TEXT;
+ALTER TABLE answers ADD COLUMN IF NOT EXISTS ai_score INTEGER CHECK (ai_score >= 0 AND ai_score <= 100);
+
 COMMENT ON TABLE answers IS 'Respuestas del usuario a cada pregunta';
-COMMENT ON COLUMN answers.answer_text IS 'Texto libre escrito por el usuario';
+COMMENT ON COLUMN answers.ai_feedback IS 'Feedback de IA individual por respuesta';
+COMMENT ON COLUMN answers.ai_score IS 'Puntaje de IA individual por respuesta (0-100)';
 
 CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers (question_id);
 
@@ -154,10 +152,6 @@ CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers (question_id);
 -- MÓDULO 5: Evaluaciones
 -- ====================================================================
 
--- Tabla: evaluations
--- Propósito: Almacena la evaluación generada por IA al finalizar
--- una entrevista. Incluye puntaje, feedback, fortalezas y áreas
--- de mejora. Una evaluación por entrevista (restricción UNIQUE).
 CREATE TABLE IF NOT EXISTS evaluations (
     id              SERIAL PRIMARY KEY,
     interview_id    INTEGER         NOT NULL UNIQUE REFERENCES interviews(id) ON DELETE CASCADE,
@@ -168,28 +162,64 @@ CREATE TABLE IF NOT EXISTS evaluations (
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
+-- v3.0: Migración de nuevas columnas para evaluations
+ALTER TABLE evaluations ADD COLUMN IF NOT EXISTS criteria_scores JSONB;
+ALTER TABLE evaluations ADD COLUMN IF NOT EXISTS tags TEXT[];
+
 COMMENT ON TABLE evaluations IS 'Evaluación generada por IA al finalizar entrevista';
 COMMENT ON COLUMN evaluations.score IS 'Puntaje numérico (0-100)';
 COMMENT ON COLUMN evaluations.feedback IS 'Feedback detallado del desempeño';
 COMMENT ON COLUMN evaluations.strengths IS 'Fortalezas identificadas por la IA';
 COMMENT ON COLUMN evaluations.improvements IS 'Áreas de mejora sugeridas';
+COMMENT ON COLUMN evaluations.criteria_scores IS 'Desglose por competencias: {precision, claridad, profundidad, comunicacion}';
+COMMENT ON COLUMN evaluations.tags IS 'Etiquetas de habilidades identificadas';
 
 CREATE INDEX IF NOT EXISTS idx_evaluations_interview_id ON evaluations (interview_id);
 
 -- ====================================================================
--- VISTAS AUXILIARES (MÓDULO 6: Historial y estadísticas)
+-- MÓDULO 6: Metas y rachas (v3.0)
+-- ====================================================================
+
+CREATE TABLE IF NOT EXISTS user_goals (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER         NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    weekly_target   INTEGER         NOT NULL DEFAULT 5
+                    CHECK (weekly_target > 0 AND weekly_target <= 30),
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE user_goals IS 'Metas semanales de práctica por usuario';
+COMMENT ON COLUMN user_goals.weekly_target IS 'Número objetivo de entrevistas por semana';
+
+CREATE TABLE IF NOT EXISTS practice_days (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    practice_date   DATE            NOT NULL,
+    UNIQUE (user_id, practice_date)
+);
+
+COMMENT ON TABLE practice_days IS 'Registro diario de práctica para calcular rachas';
+COMMENT ON COLUMN practice_days.practice_date IS 'Fecha en que el usuario practicó (sin hora)';
+
+CREATE INDEX IF NOT EXISTS idx_practice_days_user_id ON practice_days (user_id);
+CREATE INDEX IF NOT EXISTS idx_practice_days_user_date ON practice_days (user_id, practice_date DESC);
+
+-- ====================================================================
+-- MÓDULO 7: Vistas auxiliares (v3.0 actualizadas)
 -- ====================================================================
 
 -- Vista: user_progress
--- Propósito: Muestra la evolución del puntaje por usuario y área
--- a lo largo del tiempo, útil para gráficas de progreso.
-CREATE OR REPLACE VIEW user_progress AS
+-- Muestra la evolución del puntaje por usuario y área a lo largo del tiempo
+DROP VIEW IF EXISTS user_progress CASCADE;
+CREATE VIEW user_progress AS
 SELECT
     i.user_id,
     u.full_name,
     ta.name    AS area_name,
     i.id       AS interview_id,
     i.score,
+    i.difficulty_level,
     i.started_at,
     i.finished_at,
     ROW_NUMBER() OVER (
@@ -206,9 +236,9 @@ ORDER BY i.user_id, i.area_id, i.started_at;
 COMMENT ON VIEW user_progress IS 'Evolución temporal de puntajes por usuario y área';
 
 -- Vista: user_stats
--- Propósito: Estadísticas agregadas por usuario y área técnica:
--- promedio, total de entrevistas, mejor y peor puntaje.
-CREATE OR REPLACE VIEW user_stats AS
+-- Estadísticas agregadas por usuario y área técnica
+DROP VIEW IF EXISTS user_stats CASCADE;
+CREATE VIEW user_stats AS
 SELECT
     i.user_id,
     u.full_name,
@@ -218,6 +248,7 @@ SELECT
     ROUND(AVG(i.score), 1) AS avg_score,
     MAX(i.score)       AS best_score,
     MIN(i.score)       AS worst_score,
+    ROUND(AVG(i.duration_seconds), 0)::INTEGER AS avg_duration_seconds,
     MAX(i.finished_at) AS last_interview_at
 FROM interviews i
 JOIN users u           ON u.id = i.user_id
@@ -229,31 +260,91 @@ ORDER BY i.user_id, ta.name;
 
 COMMENT ON VIEW user_stats IS 'Estadísticas agregadas por usuario y área técnica';
 
+-- Vista: user_dashboard_stats
+-- Estadísticas globales del dashboard para un usuario
+CREATE OR REPLACE VIEW user_dashboard_stats AS
+SELECT
+    i.user_id,
+    COUNT(i.id)                                        AS total_interviews,
+    COUNT(i.id) FILTER (WHERE i.status = 'completed')  AS completed_interviews,
+    ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
+    MAX(i.score) FILTER (WHERE i.status = 'completed') AS best_score,
+    MIN(i.score) FILTER (WHERE i.status = 'completed') AS worst_score,
+    MAX(i.finished_at) FILTER (WHERE i.status = 'completed') AS last_interview_at
+FROM interviews i
+GROUP BY i.user_id;
+
+COMMENT ON VIEW user_dashboard_stats IS 'Estadísticas globales del dashboard por usuario';
+
+-- Vista: user_weekly_progress
+-- Progreso semanal actual del usuario
+CREATE OR REPLACE VIEW user_weekly_progress AS
+SELECT
+    i.user_id,
+    COUNT(i.id) AS weekly_count
+FROM interviews i
+WHERE i.status = 'completed'
+  AND i.finished_at >= date_trunc('week', CURRENT_TIMESTAMP)
+GROUP BY i.user_id;
+
+COMMENT ON VIEW user_weekly_progress IS 'Conteo de entrevistas completadas en la semana actual';
+
+-- Vista: area_popularity
+-- Ranking de popularidad de áreas por número de entrevistas
+CREATE OR REPLACE VIEW area_popularity AS
+SELECT
+    ta.id,
+    ta.name,
+    ta.slug,
+    ta.icon,
+    COUNT(i.id) AS total_interviews,
+    ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score
+FROM technical_areas ta
+LEFT JOIN interviews i ON i.area_id = ta.id
+GROUP BY ta.id, ta.name, ta.slug, ta.icon
+ORDER BY total_interviews DESC;
+
+COMMENT ON VIEW area_popularity IS 'Ranking de áreas por uso y rendimiento';
+
 -- ====================================================================
 -- DATOS DE EJEMPLO
 -- ====================================================================
 
--- Contraseña de ejemplo: "Test1234" (bcrypt hash generado con 10 rounds)
+-- Contraseña de ejemplo: "Test1234" (scrypt hash)
 INSERT INTO users (full_name, email, password_hash, bio, tech_level) VALUES
-    ('Ana García López',   'ana@example.com',   '$2b$10$EjemploHashBcryptAna1234567890abcdefghij', 'Desarrolladora frontend con 3 años de experiencia', 'junior'),
-    ('Carlos Mendoza R',   'carlos@example.com', '$2b$10$EjemploHashBcryptCarlos1234567890abcdefghi', 'Backend developer especializado en APIs',            'mid'),
-    ('María Fernández',    'maria@example.com',  '$2b$10$EjemploHashBcryptMaria1234567890abcdefghij', 'Tech lead con 8 años en la industria',              'senior')
+    ('Ana García López',   'ana@example.com',   'salthash_ejemplo_ana', 'Desarrolladora frontend con 3 años de experiencia', 'junior'),
+    ('Carlos Mendoza R',   'carlos@example.com', 'salthash_ejemplo_carlos', 'Backend developer especializado en APIs',            'mid'),
+    ('María Fernández',    'maria@example.com',  'salthash_ejemplo_maria', 'Tech lead con 8 años en la industria',              'senior')
 ON CONFLICT (email) DO NOTHING;
 
--- Áreas técnicas disponibles
-INSERT INTO technical_areas (name, slug, description) VALUES
-    ('Frontend',       'frontend',       'HTML, CSS, JavaScript, React, Vue, accesibilidad, rendimiento web y patrones de diseño de UI.'),
-    ('Backend',        'backend',        'APIs REST, Node.js, Python, bases de datos, autenticación, arquitectura de microservicios.'),
-    ('Bases de Datos', 'bases-de-datos', 'SQL, PostgreSQL, índices, normalización, transacciones, optimización de consultas y modelado.'),
-    ('Algoritmos',     'algoritmos',     'Estructuras de datos, complejidad algorítmica, recursión, ordenamiento, grafos y programación dinámica.'),
-    ('Desarrollo Móvil','desarrollo-movil', 'React Native, Flutter, Swift, Kotlin, ciclo de vida de apps, state management y publicación.')
-ON CONFLICT (name) DO NOTHING;
+-- Metas semanales para usuarios de ejemplo
+INSERT INTO user_goals (user_id, weekly_target) VALUES
+    (1, 5), (2, 3), (3, 7)
+ON CONFLICT (user_id) DO NOTHING;
 
--- Entrevista de ejemplo completada
-INSERT INTO interviews (user_id, area_id, status, questions_answered, score, started_at, finished_at) VALUES
-    (1, 1, 'completed', 5, 78, '2026-04-15 10:00:00-05', '2026-04-15 10:30:00-05'),
-    (2, 2, 'completed', 5, 85, '2026-04-20 14:00:00-05', '2026-04-20 14:35:00-05'),
-    (3, 1, 'completed', 5, 92, '2026-05-01 09:00:00-05', '2026-05-01 09:28:00-05');
+-- Áreas técnicas (v3.0 con iconos y popular — actualiza existentes)
+INSERT INTO technical_areas (name, slug, description, icon, popular) VALUES
+    ('Frontend',       'frontend',       'HTML, CSS, JavaScript, React, Vue, accesibilidad, rendimiento web y patrones de diseño de UI.',       'html',        TRUE),
+    ('Backend',        'backend',        'APIs REST, Node.js, Python, bases de datos, autenticación, arquitectura de microservicios.',          'dns',         TRUE),
+    ('Bases de Datos', 'bases-de-datos', 'SQL, PostgreSQL, índices, normalización, transacciones, optimización de consultas y modelado.',        'database',    FALSE),
+    ('Algoritmos',     'algoritmos',     'Estructuras de datos, complejidad algorítmica, recursión, ordenamiento, grafos y programación dinámica.', 'function', TRUE),
+    ('Desarrollo Móvil','desarrollo-movil', 'React Native, Flutter, Swift, Kotlin, ciclo de vida de apps, state management y publicación.',      'smartphone',  FALSE),
+    ('Cloud & DevOps', 'cloud-devops',   'Docker, Kubernetes, AWS, CI/CD, infraestructura como código, monitoreo y escalado.',                  'cloud',       FALSE),
+    ('Testing',        'testing',        'Pruebas unitarias, de integración, E2E, TDD, mocks, cobertura y calidad de software.',                 'checklist',   FALSE)
+ON CONFLICT (name) DO UPDATE SET icon = EXCLUDED.icon, popular = EXCLUDED.popular;
+
+-- Entrevistas de ejemplo completadas
+INSERT INTO interviews (user_id, area_id, difficulty_level, status, questions_answered, questions_total, score, duration_seconds, started_at, finished_at) VALUES
+    (1, 1, 'junior', 'completed', 5, 5, 78, 1800, '2026-04-15 10:00:00-05', '2026-04-15 10:30:00-05'),
+    (2, 2, 'mid', 'completed', 5, 5, 85, 2100, '2026-04-20 14:00:00-05', '2026-04-20 14:35:00-05'),
+    (3, 1, 'senior', 'completed', 5, 5, 92, 1680, '2026-05-01 09:00:00-05', '2026-05-01 09:28:00-05');
+
+-- Días de práctica para ejemplo
+INSERT INTO practice_days (user_id, practice_date) VALUES
+    (1, '2026-04-15'), (1, '2026-04-16'), (1, '2026-04-17'),
+    (2, '2026-04-20'),
+    (3, '2026-05-01'), (3, '2026-05-02')
+ON CONFLICT (user_id, practice_date) DO NOTHING;
 
 -- Preguntas de ejemplo para la primera entrevista
 INSERT INTO questions (interview_id, question_text, question_order) VALUES
@@ -264,16 +355,26 @@ INSERT INTO questions (interview_id, question_text, question_order) VALUES
     (1, '¿Qué son los Web Vitals y por qué son importantes para el SEO?', 5);
 
 -- Respuestas de ejemplo
-INSERT INTO answers (question_id, answer_text) VALUES
-    (1, 'Flexbox es unidimensional y Grid es bidimensional. Usaría flexbox para barras de navegación y Grid para layouts de página completos.'),
-    (2, 'Event delegation es asignar un listener a un padre para manejar eventos de sus hijos, usando event.target para identificar el elemento origen.'),
-    (3, 'El Virtual DOM es una copia ligera del DOM real. React compara el virtual DOM anterior con el nuevo y solo aplica los cambios necesarios al DOM real.'),
-    (4, 'La accesibilidad se enfoca en que personas con discapacidades puedan usar el sitio. La usabilidad mide qué tan fácil es de usar para todos. Se miden con herramientas como Lighthouse y pruebas de usuario.'),
-    (5, 'Los Web Vitals son métricas de Google (LCP, FID, CLS) que miden rendimiento real. Impactan el SEO porque Google los usa como factor de ranking.');
+INSERT INTO answers (question_id, answer_text, ai_feedback, ai_score) VALUES
+    (1, 'Flexbox es unidimensional y Grid es bidimensional. Usaría flexbox para barras de navegación y Grid para layouts de página completos.',
+        'Respuesta clara y precisa. Identifica correctamente la diferencia dimensional y da ejemplos de uso apropiados.', 85),
+    (2, 'Event delegation es asignar un listener a un padre para manejar eventos de sus hijos, usando event.target para identificar el elemento origen.',
+        'Buena definición conceptual. Podría profundizar en bubbling vs capturing.', 78),
+    (3, 'El Virtual DOM es una copia ligera del DOM real. React compara el virtual DOM anterior con el nuevo y solo aplica los cambios necesarios al DOM real.',
+        'Explicación sólida del concepto. Menciona correctamente la reconciliación aunque podría detallar el algoritmo diff.', 82),
+    (4, 'La accesibilidad se enfoca en que personas con discapacidades puedan usar el sitio. La usabilidad mide qué tan fácil es de usar para todos. Se miden con herramientas como Lighthouse y pruebas de usuario.',
+        'Excelente diferenciación de conceptos. Buenos ejemplos de herramientas de medición.', 90),
+    (5, 'Los Web Vitals son métricas de Google (LCP, FID, CLS) que miden rendimiento real. Impactan el SEO porque Google los usa como factor de ranking.',
+        'Conocimiento sólido de métricas Core Web Vitals y su impacto en SEO.', 88);
 
--- Evaluación de ejemplo
-INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements) VALUES
-    (1, 78, 'Buen desempeño general. Conoces los conceptos fundamentales de frontend. Destacaste en accesibilidad y Web Vitals. Necesitas profundizar más en Virtual DOM.', 'Sólido conocimiento de accesibilidad y métricas de rendimiento. Buena capacidad para explicar conceptos con ejemplos.', 'Profundizar en el funcionamiento interno del Virtual DOM y algoritmos de reconciliación. Practicar más escenarios de event delegation complejos.')
+-- Evaluación de ejemplo con criteria_scores y tags
+INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements, criteria_scores, tags) VALUES
+    (1, 78,
+     'Buen desempeño general. Conoces los conceptos fundamentales de frontend. Destacaste en accesibilidad y Web Vitals. Necesitas profundizar más en Virtual DOM.',
+     'Sólido conocimiento de accesibilidad y métricas de rendimiento. Buena capacidad para explicar conceptos con ejemplos.',
+     'Profundizar en el funcionamiento interno del Virtual DOM y algoritmos de reconciliación. Practicar más escenarios de event delegation complejos.',
+     '{"precision": 80, "claridad": 85, "profundidad": 70, "comunicacion": 78}',
+     ARRAY['Accesibilidad', 'Web Vitals', 'Conceptos DOM'])
 ON CONFLICT (interview_id) DO NOTHING;
 
 COMMIT;
