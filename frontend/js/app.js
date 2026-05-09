@@ -32,7 +32,8 @@
     chat: document.getElementById('view-chat'),
     evaluation: document.getElementById('view-evaluation'),
     history: document.getElementById('view-history'),
-    session: document.getElementById('view-session-detail')
+    session: document.getElementById('view-session-detail'),
+    profile: document.getElementById('view-profile')
   };
 
   var loadingOverlay = document.getElementById('loading-overlay');
@@ -124,6 +125,7 @@
       state.user = data.user;
       document.getElementById('nav-user-name').textContent = state.user.fullName;
       state.difficultyLevel = state.user.techLevel || 'mid';
+      fillDropdown(state.user);
       showApp();
     } catch (e) {
       state.token = null;
@@ -157,6 +159,7 @@
       state.difficultyLevel = data.user.techLevel || 'mid';
       localStorage.setItem('token', data.token);
       document.getElementById('nav-user-name').textContent = data.user.fullName;
+      fillDropdown(data.user);
       document.getElementById('login-email').value = '';
       document.getElementById('login-password').value = '';
       showApp();
@@ -203,6 +206,7 @@
       state.difficultyLevel = data.user.techLevel || 'mid';
       localStorage.setItem('token', data.token);
       document.getElementById('nav-user-name').textContent = data.user.fullName;
+      fillDropdown(data.user);
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-email').value = '';
       document.getElementById('reg-password').value = '';
@@ -217,14 +221,149 @@
 
   // ─── AUTH: Logout ────────────────────────────────────
 
-  document.getElementById('btn-logout').addEventListener('click', async function () {
-    try {
-      await apiRequest('/auth/logout', 'POST');
-    } catch (e) {}
+  function doLogout() {
+    apiRequest('/auth/logout', 'POST').catch(function () {});
     state.token = null;
     state.user = null;
     localStorage.removeItem('token');
+    hideDropdown();
     showAuthView('login');
+  }
+
+  document.querySelectorAll('#btn-logout').forEach(function (el) {
+    el.addEventListener('click', doLogout);
+  });
+
+  // ─── Profile Dropdown ────────────────────────────────
+
+  function fillDropdown(user) {
+    var nameEl = document.getElementById('dropdown-user-name');
+    var emailEl = document.getElementById('dropdown-user-email');
+    if (nameEl) nameEl.textContent = user.fullName;
+    if (emailEl) emailEl.textContent = user.email;
+  }
+
+  document.getElementById('avatar-trigger').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var dd = document.getElementById('profile-dropdown');
+    dd.classList.toggle('hidden');
+  });
+
+  function hideDropdown() {
+    document.getElementById('profile-dropdown').classList.add('hidden');
+  }
+
+  document.addEventListener('click', function (e) {
+    var dd = document.getElementById('profile-dropdown');
+    var trigger = document.getElementById('avatar-trigger');
+    if (!dd.classList.contains('hidden') && !dd.contains(e.target) && !trigger.contains(e.target)) {
+      dd.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('btn-go-profile').addEventListener('click', function () {
+    hideDropdown();
+    loadProfile();
+    showAppView('profile');
+  });
+
+  // ─── Profile View ────────────────────────────────────
+
+  async function loadProfile() {
+    try {
+      showLoading('Cargando perfil...');
+      var [profile, stats] = await Promise.all([
+        apiRequest('/user/profile'),
+        apiRequest('/dashboard/stats').catch(function () { return null; })
+      ]);
+
+      document.getElementById('pf-name').value = profile.fullName || '';
+      document.getElementById('pf-email').value = profile.email || '';
+      document.getElementById('pf-bio').value = profile.bio || '';
+      document.getElementById('pf-level').value = profile.techLevel || 'mid';
+      document.getElementById('profile-saved-msg').classList.add('hidden');
+
+      document.getElementById('password-saved-msg').classList.add('hidden');
+      document.getElementById('password-error-msg').classList.add('hidden');
+
+      if (stats) {
+        document.getElementById('pstat-total').textContent = stats.totalInterviews;
+        document.getElementById('pstat-avg').textContent = stats.avgScore;
+        document.getElementById('pstat-streak').textContent = stats.currentStreak + ' dias';
+        document.getElementById('pstat-weekly').textContent = stats.weeklyProgress + '/' + (stats.weeklyTarget || 5);
+      }
+    } catch (error) {
+      showToast('Error al cargar perfil: ' + error.message);
+    } finally {
+      hideLoading();
+    }
+  }
+
+  document.getElementById('btn-save-profile').addEventListener('click', async function () {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      await apiRequest('/user/profile', 'PUT', {
+        fullName: document.getElementById('pf-name').value.trim(),
+        bio: document.getElementById('pf-bio').value.trim(),
+        techLevel: document.getElementById('pf-level').value
+      });
+      state.user.fullName = document.getElementById('pf-name').value.trim();
+      document.getElementById('nav-user-name').textContent = state.user.fullName;
+      fillDropdown(state.user);
+      document.getElementById('profile-saved-msg').classList.remove('hidden');
+    } catch (error) {
+      showToast('Error: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
+    }
+  });
+
+  document.getElementById('btn-save-password').addEventListener('click', async function () {
+    var btn = this;
+    var current = document.getElementById('pf-current-pwd').value;
+    var newPwd = document.getElementById('pf-new-pwd').value;
+    var confirm = document.getElementById('pf-confirm-pwd').value;
+
+    document.getElementById('password-saved-msg').classList.add('hidden');
+    document.getElementById('password-error-msg').classList.add('hidden');
+
+    if (!current || !newPwd || !confirm) {
+      document.getElementById('password-error-msg').textContent = 'Completa todos los campos.';
+      document.getElementById('password-error-msg').classList.remove('hidden');
+      return;
+    }
+    if (newPwd.length < 6) {
+      document.getElementById('password-error-msg').textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+      document.getElementById('password-error-msg').classList.remove('hidden');
+      return;
+    }
+    if (newPwd !== confirm) {
+      document.getElementById('password-error-msg').textContent = 'Las contraseñas no coinciden.';
+      document.getElementById('password-error-msg').classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Actualizando...';
+    try {
+      await apiRequest('/user/password', 'PUT', {
+        currentPassword: current,
+        newPassword: newPwd
+      });
+      document.getElementById('pf-current-pwd').value = '';
+      document.getElementById('pf-new-pwd').value = '';
+      document.getElementById('pf-confirm-pwd').value = '';
+      document.getElementById('password-saved-msg').classList.remove('hidden');
+    } catch (error) {
+      document.getElementById('password-error-msg').textContent = error.message;
+      document.getElementById('password-error-msg').classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Actualizar contraseña';
+    }
   });
 
   // ─── AUTH: Switch views ──────────────────────────────

@@ -169,12 +169,19 @@
                     <button id="btn-start" class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md">Práctica</button>
                 </div>
             </div>
-            <div class="flex items-center gap-md">
+            <div class="flex items-center gap-md relative">
                 <button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95"><span class="material-symbols-outlined">notifications</span></button>
-                <div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                <div id="avatar-trigger" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:border-primary transition-colors">
                     <img alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVKRZ5VxYMVoeJqcFC5L3UDCl8ffCCEWSbCQJqWEy9zxWFvUSb9ANUwzU4LQVZvtix9x8ia3d_Dq8oPcXEExHZ2uvP5RRy4AeSbl2l0Qeec9xA59yiLBLjmC4F7_4Jf_rLHKiJ2dcP9mMAPW1rYWKBpLNxzqdO-W5gxpLOuYyLYz6P9No9PPc30KcxHf8kZq42bx79NX_LIOBnt-rvHPHbv1ioN6R-4jHWyPeEKXneD2s1TKM8Yn2EVSb-f2VPiFGoNA484CYNir-J"/>
                 </div>
-                <button id="btn-logout" class="ml-md px-md py-xs bg-error/20 hover:bg-error/30 text-error rounded-lg text-sm font-body-sm transition-colors">Salir</button>
+                <div id="profile-dropdown" class="hidden absolute top-full right-0 mt-2 w-48 bg-surface-container border border-outline-variant rounded-lg shadow-xl z-50 overflow-hidden" style="background:#171A21">
+                    <div class="px-md py-sm border-b border-outline-variant" style="padding:10px 14px">
+                        <div id="dropdown-user-name" class="font-body-md text-body-md text-on-surface font-semibold">Usuario</div>
+                        <div id="dropdown-user-email" class="font-body-sm text-body-sm text-on-surface-variant" style="font-size:12px">email@ejemplo.com</div>
+                    </div>
+                    <button id="btn-go-profile" class="w-full text-left px-md py-sm font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-bright transition-colors" style="padding:10px 14px;cursor:pointer;border:none;background:transparent">Mi Perfil</button>
+                    <button id="btn-logout" class="w-full text-left px-md py-sm font-body-sm text-body-sm text-error hover:bg-surface-bright transition-colors" style="padding:10px 14px;cursor:pointer;border:none;background:transparent;border-top:1px solid #2B313C">Cerrar sesión</button>
+                </div>
             </div>
         </nav>
 
@@ -325,6 +332,119 @@
                 <div class="mt-lg flex gap-md">
                     <button id="btn-back-to-history" class="flex-1 bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Volver al historial</button>
                     <button id="btn-close-session" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant">Ir al inicio</button>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="view-profile" class="view-hidden max-w-3xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-lg flex items-center gap-md">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div>
+                        <h1 class="font-h1 text-h1 text-on-surface mb-xs">Mi Perfil</h1>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Configura tu cuenta y revisa tu progreso.</p>
+                    </div>
+                </header>
+
+                <div style="display:flex;flex-direction:column;gap:20px">
+                    <!-- Datos Personales -->
+                    <div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="background:#20242D">
+                        <h2 class="font-h3 text-h3 text-on-surface mb-lg" style="display:flex;align-items:center;gap:8px">
+                            <span class="material-symbols-outlined" style="color:#5B7CFA">person</span> Datos Personales
+                        </h2>
+                        <div id="profile-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Nombre completo</label>
+                                <input id="pf-name" type="text" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" style="background:#171A21"/>
+                            </div>
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Correo electrónico</label>
+                                <input id="pf-email" type="email" disabled class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md opacity-60" style="background:#171A21;cursor:not-allowed"/>
+                            </div>
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Biografía</label>
+                                <textarea id="pf-bio" rows="3" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" style="background:#171A21"></textarea>
+                            </div>
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Nivel técnico</label>
+                                <select id="pf-level" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" style="background:#171A21">
+                                    <option value="junior">Junior</option>
+                                    <option value="mid">Mid</option>
+                                    <option value="senior">Senior</option>
+                                </select>
+                            </div>
+                            <button id="btn-save-profile" class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-sm rounded-lg transition-all duration-150 active:scale-95 self-start">Guardar cambios</button>
+                            <div id="profile-saved-msg" class="hidden" style="font-size:13px;color:#4CAF7A">Cambios guardados correctamente.</div>
+                        </div>
+                    </div>
+
+                    <!-- Cambiar Contraseña -->
+                    <div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="background:#20242D">
+                        <h2 class="font-h3 text-h3 text-on-surface mb-lg" style="display:flex;align-items:center;gap:8px">
+                            <span class="material-symbols-outlined" style="color:#5B7CFA">lock</span> Cambiar Contraseña
+                        </h2>
+                        <div id="password-form" style="display:flex;flex-direction:column;gap:14px">
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Contraseña actual</label>
+                                <input id="pf-current-pwd" type="password" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" style="background:#171A21"/>
+                            </div>
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Nueva contraseña</label>
+                                <input id="pf-new-pwd" type="password" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" style="background:#171A21"/>
+                            </div>
+                            <div>
+                                <label class="font-body-sm text-body-sm text-on-surface-variant block mb-xs" style="font-size:13px">Confirmar nueva contraseña</label>
+                                <input id="pf-confirm-pwd" type="password" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" style="background:#171A21"/>
+                            </div>
+                            <button id="btn-save-password" class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-sm rounded-lg transition-all duration-150 active:scale-95 self-start">Actualizar contraseña</button>
+                            <div id="password-saved-msg" class="hidden" style="font-size:13px;color:#4CAF7A">Contraseña actualizada correctamente.</div>
+                            <div id="password-error-msg" class="hidden" style="font-size:13px;color:#D96B6B"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progreso -->
+                    <div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="background:#20242D">
+                        <h2 class="font-h3 text-h3 text-on-surface mb-lg" style="display:flex;align-items:center;gap:8px">
+                            <span class="material-symbols-outlined" style="color:#5B7CFA">trending_up</span> Mi Progreso
+                        </h2>
+                        <div id="profile-stats" class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+                            <div class="bg-surface-container-low border border-outline-variant p-md rounded-lg text-center" style="background:#171A21">
+                                <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">Entrevistas</div>
+                                <div class="font-h2 text-h2 text-primary" id="pstat-total">—</div>
+                            </div>
+                            <div class="bg-surface-container-low border border-outline-variant p-md rounded-lg text-center" style="background:#171A21">
+                                <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">Promedio</div>
+                                <div class="font-h2 text-h2 text-tertiary" id="pstat-avg">—</div>
+                            </div>
+                            <div class="bg-surface-container-low border border-outline-variant p-md rounded-lg text-center" style="background:#171A21">
+                                <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">Racha</div>
+                                <div class="font-h2 text-h2 text-on-surface" id="pstat-streak">—</div>
+                            </div>
+                            <div class="bg-surface-container-low border border-outline-variant p-md rounded-lg text-center" style="background:#171A21">
+                                <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">Semanal</div>
+                                <div class="font-h2 text-h2 text-on-surface" id="pstat-weekly">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Política de Datos -->
+                    <div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="background:#20242D">
+                        <h2 class="font-h3 text-h3 text-on-surface mb-lg" style="display:flex;align-items:center;gap:8px">
+                            <span class="material-symbols-outlined" style="color:#5B7CFA">shield</span> Política y Tratamiento de Datos
+                        </h2>
+                        <div style="font-size:14px;color:#A7ADB8;line-height:1.6">
+                            <p style="margin-bottom:12px">En <strong>DevInterview</strong> protegemos tu privacidad. Los datos que recopilamos se utilizan exclusivamente para:</p>
+                            <ul style="padding-left:20px;margin-bottom:12px;list-style:disc">
+                                <li style="margin-bottom:6px">Personalizar tu experiencia de práctica y evaluación.</li>
+                                <li style="margin-bottom:6px">Generar estadísticas anónimas de rendimiento para mejorar el servicio.</li>
+                                <li style="margin-bottom:6px">Enviar recordatorios opcionales sobre tus sesiones de práctica.</li>
+                            </ul>
+                            <p style="margin-bottom:12px">No compartimos tus datos personales con terceros. Tus respuestas de entrevistas se almacenan de forma segura y solo son visibles para ti.</p>
+                            <p style="margin-bottom:12px">Puedes solicitar la eliminación de tu cuenta y todos tus datos en cualquier momento contactando a soporte.</p>
+                            <p style="font-size:12px;color:#7D8593;margin-top:16px">Versión 1.0 — Última actualización: Mayo 2026</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
