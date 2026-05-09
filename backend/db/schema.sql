@@ -401,3 +401,111 @@ INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements,
 ON CONFLICT (interview_id) DO NOTHING;
 
 COMMIT;
+
+
+
+-- ====================================================================
+-- MÓDULO 8: Preguntas de quiz (multiple choice, respaldo para IA)
+-- ====================================================================
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS quiz_questions (
+    id              SERIAL PRIMARY KEY,
+    area_id         INTEGER         NOT NULL REFERENCES technical_areas(id),
+    difficulty      VARCHAR(20)     NOT NULL CHECK (difficulty IN ('junior', 'mid', 'senior')),
+    question_text   TEXT            NOT NULL,
+    options         JSONB           NOT NULL,
+    correct_answer  CHAR(1)        NOT NULL CHECK (correct_answer IN ('a', 'b', 'c', 'd')),
+    explanation     TEXT            NOT NULL,
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_quiz_area_diff ON quiz_questions (area_id, difficulty);
+
+INSERT INTO quiz_questions (area_id, difficulty, question_text, options, correct_answer, explanation) VALUES
+
+-- Frontend (area_id=1)
+(1, 'junior', '¿Qué etiqueta HTML se usa para crear un enlace?',
+  '{"a": "&lt;link&gt;", "b": "&lt;a&gt;", "c": "&lt;href&gt;", "d": "&lt;url&gt;"}', 'b',
+  'La etiqueta &lt;a&gt; (anchor) es la correcta para crear enlaces HTML. El atributo href define la URL.'),
+(1, 'junior', '¿Qué propiedad CSS se usa para cambiar el color de fondo?',
+  '{"a": "color", "b": "background-color", "c": "bg-color", "d": "background"}', 'b',
+  'background-color es la propiedad correcta. La propiedad "background" es un shorthand que incluye varias propiedades.'),
+(1, 'mid', '¿Qué es el Virtual DOM?',
+  '{"a": "Una copia del DOM que se renderiza en el servidor", "b": "Una representacion ligera del DOM en memoria que permite detectar cambios eficientemente", "c": "Un tipo de DOM usado solo en navegadores antiguos", "d": "Un framework para manipular el DOM directamente"}', 'b',
+  'El Virtual DOM es una representacion en memoria del DOM real. React lo usa para comparar cambios (diffing) y aplicar solo las actualizaciones necesarias.'),
+(1, 'mid', '¿Cuál es la diferencia entre flexbox y CSS Grid?',
+  '{"a": "Flexbox es para layouts 2D y Grid para 1D", "b": "Flexbox es 1D (fila O columna) y Grid es 2D (filas Y columnas)", "c": "Ambos son iguales pero Grid es mas nuevo", "d": "Flexbox solo funciona en navegadores modernos"}', 'b',
+  'Flexbox trabaja en una sola direccion (fila o columna), mientras que CSS Grid permite disenar en dos dimensiones simultaneamente.'),
+(1, 'senior', '¿Qué estrategia es mejor para optimizar el rendimiento de una SPA?',
+  '{"a": "Usar solo CSS sin JavaScript", "b": "Code splitting y lazy loading de modulos", "c": "Cargar todo en un solo bundle", "d": "Usar imagenes en lugar de componentes"}', 'b',
+  'Code splitting divide el codigo en fragmentos que se cargan bajo demanda, reduciendo el tiempo de carga inicial. Lazy loading retrasa la carga de componentes no criticos.'),
+(1, 'senior', '¿Qué es el Closure en JavaScript?',
+  '{"a": "Una funcion que se ejecuta inmediatamente", "b": "La combinacion de una funcion con su entorno lexico exterior", "c": "Un tipo de bucle cerrado", "d": "Una forma de declarar variables privadas en ES6"}', 'b',
+  'Un closure ocurre cuando una funcion interna recuerda el ambito (scope) de su funcion externa, incluso despues de que esta haya terminado de ejecutarse.'),
+
+-- Backend (area_id=2)
+(2, 'junior', '¿Qué método HTTP se usa para crear un recurso en REST?',
+  '{"a": "GET", "b": "PUT", "c": "POST", "d": "DELETE"}', 'c',
+  'POST se usa para crear nuevos recursos. GET es para leer, PUT para actualizar, DELETE para eliminar.'),
+(2, 'junior', '¿Qué es una API REST?',
+  '{"a": "Un tipo de base de datos", "b": "Un conjunto de reglas para construir servicios web usando HTTP", "c": "Un lenguaje de programacion", "d": "Un framework de frontend"}', 'b',
+  'REST (Representational State Transfer) es un estilo arquitectonico que define como crear servicios web usando los verbos HTTP.'),
+(2, 'mid', '¿Qué es un middleware en el contexto de servidores HTTP?',
+  '{"a": "Una base de datos intermedia", "b": "Una funcion que intercepta peticiones HTTP antes de llegar al manejador final", "c": "Un tipo de servidor web", "d": "Un protocolo de comunicacion"}', 'b',
+  'Un middleware es una funcion que se ejecuta en medio del pipeline de procesamiento de una peticion HTTP. Puede modificar la request, la response, o terminar el ciclo.'),
+(2, 'mid', '¿Qué es JWT y para que sirve?',
+  '{"a": "Un formato de compresion de imagenes", "b": "Un estandar abierto para transmitir informacion de forma segura entre partes como un objeto JSON", "c": "Un tipo de base de datos NoSQL", "d": "Un framework de autenticacion"}', 'b',
+  'JWT (JSON Web Token) permite transmitir informacion entre partes como un objeto JSON firmado digitalmente, comunmente usado para autenticacion y autorizacion.'),
+(2, 'senior', '¿Qué es el teorema CAP en sistemas distribuidos?',
+  '{"a": "Todo sistema distribuido solo puede garantizar dos de tres: consistencia, disponibilidad y tolerancia a particiones", "b": "Un sistema debe tener los tres: consistencia, atomicidad y persistencia", "c": "Un algoritmo de balanceo de carga", "d": "Un protocolo de cache distribuida"}', 'a',
+  'El teorema CAP establece que un sistema distribuido no puede garantizar simultaneamente Consistencia, Disponibilidad y Tolerancia a Particiones. Solo puede garantizar dos de las tres.'),
+(2, 'senior', '¿Cuál es la ventaja de usar microservicios sobre una arquitectura monolítica?',
+  '{"a": "Menos complejidad operativa", "b": "Escalabilidad independiente por servicio y despliegues aislados", "c": "Base de datos unica mas simple", "d": "Menor latencia en las peticiones"}', 'b',
+  'Los microservicios permiten escalar, desplegar y mantener cada servicio de forma independiente, mejorando la agilidad y el aislamiento de fallos.'),
+
+-- Algoritmos (area_id=4)
+(4, 'junior', '¿Qué es la complejidad O(n)?',
+  '{"a": "El algoritmo siempre toma el mismo tiempo", "b": "El tiempo de ejecucion crece linealmente con el tamano de entrada", "c": "El tiempo se duplica con cada elemento", "d": "El tiempo es constante"}', 'b',
+  'O(n) indica que el tiempo de ejecucion crece de forma lineal y proporcional al tamano de la entrada.'),
+(4, 'junior', '¿Qué estructura de datos usa el principio LIFO?',
+  '{"a": "Cola (Queue)", "b": "Pila (Stack)", "c": "Lista enlazada", "d": "Arbol binario"}', 'b',
+  'LIFO (Last In, First Out) es el principio de la pila (stack). El ultimo elemento en agregarse es el primero en salir.'),
+(4, 'mid', '¿Qué complejidad tiene el algoritmo QuickSort en el caso promedio?',
+  '{"a": "O(n)", "b": "O(n log n)", "c": "O(n^2)", "d": "O(log n)"}', 'b',
+  'QuickSort tiene complejidad O(n log n) en el caso promedio. En el peor caso (arrays ya ordenados sin buena eleccion de pivote) es O(n^2).'),
+(4, 'senior', '¿Qué es la programacion dinamica?',
+  '{"a": "Un lenguaje de programacion", "b": "Una tecnica que resuelve problemas dividiendolos en subproblemas y almacenando sus resultados", "c": "Un tipo de compilacion en tiempo real", "d": "Una libreria de JavaScript"}', 'b',
+  'La programacion dinamica resuelve problemas complejos dividiendolos en subproblemas mas simples, resolviendo cada uno una sola vez y almacenando sus soluciones (memoization).'),
+
+-- Bases de Datos (area_id=3)
+(3, 'junior', '¿Qué comando SQL se usa para obtener datos de una tabla?',
+  '{"a": "INSERT", "b": "SELECT", "c": "UPDATE", "d": "DELETE"}', 'b',
+  'SELECT es el comando para consultar/obtener datos de una tabla en SQL.'),
+(3, 'mid', '¿Qué es un INDEX en una base de datos?',
+  '{"a": "Un tipo de dato especial", "b": "Una estructura que acelera las consultas al permitir busquedas mas rapidas", "c": "Una tabla temporal", "d": "Una funcion de agregacion"}', 'b',
+  'Un indice es una estructura de datos (como un arbol B-tree) que mejora la velocidad de las operaciones SELECT, WHERE y JOIN a costa de mas espacio en disco.'),
+(3, 'senior', '¿Qué es una transaccion ACID en bases de datos?',
+  '{"a": "Una consulta que se ejecuta automaticamente", "b": "Un conjunto de operaciones que se ejecutan como una unidad, garantizando Atomicidad, Consistencia, Aislamiento y Durabilidad", "c": "Un tipo de backup", "d": "Un comando de PostgreSQL"}', 'b',
+  'ACID es un acronimo que define propiedades de las transacciones en bases de datos relacionales: Atomicidad, Consistencia, Aislamiento (Isolation) y Durabilidad.'),
+
+-- Cloud & DevOps (area_id=31)
+(31, 'mid', '¿Qué es Docker?',
+  '{"a": "Una base de datos", "b": "Una plataforma para crear, desplegar y ejecutar aplicaciones en contenedores", "c": "Un lenguaje de programacion", "d": "Un sistema operativo"}', 'b',
+  'Docker permite empaquetar aplicaciones con sus dependencias en contenedores ligeros y portatiles que pueden ejecutarse en cualquier sistema con Docker instalado.'),
+(31, 'senior', '¿Qué es Kubernetes?',
+  '{"a": "Un editor de texto", "b": "Un orquestador de contenedores que automatiza el despliegue, escalado y gestion de aplicaciones", "c": "Un sistema de archivos", "d": "Un compilador"}', 'b',
+  'Kubernetes (K8s) es una plataforma de orquestacion de contenedores que automatiza el despliegue, escalado y operacion de aplicaciones en contenedores a traves de clusters.'),
+
+-- Ciencia de Datos (area_id=145)
+(145, 'junior', '¿Qué libreria de Python se usa principalmente para manipular datos tabulares?',
+  '{"a": "Matplotlib", "b": "NumPy", "c": "pandas", "d": "Scikit-learn"}', 'c',
+  'pandas es la libreria principal para manipulacion y analisis de datos tabulares en Python, proporcionando DataFrames.'),
+(145, 'mid', '¿Qué es el sobreajuste (overfitting) en Machine Learning?',
+  '{"a": "Cuando el modelo no aprende lo suficiente", "b": "Cuando el modelo se ajusta demasiado a los datos de entrenamiento y no generaliza bien", "c": "Cuando hay demasiados datos", "d": "Cuando el modelo es muy simple"}', 'b',
+  'El overfitting ocurre cuando un modelo aprende el ruido y los detalles especificos de los datos de entrenamiento, perjudicando su rendimiento en datos nuevos no vistos.')
+
+ON CONFLICT DO NOTHING;
+
+COMMIT;

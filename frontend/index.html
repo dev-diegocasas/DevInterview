@@ -340,6 +340,50 @@
                 </div>
             </div>
 
+            <!-- Quiz View (fallback cuando IA no tiene tokens) -->
+            <div id="view-quiz" class="view-hidden max-w-3xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="font-h1 text-h1 text-on-surface mb-xs">Cuestionario técnico</h1>
+                            <p class="font-body-md text-body-md text-on-surface-variant">Modo sin conexión a IA — selecciona la respuesta correcta.</p>
+                        </div>
+                        <span id="quiz-area-badge" class="font-label-uppercase text-label-uppercase text-primary bg-primary/10 px-sm py-xs rounded border border-primary/20"></span>
+                    </div>
+                    <div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden mt-md">
+                        <div id="quiz-progress" class="h-full bg-primary transition-all duration-300" style="width:0%"></div>
+                    </div>
+                </header>
+                <div id="quiz-content">
+                    <div id="quiz-question-area" class="bg-surface-container border border-outline-variant rounded-xl p-lg mb-lg">
+                        <div class="font-body-sm text-body-sm text-on-surface-variant mb-md" id="quiz-counter">Pregunta 1 de 5</div>
+                        <h2 class="font-h3 text-h3 text-on-surface mb-lg" id="quiz-question-text">Cargando pregunta...</h2>
+                        <div id="quiz-options" class="space-y-md"></div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button id="quiz-prev-btn" class="bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-sm rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant" disabled>Anterior</button>
+                        <span id="quiz-selection-status" class="font-body-sm text-body-sm text-on-surface-variant">Selecciona una opción</span>
+                        <button id="quiz-next-btn" class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-sm rounded-lg transition-all duration-150 active:scale-95" disabled>Siguiente</button>
+                    </div>
+                    <div class="mt-lg text-center">
+                        <button id="quiz-submit-btn" class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95 hidden">Enviar respuestas</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Results View -->
+            <div id="view-quiz-results" class="view-hidden max-w-3xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-lg text-center">
+                    <h1 class="font-h1 text-h1 text-on-surface mb-xs">Resultados del cuestionario</h1>
+                    <p class="font-body-md text-body-md text-on-surface-variant" id="quiz-results-summary">Revisa tus respuestas.</p>
+                </header>
+                <div id="quiz-results-content" class="space-y-lg"></div>
+                <div class="mt-lg flex gap-md">
+                    <button id="btn-quiz-new" class="flex-1 bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Nuevo cuestionario</button>
+                    <button id="btn-quiz-home" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant" onclick="window.goHome()">Volver al inicio</button>
+                </div>
+            </div>
+
             <!-- History View -->
             <div id="view-history" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-xl flex items-center gap-md">

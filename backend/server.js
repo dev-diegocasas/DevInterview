@@ -11,6 +11,7 @@ const { startInterview, submitAnswer, finishInterviewRoute, getInterviewDetailRo
 const { historyRoute, deleteInterviewRoute, historyStatsRoute, sessionDetailRoute } = require('./routes/history');
 const { dashboardStatsRoute } = require('./routes/dashboard');
 const { getProfile, updateProfile, changePassword } = require('./routes/user');
+const { getQuizRoute, submitQuizRoute } = require('./routes/quiz');
 const { register, login, logout, me, forgotPassword, resetPassword } = require('./routes/auth');
 
 const PORT = process.env.PORT || 3000;
@@ -143,6 +144,14 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/user/password' && req.method === 'PUT') {
     return changePassword(req, res);
+  }
+
+  if (pathname === '/api/quiz' && req.method === 'GET') {
+    return getQuizRoute(req, res);
+  }
+
+  if (pathname === '/api/quiz/submit' && req.method === 'POST') {
+    return submitQuizRoute(req, res);
   }
 
   if (pathname.startsWith('/api/')) {

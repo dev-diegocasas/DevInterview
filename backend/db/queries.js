@@ -563,6 +563,30 @@ async function markPasswordResetUsed(token) {
   await pool.query('UPDATE password_resets SET used = true WHERE token = $1', [token]);
 }
 
+// ====================================================================
+// QUIZ (multiple choice, respaldo para IA agotada)
+// ====================================================================
+
+async function getQuizQuestions(areaId, difficulty, limit) {
+  const result = await pool.query(
+    `SELECT id, question_text, options, difficulty
+     FROM quiz_questions
+     WHERE area_id = $1 AND difficulty = $2
+     ORDER BY RANDOM()
+     LIMIT $3`,
+    [areaId, difficulty, limit || 5]
+  );
+  return result.rows;
+}
+
+async function getQuizQuestionById(id) {
+  const result = await pool.query(
+    'SELECT id, area_id, question_text, options, correct_answer, explanation, difficulty FROM quiz_questions WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   // Áreas
   getAreas,
@@ -624,5 +648,9 @@ module.exports = {
   // Restablecer contraseña
   createPasswordReset,
   getPasswordResetByToken,
-  markPasswordResetUsed
+  markPasswordResetUsed,
+
+  // Quiz
+  getQuizQuestions,
+  getQuizQuestionById
 };

@@ -14,10 +14,34 @@ const {
   getInterviewAnswers,
   getInterviewTranscript,
   getInterviewById,
-  recordPracticeDay
+  recordPracticeDay,
+  getQuizQuestions
 } = require('../db/queries');
 
 const MAX_QUESTIONS = 5;
+
+async function tryGenerateOrQuiz(area, difficulty, userId) {
+  try {
+    const questionText = await generateFirstQuestion(area.name, difficulty);
+    return { mode: 'chat', text: questionText };
+  } catch (aiError) {
+    const questions = await getQuizQuestions(area.id, difficulty, MAX_QUESTIONS);
+    if (questions.length > 0) {
+      return {
+        mode: 'quiz',
+        quizData: {
+          area: area.name,
+          difficulty: difficulty,
+          totalQuestions: questions.length,
+          questions: questions.map(function (q) {
+            return { id: q.id, text: q.question_text, options: q.options };
+          })
+        }
+      };
+    }
+    throw aiError;
+  }
+}
 
 async function authGuard(req, res) {
   const session = await requireAuth(req);
@@ -59,17 +83,15 @@ async function startInterview(req, res) {
 
       if (questions.length === 0) {
         const interview = await createInterview(areaId, session.user_id, difficulty);
-        const questionText = await generateFirstQuestion(area.name, difficulty);
-        const question = await saveQuestion(interview.id, questionText, 1);
-
+        var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+        if (aiResult.mode === 'quiz') {
+          return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+        }
+        const question = await saveQuestion(interview.id, aiResult.text, 1);
         return sendJSON(res, 200, {
-          success: true,
-          data: {
-            interviewId: interview.id,
-            area: area.name,
-            difficulty: difficulty,
-            resumed: false,
-            question: { id: question.id, text: questionText, order: 1 }
+          success: true, data: {
+            interviewId: interview.id, area: area.name, difficulty: difficulty,
+            resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
           }
         });
       }
@@ -77,48 +99,40 @@ async function startInterview(req, res) {
       if (unanswered.length > 0) {
         const currentQ = unanswered[0];
         return sendJSON(res, 200, {
-          success: true,
-          data: {
-            interviewId: existing.id,
-            area: area.name,
+          success: true, data: {
+            interviewId: existing.id, area: area.name,
             difficulty: existing.difficulty_level || difficulty,
-            totalQuestions: existing.questions_total,
-            resumed: true,
-            questionsAndAnswers: qaPairs,
-            questionNumber: answered.length + 1,
+            totalQuestions: existing.questions_total, resumed: true,
+            questionsAndAnswers: qaPairs, questionNumber: answered.length + 1,
             currentQuestion: { id: currentQ.question_id, text: currentQ.question_text, order: currentQ.question_order }
           }
         });
       }
 
       const interview = await createInterview(areaId, session.user_id, difficulty);
-      const questionText = await generateFirstQuestion(area.name, difficulty);
-      const question = await saveQuestion(interview.id, questionText, 1);
-
+      var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+      if (aiResult.mode === 'quiz') {
+        return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+      }
+      const question = await saveQuestion(interview.id, aiResult.text, 1);
       return sendJSON(res, 200, {
-        success: true,
-        data: {
-          interviewId: interview.id,
-          area: area.name,
-          difficulty: difficulty,
-          resumed: false,
-          question: { id: question.id, text: questionText, order: 1 }
+        success: true, data: {
+          interviewId: interview.id, area: area.name, difficulty: difficulty,
+          resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
         }
       });
     }
 
     const interview = await createInterview(areaId, session.user_id, difficulty);
-    const questionText = await generateFirstQuestion(area.name, difficulty);
-    const question = await saveQuestion(interview.id, questionText, 1);
-
+    var aiResult = await tryGenerateOrQuiz(area, difficulty, session.user_id);
+    if (aiResult.mode === 'quiz') {
+      return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+    }
+    const question = await saveQuestion(interview.id, aiResult.text, 1);
     sendJSON(res, 200, {
-      success: true,
-      data: {
-        interviewId: interview.id,
-        area: area.name,
-        difficulty: difficulty,
-        resumed: false,
-        question: { id: question.id, text: questionText, order: 1 }
+      success: true, data: {
+        interviewId: interview.id, area: area.name, difficulty: difficulty,
+        resumed: false, question: { id: question.id, text: aiResult.text, order: 1 }
       }
     });
   } catch (error) {

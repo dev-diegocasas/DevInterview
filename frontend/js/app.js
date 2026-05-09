@@ -33,7 +33,9 @@
     evaluation: document.getElementById('view-evaluation'),
     history: document.getElementById('view-history'),
     session: document.getElementById('view-session-detail'),
-    profile: document.getElementById('view-profile')
+    profile: document.getElementById('view-profile'),
+    quiz: document.getElementById('view-quiz'),
+    quizResults: document.getElementById('view-quiz-results')
   };
 
   var loadingOverlay = document.getElementById('loading-overlay');
@@ -674,6 +676,12 @@
         areaId: areaId,
         difficultyLevel: state.difficultyLevel
       });
+
+      if (result.quizMode) {
+        startQuiz(result.quiz);
+        return;
+      }
+
       state.interviewId = result.interviewId;
 
       if (result.resumed) {
@@ -824,7 +832,177 @@
     }
   }
 
-  // ─── Evaluation ─────────────────────────────────────
+  // ─── Quiz ───────────────────────────────────────────
+
+  var quizState = { questions: [], currentIndex: 0, answers: {}, area: '', difficulty: '' };
+
+  function startQuiz(quizData) {
+    quizState.questions = quizData.questions || [];
+    quizState.currentIndex = 0;
+    quizState.answers = {};
+    quizState.area = quizData.area || '';
+    quizState.difficulty = quizData.difficulty || 'mid';
+
+    document.getElementById('quiz-area-badge').textContent = quizData.area + ' [' + difficultyLabel(quizData.difficulty) + ']';
+
+    showAppView('quiz');
+    renderQuizQuestion();
+  }
+
+  function renderQuizQuestion() {
+    var q = quizState.questions[quizState.currentIndex];
+    if (!q) return;
+
+    var total = quizState.questions.length;
+    var idx = quizState.currentIndex + 1;
+
+    document.getElementById('quiz-counter').textContent = 'Pregunta ' + idx + ' de ' + total;
+    document.getElementById('quiz-question-text').textContent = q.text;
+    document.getElementById('quiz-progress').style.width = ((idx / total) * 100) + '%';
+
+    var optionsHtml = '';
+    var labels = ['a', 'b', 'c', 'd'];
+    var opts = q.options || {};
+
+    labels.forEach(function (l) {
+      if (!opts[l]) return;
+      var selected = quizState.answers[q.id] === l;
+      optionsHtml +=
+        '<div class="quiz-option" data-qid="' + q.id + '" data-val="' + l + '" style="padding:12px 16px;border-radius:8px;border:1px solid ' + (selected ? '#5B7CFA' : '#2B313C') + ';background:' + (selected ? 'rgba(91,124,250,0.1)' : '#171A21') + ';cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px">' +
+          '<div style="width:28px;height:28px;border-radius:50%;border:2px solid ' + (selected ? '#5B7CFA' : '#2B313C') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + (selected ? '#5B7CFA' : 'transparent') + '">' +
+            '<span style="color:' + (selected ? '#E6E8EE' : '#A7ADB8') + ';font-size:13px;font-weight:600;text-transform:uppercase">' + l + '</span>' +
+          '</div>' +
+          '<span style="color:#E6E8EE;font-size:15px">' + escapeHTML(opts[l]) + '</span>' +
+        '</div>';
+    });
+
+    document.getElementById('quiz-options').innerHTML = optionsHtml;
+
+    // Click handlers for options
+    document.querySelectorAll('.quiz-option').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var qid = parseInt(this.getAttribute('data-qid'), 10);
+        var val = this.getAttribute('data-val');
+        quizState.answers[qid] = val;
+        renderQuizQuestion();
+        updateQuizNav();
+      });
+    });
+
+    updateQuizNav();
+  }
+
+  function updateQuizNav() {
+    var total = quizState.questions.length;
+    var idx = quizState.currentIndex;
+    var q = quizState.questions[idx];
+    var hasAnswer = q ? quizState.answers[q.id] !== undefined : false;
+
+    document.getElementById('quiz-prev-btn').disabled = idx === 0;
+    document.getElementById('quiz-next-btn').disabled = !hasAnswer || idx >= total - 1;
+
+    document.getElementById('quiz-selection-status').textContent = hasAnswer ? 'Opción seleccionada' : 'Selecciona una opción';
+    document.getElementById('quiz-selection-status').style.color = hasAnswer ? '#4CAF7A' : '#7D8593';
+
+    var allAnswered = quizState.questions.every(function (q) { return quizState.answers[q.id] !== undefined; });
+    var submitBtn = document.getElementById('quiz-submit-btn');
+    if (allAnswered) {
+      submitBtn.classList.remove('hidden');
+      submitBtn.style.display = 'block';
+    } else {
+      submitBtn.classList.add('hidden');
+      submitBtn.style.display = '';
+    }
+  }
+
+  document.getElementById('quiz-prev-btn').addEventListener('click', function () {
+    if (quizState.currentIndex > 0) { quizState.currentIndex--; renderQuizQuestion(); }
+  });
+
+  document.getElementById('quiz-next-btn').addEventListener('click', function () {
+    if (quizState.currentIndex < quizState.questions.length - 1) { quizState.currentIndex++; renderQuizQuestion(); }
+  });
+
+  document.getElementById('quiz-submit-btn').addEventListener('click', async function () {
+    var answers = quizState.questions.map(function (q) {
+      return { questionId: q.id, selected: quizState.answers[q.id] || '' };
+    });
+
+    try {
+      showLoading('Evaluando respuestas...');
+      var result = await apiRequest('/quiz/submit', 'POST', {
+        answers: answers,
+        area: quizState.area,
+        difficulty: quizState.difficulty
+      });
+      showQuizResults(result);
+    } catch (error) {
+      showToast('Error: ' + error.message);
+    } finally {
+      hideLoading();
+    }
+  });
+
+  function showQuizResults(result) {
+    showAppView('quizResults');
+
+    var scoreColor = result.score >= 70 ? '#4CAF7A' : result.score >= 40 ? '#D6A54A' : '#D96B6B';
+    document.getElementById('quiz-results-summary').textContent =
+      result.correctCount + ' de ' + result.totalQuestions + ' correctas — Puntaje: ' + result.score + '/100';
+
+    var html = '';
+    result.results.forEach(function (r, i) {
+      var isCorrect = r.isCorrect;
+      var borderColor = isCorrect ? '#4CAF7A' : '#D96B6B';
+      var icon = isCorrect ? 'check_circle' : 'cancel';
+      var iconColor = isCorrect ? '#4CAF7A' : '#D96B6B';
+      var statusLabel = isCorrect ? 'Correcta' : 'Incorrecta';
+
+      html +=
+        '<div class="bg-surface-container border border-outline-variant rounded-xl p-lg" style="border-left:4px solid ' + borderColor + '">' +
+          '<div class="flex items-center gap-sm mb-md">' +
+            '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:20px">' + icon + '</span>' +
+            '<span class="font-label-uppercase" style="color:' + iconColor + '">Pregunta ' + (i + 1) + ' — ' + statusLabel + '</span>' +
+          '</div>' +
+          '<p class="font-body-md text-body-md text-on-surface mb-md" style="font-weight:500">' + escapeHTML(r.questionText) + '</p>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+            renderOptionBlock(r.options, r.selected, r.correctAnswer) +
+          '</div>' +
+          '<div style="padding:12px;background:#171A21;border-radius:8px;border:1px solid #2B313C">' +
+            '<span class="font-label-uppercase" style="color:#5B7CFA;font-size:10px">EXPLICACION</span>' +
+            '<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs" style="margin:4px 0 0">' + escapeHTML(r.explanation) + '</p>' +
+          '</div>' +
+        '</div>';
+    });
+
+    document.getElementById('quiz-results-content').innerHTML = html;
+  }
+
+  function renderOptionBlock(options, selected, correct) {
+    var labels = ['a', 'b', 'c', 'd'];
+    var html = '';
+    labels.forEach(function (l) {
+      if (!options[l]) return;
+      var isSelected = l === selected;
+      var isCorrect = l === correct;
+      var bgColor = isCorrect ? 'rgba(76,175,122,0.15)' : (isSelected && !isCorrect ? 'rgba(217,107,107,0.15)' : '#171A21');
+      var borderColor = isCorrect ? '#4CAF7A' : (isSelected && !isCorrect ? '#D96B6B' : '#2B313C');
+      var textColor = isCorrect ? '#4CAF7A' : (isSelected && !isCorrect ? '#D96B6B' : '#A7ADB8');
+      var prefix = isCorrect ? '✓' : (isSelected ? '✗' : '');
+      html +=
+        '<div style="padding:8px 12px;border-radius:6px;border:1px solid ' + borderColor + ';background:' + bgColor + ';display:flex;align-items:center;gap:8px">' +
+          '<span class="font-code-sm" style="color:' + textColor + ';font-weight:600;text-transform:uppercase;font-size:11px">' + l + '.</span>' +
+          '<span style="font-size:13px;color:' + (isCorrect || (isSelected && !isCorrect) ? textColor : '#A7ADB8') + '">' + escapeHTML(options[l]) + '</span>' +
+          '<span style="margin-left:auto;font-size:12px;color:' + textColor + ';font-weight:600">' + prefix + '</span>' +
+        '</div>';
+    });
+    return html;
+  }
+
+  document.getElementById('btn-quiz-new').addEventListener('click', function () {
+    loadAreas();
+    showAppView('areas');
+  });
 
   function showEvaluation(evaluation) {
     showAppView('evaluation');
