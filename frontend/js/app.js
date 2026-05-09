@@ -297,13 +297,67 @@
     grid.innerHTML = '';
     areas.forEach(function (area) {
       var card = document.createElement('div');
-      card.className = 'area-card';
-      var popularBadge = area.popular ? ' <span class="bg-primary/10 text-primary text-label-uppercase px-sm py-[2px] rounded-full border border-primary/20" style="font-size:10px">Popular</span>' : '';
-      card.innerHTML = '<h3>' + escapeHTML(area.name) + popularBadge + '</h3><p>' + escapeHTML(area.description) + '</p>';
-      card.addEventListener('click', function () {
-        startInterview(area.id, area.name);
-      });
+      card.className = 'bg-surface-container-low border border-outline-variant rounded-xl p-[24px] flex flex-col gap-[16px] hover:border-primary transition-all duration-300';
+      card.style.backgroundColor = '#20242D';
+
+      var selectedDiff = state.difficultyLevel || 'mid';
+
+      var popularBadge = area.popular
+        ? '<span class="bg-primary/10 text-primary text-label-uppercase px-sm py-[2px] rounded-full border border-primary/20" style="font-size:10px;font-family:JetBrains Mono">Popular</span>'
+        : '';
+
+      var iconHtml = area.icon
+        ? '<span class="material-symbols-outlined" style="font-size:32px;color:#5B7CFA">' + escapeHTML(area.icon) + '</span>'
+        : '<span class="material-symbols-outlined" style="font-size:32px;color:#5B7CFA">code</span>';
+
+      card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+          '<div style="padding:8px;background:rgba(91,124,250,0.1);border-radius:8px">' + iconHtml + '</div>' +
+          popularBadge +
+        '</div>' +
+        '<div>' +
+          '<h3 class="font-h3 text-h3 text-on-surface" style="margin:0;font-size:20px;font-weight:500;color:#E6E8EE">' + escapeHTML(area.name) + '</h3>' +
+          '<p class="font-body-sm text-body-sm" style="margin:4px 0 0;font-size:14px;color:#A7ADB8;line-height:1.5">' + escapeHTML(area.description) + '</p>' +
+        '</div>' +
+        '<div style="margin-top:auto">' +
+          '<div style="margin-bottom:8px">' +
+            '<span class="font-label-uppercase" style="font-size:11px;font-family:JetBrains Mono;color:#7D8593;text-transform:uppercase;letter-spacing:0.05em">Dificultad</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;margin-bottom:12px">' +
+            '<button class="diff-btn" data-area="' + area.id + '" data-level="junior" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'junior' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'junior' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'junior' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'junior' ? '600' : '400') + '">Junior</button>' +
+            '<button class="diff-btn" data-area="' + area.id + '" data-level="mid" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'mid' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'mid' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'mid' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'mid' ? '600' : '400') + '">Mid</button>' +
+            '<button class="diff-btn" data-area="' + area.id + '" data-level="senior" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'senior' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'senior' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'senior' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'senior' ? '600' : '400') + '">Senior</button>' +
+          '</div>' +
+          '<button class="start-interview-btn" data-area-id="' + area.id + '" data-area-name="' + escapeHTML(area.name) + '" style="width:100%;background:#5B7CFA;color:#E6E8EE;border:none;padding:10px 0;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s">Iniciar Entrevista</button>' +
+        '</div>';
+
       grid.appendChild(card);
+    });
+
+    // Event delegation: diff buttons
+    document.querySelectorAll('.diff-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var areaId = this.getAttribute('data-area');
+        var level = this.getAttribute('data-level');
+        document.querySelectorAll('.diff-btn[data-area="' + areaId + '"]').forEach(function (b) {
+          var isActive = b.getAttribute('data-level') === level;
+          b.style.borderColor = isActive ? '#5B7CFA' : '#2B313C';
+          b.style.background = isActive ? 'rgba(91,124,250,0.1)' : 'transparent';
+          b.style.color = isActive ? '#5B7CFA' : '#A7ADB8';
+          b.style.fontWeight = isActive ? '600' : '400';
+        });
+        state.difficultyLevel = level;
+      });
+    });
+
+    // Event delegation: start buttons
+    document.querySelectorAll('.start-interview-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var areaId = parseInt(this.getAttribute('data-area-id'), 10);
+        var areaName = this.getAttribute('data-area-name');
+        startInterview(areaId, areaName);
+      });
     });
   }
 

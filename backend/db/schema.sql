@@ -324,14 +324,23 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- Áreas técnicas (v3.0 con iconos y popular — actualiza existentes)
 INSERT INTO technical_areas (name, slug, description, icon, popular) VALUES
-    ('Frontend',       'frontend',       'HTML, CSS, JavaScript, React, Vue, accesibilidad, rendimiento web y patrones de diseño de UI.',       'html',        TRUE),
-    ('Backend',        'backend',        'APIs REST, Node.js, Python, bases de datos, autenticación, arquitectura de microservicios.',          'dns',         TRUE),
-    ('Bases de Datos', 'bases-de-datos', 'SQL, PostgreSQL, índices, normalización, transacciones, optimización de consultas y modelado.',        'database',    FALSE),
-    ('Algoritmos',     'algoritmos',     'Estructuras de datos, complejidad algorítmica, recursión, ordenamiento, grafos y programación dinámica.', 'function', TRUE),
-    ('Desarrollo Móvil','desarrollo-movil', 'React Native, Flutter, Swift, Kotlin, ciclo de vida de apps, state management y publicación.',      'smartphone',  FALSE),
-    ('Cloud & DevOps', 'cloud-devops',   'Docker, Kubernetes, AWS, CI/CD, infraestructura como código, monitoreo y escalado.',                  'cloud',       FALSE),
-    ('Testing',        'testing',        'Pruebas unitarias, de integración, E2E, TDD, mocks, cobertura y calidad de software.',                 'checklist',   FALSE)
-ON CONFLICT (name) DO UPDATE SET icon = EXCLUDED.icon, popular = EXCLUDED.popular;
+    ('Frontend',       'frontend',       'HTML semantico, CSS Grid/Flexbox, JavaScript (ES6+), TypeScript, React, Vue, Angular, accesibilidad (WCAG), rendimiento web (Core Web Vitals), patrones de diseño UI, testing con Jest y Cypress.',
+       'html',        TRUE),
+    ('Backend',        'backend',        'APIs REST y GraphQL, Node.js, Python (Django/FastAPI), Java Spring, Go, microservicios, autenticacion (JWT, OAuth), patrones de diseño, manejo de errores, caching con Redis, mensajeria con RabbitMQ/Kafka.',
+       'dns',         TRUE),
+    ('Bases de Datos', 'bases-de-datos', 'SQL (PostgreSQL, MySQL), normalizacion, indices (B-tree, hash, GIN), transacciones ACID, optimizacion de queries (EXPLAIN ANALYZE), modelado entidad-relacion, NoSQL (MongoDB, Redis), migraciones y backups.',
+       'database',    FALSE),
+    ('Algoritmos',     'algoritmos',     'Estructuras de datos (listas, arboles, grafos, hash tables), complejidad Big O, recursion, algoritmos de ordenamiento (QuickSort, MergeSort), busqueda binaria, DFS, BFS, Dijkstra, programacion dinamica, dos punteros, sliding window.',
+       'function',    TRUE),
+    ('Desarrollo Móvil','desarrollo-movil', 'React Native, Flutter/Dart, Swift (iOS), Kotlin (Android), ciclo de vida de apps, state management (Redux, BLoC), navegacion, consumo de APIs, persistencia local, notificaciones push, publicación en stores.',
+       'smartphone',  FALSE),
+    ('Cloud & DevOps', 'cloud-devops',   'Docker, Kubernetes, AWS (EC2, S3, Lambda, RDS), CI/CD (GitHub Actions, Jenkins), Terraform, monitoreo (Prometheus, Grafana), escalado horizontal, balanceo de carga, estrategias de despliegue (blue-green, canary).',
+       'cloud',       FALSE),
+    ('Testing',        'testing',        'Pruebas unitarias (Jest, JUnit, PyTest), pruebas de integracion, E2E (Cypress, Playwright), TDD, BDD, mocks y stubs, cobertura de codigo, pruebas de carga (k6, JMeter), calidad de software y CI.',
+       'checklist',   FALSE),
+    ('Ciencia de Datos','ciencia-de-datos', 'Python (pandas, NumPy, scikit-learn), SQL analitico, visualizacion (Matplotlib, Tableau), estadistica descriptiva e inferencial, machine learning (regresion, clasificacion, clustering), feature engineering, validacion de modelos.',
+       'analytics',   FALSE)
+ON CONFLICT (name) DO UPDATE SET icon = EXCLUDED.icon, popular = EXCLUDED.popular, description = EXCLUDED.description;
 
 -- Entrevistas de ejemplo completadas
 INSERT INTO interviews (user_id, area_id, difficulty_level, status, questions_answered, questions_total, score, duration_seconds, started_at, finished_at) VALUES
