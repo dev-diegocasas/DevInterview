@@ -263,10 +263,6 @@
     showAppView('history');
   });
 
-  document.getElementById('btn-back-home').addEventListener('click', function () {
-    showAppView('home');
-  });
-
   // ─── Dashboard Stats ────────────────────────────────
 
   async function loadDashboardStats() {
@@ -543,11 +539,6 @@
   document.getElementById('btn-new-interview').addEventListener('click', function () {
     loadAreas();
     showAppView('areas');
-  });
-
-  document.getElementById('btn-home-from-eval').addEventListener('click', function () {
-    showAppView('home');
-    loadDashboardStats();
   });
 
   // ─── History ────────────────────────────────────────
@@ -840,6 +831,18 @@
   window.showAppView = showAppView;
   window.showAuthView = showAuthView;
   window.showApp = showApp;
+
+  window.goHome = function () {
+    showAppView('home');
+    loadDashboardStats();
+  };
+
+  window.goToHistory = function () {
+    state.historyPage = 1;
+    loadHistory();
+    showAppView('history');
+  };
+
   window.setDifficultyJS = function (level) {
     state.difficultyLevel = level;
     document.querySelectorAll('.difficulty-btn').forEach(function (btn) {

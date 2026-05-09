@@ -164,7 +164,7 @@
             <div class="flex items-center gap-xl">
                 <span class="font-h2 text-h2 font-semibold text-primary">DevInterview</span>
                 <div class="hidden md:flex items-center gap-lg">
-                    <button class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" onclick="showAppView('home')">Dashboard</button>
+                    <button class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" onclick="window.goHome()">Dashboard</button>
                     <button id="btn-history-nav" class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md">Historial</button>
                     <button id="btn-start" class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md">Práctica</button>
                 </div>
@@ -229,7 +229,7 @@
             <!-- Areas View (Interview Selection) -->
             <div id="view-areas" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-xl flex items-center gap-md">
-                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div>
@@ -255,7 +255,7 @@
                             <span class="font-label-uppercase text-label-uppercase text-primary">Área: <span id="chat-area-name">-</span></span>
                             <h2 class="font-h2 text-h2 text-on-surface mt-xs" id="chat-question-counter">Pregunta 1 de 5</h2>
                         </div>
-                        <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                        <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>
@@ -279,14 +279,14 @@
                 <div id="evaluation-content"></div>
                 <div class="flex gap-md mt-xl">
                     <button id="btn-new-interview" class="flex-1 bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Nueva entrevista</button>
-                    <button id="btn-home-from-eval" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant" onclick="showAppView('home')">Volver al inicio</button>
+                    <button id="btn-home-from-eval" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant" onclick="window.goHome()">Volver al inicio</button>
                 </div>
             </div>
 
             <!-- History View -->
             <div id="view-history" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-xl flex items-center gap-md">
-                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home'); loadDashboardStats()">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div>
@@ -310,14 +310,14 @@
                 <div id="history-list" class="space-y-md"></div>
                 <div id="history-pagination" class="mt-md"></div>
                 <div class="mt-lg text-center">
-                    <button class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95" onclick="showAppView('home'); loadDashboardStats()">Volver al inicio</button>
+                    <button class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95" onclick="window.goHome()">Volver al inicio</button>
                 </div>
             </div>
 
             <!-- Session Detail View -->
             <div id="view-session-detail" class="view-hidden max-w-4xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
                 <header class="mb-lg flex items-center gap-md">
-                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('history'); loadHistory()">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goToHistory()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div>
