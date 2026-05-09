@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Geist:wght@400;500;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-variant": "#33343d",
+                "secondary-fixed-dim": "#b9c7e4",
+                "outline-variant": "#2B313C",
+                "outline": "#8e90a0",
+                "primary-container": "#5B7CFA",
+                "secondary-fixed": "#d6e3ff",
+                "on-tertiary": "#4d2600",
+                "on-error": "#690005",
+                "surface-container": "#171A21",
+                "secondary": "#b9c7e4",
+                "surface-tint": "#b7c4ff",
+                "on-tertiary-fixed": "#2f1500",
+                "tertiary": "#ffb77e",
+                "surface-dim": "#12131a",
+                "surface-bright": "#383941",
+                "surface-container-lowest": "#0F1115",
+                "surface-container-highest": "#33343d",
+                "inverse-primary": "#2e53d0",
+                "primary-fixed": "#dde1ff",
+                "tertiary-container": "#d87813",
+                "surface": "#12131a",
+                "on-primary": "#E6E8EE",
+                "on-tertiary-container": "#442100",
+                "on-tertiary-fixed-variant": "#6e3900",
+                "on-surface-variant": "#A7ADB8",
+                "on-primary-container": "#E6E8EE",
+                "on-primary-fixed": "#001453",
+                "on-secondary-fixed": "#0d1c32",
+                "primary-fixed-dim": "#b7c4ff",
+                "on-error-container": "#ffdad6",
+                "inverse-surface": "#e2e1ec",
+                "error-container": "#93000a",
+                "on-secondary": "#233148",
+                "surface-container-high": "#282932",
+                "primary": "#b7c4ff",
+                "background": "#0F1115",
+                "on-surface": "#e2e1ec",
+                "on-secondary-fixed-variant": "#39475f",
+                "secondary-container": "#39475f",
+                "on-background": "#e2e1ec",
+                "tertiary-fixed": "#ffdcc3",
+                "inverse-on-surface": "#2f3038",
+                "tertiary-fixed-dim": "#ffb77e",
+                "on-secondary-container": "#a7b6d2",
+                "surface-container-low": "#1a1b23",
+                "error": "#ffb4ab",
+                "on-primary-fixed-variant": "#0038b8"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "sm": "8px",
+                "xs": "4px",
+                "margin-mobile": "16px",
+                "lg": "24px",
+                "gutter": "16px",
+                "xl": "40px",
+                "md": "16px",
+                "base": "4px",
+                "margin-desktop": "32px"
+            },
+            "fontFamily": {
+                "h3": ["Geist"],
+                "code-sm": ["JetBrains Mono"],
+                "body-lg": ["Geist"],
+                "body-md": ["Geist"],
+                "h1": ["Geist"],
+                "body-sm": ["Geist"],
+                "label-uppercase": ["JetBrains Mono"],
+                "code-md": ["JetBrains Mono"],
+                "h2": ["Geist"]
+            },
+            "fontSize": {
+                "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .code-glow {
+            box-shadow: 0 0 40px -10px rgba(91, 124, 250, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+<main class="flex-grow flex flex-col md:flex-row">
+<!-- Visual Section (Split Screen Left) -->
+<section class="hidden md:flex md:w-1/2 bg-surface-container-low border-r border-outline-variant relative overflow-hidden items-center justify-center p-xl">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-30 grayscale brightness-50" data-alt="A highly detailed cinematic shot of a professional code editor interface displayed on a high-resolution monitor in a dimly lit, minimalist tech studio. The screen shows complex lines of syntactically highlighted code in shades of deep blue, electric indigo, and soft cyan. The background atmosphere is dark and focused, with subtle bokeh reflections of hardware LEDs. The visual style is technical, precise, and evokes a sense of deep engineering focus and high-performance computing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIXLm5-5yOfHhe4duDG12hOFOeM0VOBiKVZnuajWWvjuoWlzg1BQJ71IO2b0y68PvuXIqQs1_zGNdStpnvB0lmyABl5zcCoJ5SZ_5Uws_tVBj41lPZ1F0ORHXKVZx8eeO2ZBZZ0CCc56w576EEM58x4dCZAOEyYGdpKe0SQUVyNZFmEfpUQZK6QN8lxXJYlrVUGyCQkhln3LgPSW6h4xPrekFYzpqGjh_z_kHmqq3MqrgpxiCQNkjYuN3in6emvjOv2PoK41z_DP0i"/>
+<div class="absolute inset-0 bg-gradient-to-tr from-background via-transparent to-primary/10"></div>
+</div>
+<div class="relative z-10 max-w-md">
+<div class="mb-lg">
+<span class="font-h1 text-h1 font-extrabold text-primary tracking-tighter">DevInterview</span>
+</div>
+<h2 class="font-h2 text-h2 text-on-surface mb-md">Domina la entrevista técnica.</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-xl">
+                    Accede a un entorno de ejecución profesional diseñado para elevar tu lógica de programación y prepararte para el siguiente nivel en tu carrera.
+                </p>
+<div class="bg-surface-container-highest/50 backdrop-blur-md border border-outline-variant p-lg rounded-lg code-glow">
+<div class="flex gap-xs mb-sm">
+<div class="w-3 h-3 rounded-full bg-error/40"></div>
+<div class="w-3 h-3 rounded-full bg-tertiary/40"></div>
+<div class="w-3 h-3 rounded-full bg-primary/40"></div>
+</div>
+<code class="font-code-sm text-code-sm block text-secondary">
+<span class="text-tertiary">function</span> <span class="text-primary">solveChallenge</span>(input) {<br/>
+                          <span class="text-on-surface-variant">// Tu futuro comienza aquí</span><br/>
+                          <span class="text-tertiary">return</span> input.map(x =&gt; x * <span class="text-primary-container">success</span>);<br/>
+                        }
+                    </code>
+</div>
+</div>
+</section>
+<!-- Form Section (Split Screen Right) -->
+<section class="flex-grow md:w-1/2 flex items-center justify-center p-margin-mobile md:p-xl">
+<div class="w-full max-w-[400px]">
+<div class="md:hidden mb-xl text-center">
+<span class="font-h2 text-h2 font-extrabold text-primary tracking-tighter">DevInterview</span>
+</div>
+<div class="mb-xl">
+<h1 class="font-h2 text-h2 text-on-surface mb-base">Bienvenido de nuevo</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Ingresa tus credenciales para acceder.</p>
+</div>
+<form class="space-y-lg">
+<div class="space-y-base">
+<label class="font-label-uppercase text-label-uppercase text-on-surface-variant uppercase" for="email">Correo Electrónico</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">mail</span>
+<input class="w-full bg-surface-container border border-outline-variant rounded-lg py-md pl-[48px] pr-md text-on-surface font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none" id="email" placeholder="nombre@dev.com" type="email"/>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center">
+<label class="font-label-uppercase text-label-uppercase text-on-surface-variant uppercase" for="password">Contraseña</label>
+<a class="font-body-sm text-body-sm text-primary-container hover:underline transition-all" href="#">¿Olvidaste tu contraseña?</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full bg-surface-container border border-outline-variant rounded-lg py-md pl-[48px] pr-md text-on-surface font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none" id="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container font-h3 text-h3 py-md rounded-lg hover:bg-[#4C6EF5] active:scale-[0.98] transition-all duration-150 shadow-lg shadow-primary-container/20" type="submit">
+                        Iniciar sesión
+                    </button>
+</form>
+<div class="relative my-xl">
+<div class="absolute inset-0 flex items-center">
+<span class="w-full border-t border-outline-variant"></span>
+</div>
+<div class="relative flex justify-center text-label-uppercase">
+<span class="bg-background px-md text-on-surface-variant font-label-uppercase">O CONTINUAR CON</span>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-md bg-surface-container border border-outline-variant text-on-surface font-body-md py-md rounded-lg hover:bg-surface-bright active:scale-[0.98] transition-all duration-150">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path>
+</svg>
+<span>Continuar con GitHub</span>
+</button>
+<p class="mt-xl text-center font-body-sm text-body-sm text-on-surface-variant">
+                    ¿No tienes una cuenta? 
+                    <a class="text-primary-container font-semibold hover:underline" href="#">Regístrate gratis</a>
+</p>
+</div>
+</section>
+</main>
+<!-- Footer Component from JSON Context -->
+<footer class="bg-surface-dim border-t border-outline-variant py-lg px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center">
+<div class="mb-md md:mb-0">
+<p class="font-body-sm text-body-sm text-secondary">© 2024 DevInterview. Todos los derechos reservados.</p>
+</div>
+<div class="flex gap-lg">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidad</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Términos</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Soporte</a>
+</div>
+</footer>
+</body></html>

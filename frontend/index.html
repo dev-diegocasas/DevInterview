@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>DevInterview | Domina tu próxima entrevista técnica</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#33343d", "secondary-fixed-dim": "#b9c7e4", "outline-variant": "#2B313C", "outline": "#8e90a0",
+                        "primary-container": "#6b89ff", "secondary-fixed": "#d6e3ff", "on-tertiary": "#4d2600", "on-error": "#690005",
+                        "surface-container": "#171A21", "secondary": "#b9c7e4", "surface-tint": "#b7c4ff", "on-tertiary-fixed": "#2f1500",
+                        "tertiary": "#ffb77e", "surface-dim": "#0F1115", "surface-bright": "#383941", "surface-container-lowest": "#0F1115",
+                        "surface-container-highest": "#33343d", "inverse-primary": "#2e53d0", "primary-fixed": "#dde1ff", "tertiary-container": "#d87813",
+                        "surface": "#12131a", "on-primary": "#002584", "on-tertiary-container": "#442100", "on-tertiary-fixed-variant": "#6e3900",
+                        "on-surface-variant": "#A7ADB8", "on-primary-container": "#002074", "on-primary-fixed": "#001453", "on-secondary-fixed": "#0d1c32",
+                        "primary-fixed-dim": "#b7c4ff", "on-error-container": "#ffdad6", "inverse-surface": "#e2e1ec", "error-container": "#93000a",
+                        "on-secondary": "#233148", "surface-container-high": "#20242D", "primary": "#5B7CFA", "background": "#0F1115",
+                        "on-surface": "#E6E8EE", "on-secondary-fixed-variant": "#39475f", "secondary-container": "#39475f", "on-background": "#E6E8EE",
+                        "tertiary-fixed": "#ffdcc3", "inverse-on-surface": "#2f3038", "tertiary-fixed-dim": "#ffb77e", "on-secondary-container": "#a7b6d2",
+                        "surface-container-low": "#1a1b23", "error": "#ffb4ab", "on-primary-fixed-variant": "#0038b8"
+                    },
+                    "borderRadius": {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                    "spacing": {"sm": "8px", "xs": "4px", "margin-mobile": "16px", "lg": "24px", "gutter": "16px", "xl": "40px", "md": "16px", "base": "4px", "margin-desktop": "32px"},
+                    "fontFamily": {"h3": ["Geist"], "code-sm": ["JetBrains Mono"], "body-lg": ["Geist"], "body-md": ["Geist"], "h1": ["Geist"], "body-sm": ["Geist"], "label-uppercase": ["JetBrains Mono"], "code-md": ["JetBrains Mono"], "h2": ["Geist"]},
+                    "fontSize": {"h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}], "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}], "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}], "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}], "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}], "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}], "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}], "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}], "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]}
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        body { background-color: #0F1115; color: #E6E8EE; font-family: 'Geist', sans-serif; }
+        .view-hidden { display: none !important; }
+        .view-active { display: block; }
+        .view-active.flex-container { display: flex; flex-direction: column; }
+        .message { padding: 12px 16px; margin-bottom: 12px; border-radius: 8px; word-wrap: break-word; max-width: 80%; }
+        .message.system { background-color: #171A21; color: #E6E8EE; border: 1px solid #2B313C; }
+        .message.user { background-color: #5B7CFA; color: #E6E8EE; margin-left: auto; text-align: right; }
+        .area-card { background-color: #20242D; border: 1px solid #2B313C; padding: 24px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .area-card:hover { border-color: #5B7CFA; transform: translateY(-2px); }
+        .area-card h3 { font-size: 20px; font-weight: 600; color: #E6E8EE; margin-bottom: 8px; }
+        .area-card p { font-size: 14px; color: #A7ADB8; }
+        .history-item { background-color: #20242D; border: 1px solid #2B313C; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .history-item.clickable { cursor: pointer; }
+        .history-item.clickable:hover { border-color: #5B7CFA; }
+        .history-info { flex: 1; }
+        .history-area { font-size: 16px; font-weight: 500; color: #E6E8EE; margin-bottom: 4px; }
+        .history-date { font-size: 14px; color: #A7ADB8; }
+        .history-score { font-size: 18px; font-weight: 600; color: #5B7CFA; min-width: 60px; text-align: center; }
+        .btn-delete-interview { background-color: #D96B6B; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: background-color 0.2s; }
+        .btn-delete-interview:hover { background-color: #C55A5A; }
+        .evaluation-card { background-color: #20242D; border: 1px solid #2B313C; border-radius: 8px; padding: 32px; }
+        .evaluation-score { text-align: center; margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid #2B313C; }
+        .score-number { font-size: 72px; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+        .score-label { font-size: 14px; color: #A7ADB8; }
+        .evaluation-section { margin-bottom: 24px; }
+        .evaluation-section h3 { font-size: 18px; font-weight: 600; color: #E6E8EE; margin-bottom: 12px; }
+        .evaluation-section p { font-size: 14px; line-height: 1.6; color: #A7ADB8; }
+        .empty-state { text-align: center; padding: 40px; color: #A7ADB8; font-size: 16px; }
+        #chat-messages { display: flex; flex-direction: column; }
+        #app-main.view-active { display: flex; flex-direction: column; }
+        #view-home.view-active, #view-areas.view-active, #view-evaluation.view-active, #view-history.view-active { display: block; }
+        #view-chat.view-active { display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="selection:bg-primary/30">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="view-hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center">
+        <div class="bg-surface-container-high border border-outline-variant rounded-lg p-lg">
+            <div class="flex items-center gap-md">
+                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span id="loading-text" class="text-on-surface font-body-md">Cargando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== AUTHENTICATION VIEWS ==================== -->
+    
+    <!-- Login View -->
+    <div id="view-login" class="view-hidden min-h-screen flex flex-col">
+        <header class="fixed top-0 w-full bg-surface-container/80 backdrop-blur-md z-50 border-b border-outline-variant px-margin-desktop h-16 flex justify-between items-center">
+            <span class="font-h2 text-h2 font-semibold text-primary">DevInterview</span>
+        </header>
+        <main class="flex-grow pt-16 flex md:flex-row">
+            <section class="hidden md:flex md:w-1/2 bg-surface-container-low border-r border-outline-variant items-center justify-center p-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-md">
+                    <div class="mb-lg"><span class="font-h1 text-h1 font-extrabold text-primary tracking-tighter">DevInterview</span></div>
+                    <h2 class="font-h2 text-h2 text-on-surface mb-md">Domina la entrevista técnica.</h2>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant mb-xl">Accede a un entorno de ejecución profesional diseñado para elevar tu lógica de programación.</p>
+                </div>
+            </section>
+            <section class="flex-grow md:w-1/2 flex items-center justify-center p-margin-mobile md:p-xl">
+                <div class="w-full max-w-[400px]">
+                    <div class="md:hidden mb-xl"><span class="font-h1 text-h1 font-semibold text-primary">DevInterview</span></div>
+                    <h2 class="font-h2 text-h2 text-on-surface mb-xs">Inicia sesión</h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant mb-xl">Accede a tu cuenta para continuar practicando.</p>
+                    <div id="login-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
+                    <form id="form-login" class="space-y-lg">
+                        <div class="space-y-xs">
+                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-email">Correo electrónico</label>
+                            <input id="login-email" type="email" placeholder="nombre@ejemplo.com" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                        </div>
+                        <div class="space-y-xs">
+                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-password">Contraseña</label>
+                            <input id="login-password" type="password" placeholder="••••••••" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Iniciar sesión</button>
+                    </form>
+                    <div class="mt-lg text-center"><p class="font-body-md text-on-surface-variant">¿No tienes cuenta? <a id="link-to-register" href="#" class="text-primary hover:text-[#4C6EF5] font-semibold transition-colors">Regístrate aquí</a></p></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Register View -->
+    <div id="view-register" class="view-hidden min-h-screen flex flex-col">
+        <header class="fixed top-0 w-full bg-surface-container/80 backdrop-blur-md z-50 border-b border-outline-variant px-margin-desktop h-16 flex justify-between items-center">
+            <span class="font-h2 text-h2 font-semibold text-primary">DevInterview</span>
+        </header>
+        <main class="flex-grow pt-16 flex md:flex-row">
+            <section class="hidden md:flex md:w-1/2 bg-surface-container-low border-r border-outline-variant items-center justify-center p-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-md">
+                    <div class="mb-lg"><span class="font-label-uppercase text-label-uppercase text-primary tracking-widest bg-primary/10 px-sm py-xs rounded">PRÓXIMA GENERACIÓN</span></div>
+                    <h1 class="font-h1 text-h1 text-on-surface mb-md">Domina el arte de la entrevista técnica.</h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant mb-xl">Un entorno diseñado por ingenieros para ingenieros.</p>
+                </div>
+            </section>
+            <section class="flex-grow md:w-1/2 flex items-center justify-center p-margin-mobile md:p-xl">
+                <div class="w-full max-w-[440px]">
+                    <div class="mb-xl"><h2 class="font-h2 text-h2 text-on-surface mb-xs">Crea tu cuenta</h2><p class="font-body-md text-body-md text-on-surface-variant">Empieza tu camino hacia el éxito hoy mismo.</p></div>
+                    <div id="register-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
+                    <form id="form-register" class="space-y-lg">
+                        <div class="space-y-xs">
+                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="reg-name">Nombre completo</label>
+                            <input id="reg-name" type="text" placeholder="John Doe" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                        </div>
+                        <div class="space-y-xs">
+                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="reg-email">Correo electrónico</label>
+                            <input id="reg-email" type="email" placeholder="nombre@ejemplo.com" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                        </div>
+                        <div class="space-y-xs">
+                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="reg-password">Contraseña</label>
+                            <input id="reg-password" type="password" placeholder="••••••••" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Crear cuenta</button>
+                    </form>
+                    <div class="mt-lg text-center"><p class="font-body-md text-on-surface-variant">¿Ya tienes cuenta? <a id="link-to-login" href="#" class="text-primary hover:text-[#4C6EF5] font-semibold transition-colors">Inicia sesión</a></p></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== APPLICATION VIEWS ==================== -->
+    
+    <div id="app-main" class="view-hidden flex flex-col min-h-screen">
+        <!-- Navigation Bar -->
+        <nav class="bg-surface-container/80 backdrop-blur-md z-40 border-b border-outline-variant px-margin-desktop h-16 flex justify-between items-center fixed top-0 w-full">
+            <div class="flex items-center gap-xl">
+                <span class="font-h2 text-h2 font-semibold text-primary">DevInterview</span>
+                <div class="hidden md:flex items-center gap-lg">
+                    <button class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" onclick="showAppView('home')">Dashboard</button>
+                    <button id="btn-history-nav" class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md">Historial</button>
+                    <button id="btn-start" class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md">Práctica</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-md">
+                <button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-150 active:scale-95"><span class="material-symbols-outlined">notifications</span></button>
+                <div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                    <img alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVKRZ5VxYMVoeJqcFC5L3UDCl8ffCCEWSbCQJqWEy9zxWFvUSb9ANUwzU4LQVZvtix9x8ia3d_Dq8oPcXEExHZ2uvP5RRy4AeSbl2l0Qeec9xA59yiLBLjmC4F7_4Jf_rLHKiJ2dcP9mMAPW1rYWKBpLNxzqdO-W5gxpLOuYyLYz6P9No9PPc30KcxHf8kZq42bx79NX_LIOBnt-rvHPHbv1ioN6R-4jHWyPeEKXneD2s1TKM8Yn2EVSb-f2VPiFGoNA484CYNir-J"/>
+                </div>
+                <button id="btn-logout" class="ml-md px-md py-xs bg-error/20 hover:bg-error/30 text-error rounded-lg text-sm font-body-sm transition-colors">Salir</button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow pt-24 pb-6">
+            <!-- Home View -->
+            <div id="view-home" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-xl">
+                    <h1 class="font-h1 text-h1 text-on-surface mb-xs">Bienvenido de nuevo, <span id="nav-user-name">Usuario</span> 👋</h1>
+                    <p class="font-body-md text-body-md text-on-surface-variant">Tu preparación técnica está en progreso.</p>
+                </header>
+                <div class="flex flex-col gap-xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                        <div class="bg-surface-container-high border border-outline-variant p-lg rounded-lg">
+                            <div class="flex items-center justify-between mb-md">
+                                <span class="font-label-uppercase text-label-uppercase text-on-surface-variant">COMENZAR PRÁCTICA</span>
+                                <span class="material-symbols-outlined text-primary">terminal</span>
+                            </div>
+                            <p class="font-body-md text-body-md text-on-surface-variant mb-lg">Elige un área y comienza tu entrevista técnica.</p>
+                            <button id="btn-start-home" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Empezar ahora</button>
+                        </div>
+                        <div class="bg-surface-container-high border border-outline-variant p-lg rounded-lg">
+                            <div class="flex items-center justify-between mb-md">
+                                <span class="font-label-uppercase text-label-uppercase text-on-surface-variant">VER HISTORIAL</span>
+                                <span class="material-symbols-outlined text-tertiary">history</span>
+                            </div>
+                            <p class="font-body-md text-body-md text-on-surface-variant mb-lg">Revisa tus entrevistas anteriores y tu progreso.</p>
+                            <button id="btn-history-home" class="w-full bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant">Ver historial</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Areas View (Interview Selection) -->
+            <div id="view-areas" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-xl flex items-center gap-md">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div>
+                        <h1 class="font-h1 text-h1 text-on-surface mb-xs">Elige tu área de práctica</h1>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Selecciona el tema en el que deseas practicar.</p>
+                    </div>
+                </header>
+                <div id="areas-grid" class="grid grid-cols-1 md:grid-cols-3 gap-lg"></div>
+            </div>
+
+            <!-- Chat View (Interview Practice) -->
+            <div id="view-chat" class="view-hidden flex flex-col h-[calc(100vh-140px)] max-w-4xl mx-auto w-full">
+                <header class="mb-lg px-margin-mobile md:px-0">
+                    <div class="flex items-center justify-between mb-md">
+                        <div>
+                            <span class="font-label-uppercase text-label-uppercase text-primary">Área: <span id="chat-area-name">-</span></span>
+                            <h2 class="font-h2 text-h2 text-on-surface mt-xs" id="chat-question-counter">Pregunta 1 de 5</h2>
+                        </div>
+                        <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                        <div class="h-full w-1/5 bg-primary transition-all duration-300"></div>
+                    </div>
+                </header>
+                <div id="chat-messages" class="flex-grow overflow-y-auto mb-lg bg-surface-container rounded-lg p-lg border border-outline-variant"></div>
+                <div class="flex gap-md px-margin-mobile md:px-0">
+                    <textarea id="chat-input" placeholder="Escribe tu respuesta aquí..." class="flex-grow bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" rows="3"></textarea>
+                    <button id="btn-send" class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-sm rounded-lg transition-all duration-150 active:scale-95 self-end h-fit">Enviar</button>
+                </div>
+            </div>
+
+            <!-- Evaluation View -->
+            <div id="view-evaluation" class="view-hidden max-w-4xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-lg">
+                    <h1 class="font-h1 text-h1 text-on-surface mb-md">Evaluación de tu entrevista</h1>
+                    <p class="font-body-md text-body-md text-on-surface-variant">Aquí está el análisis detallado de tu desempeño.</p>
+                </header>
+                <div id="evaluation-content"></div>
+                <div class="flex gap-md mt-xl">
+                    <button id="btn-new-interview" class="flex-1 bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95">Nueva entrevista</button>
+                    <button id="btn-home-from-eval" class="flex-1 bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-lg py-md rounded-lg transition-all duration-150 active:scale-95 border border-outline-variant" onclick="showAppView('home')">Volver al inicio</button>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="view-history" class="view-hidden max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
+                <header class="mb-xl flex items-center gap-md">
+                    <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="showAppView('home')">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div>
+                        <h1 class="font-h1 text-h1 text-on-surface mb-xs">Tu Historial de Entrevistas</h1>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Revisa tu progreso y analiza tus sesiones anteriores.</p>
+                    </div>
+                </header>
+                <div id="history-list" class="space-y-md"></div>
+                <div class="mt-lg text-center">
+                    <button class="bg-primary hover:bg-[#4C6EF5] text-on-surface font-semibold px-xl py-md rounded-lg transition-all duration-150 active:scale-95" onclick="showAppView('home')">Volver al inicio</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

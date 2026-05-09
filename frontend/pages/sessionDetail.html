@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #0F1115;
+            color: #e2e1ec;
+            font-family: 'Geist', sans-serif;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#0c0e15",
+                      "secondary": "#b9c7e4",
+                      "tertiary-container": "#d87813",
+                      "surface-container-high": "#282932",
+                      "tertiary-fixed": "#ffdcc3",
+                      "error": "#ffb4ab",
+                      "outline": "#8e90a0",
+                      "background": "#12131a",
+                      "tertiary": "#ffb77e",
+                      "primary": "#b7c4ff",
+                      "surface-dim": "#12131a",
+                      "surface-container": "#1e1f27",
+                      "on-surface-variant": "#c4c5d6",
+                      "secondary-container": "#39475f",
+                      "surface-bright": "#383941",
+                      "on-secondary-fixed-variant": "#39475f",
+                      "on-secondary": "#233148",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#b7c4ff",
+                      "on-primary-container": "#002074",
+                      "inverse-primary": "#2e53d0",
+                      "on-tertiary": "#4d2600",
+                      "inverse-surface": "#e2e1ec",
+                      "secondary-fixed": "#d6e3ff",
+                      "on-primary": "#002584",
+                      "surface-variant": "#33343d",
+                      "surface-container-highest": "#33343d",
+                      "tertiary-fixed-dim": "#ffb77e",
+                      "surface-tint": "#b7c4ff",
+                      "surface": "#12131a",
+                      "error-container": "#93000a",
+                      "on-tertiary-container": "#442100",
+                      "outline-variant": "#444654",
+                      "on-tertiary-fixed": "#2f1500",
+                      "on-primary-fixed-variant": "#0038b8",
+                      "surface-container-low": "#1a1b23",
+                      "on-primary-fixed": "#001453",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "primary-container": "#6b89ff",
+                      "on-background": "#e2e1ec",
+                      "inverse-on-surface": "#2f3038",
+                      "on-secondary-container": "#a7b6d2",
+                      "primary-fixed": "#dde1ff",
+                      "on-surface": "#e2e1ec",
+                      "on-secondary-fixed": "#0d1c32",
+                      "secondary-fixed-dim": "#b9c7e4",
+                      "accent-blue": "#5B7CFA"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "gutter": "16px",
+                      "sm": "8px",
+                      "base": "4px",
+                      "margin-desktop": "32px",
+                      "lg": "24px",
+                      "xl": "40px",
+                      "md": "16px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "h3": ["Geist"],
+                      "body-sm": ["Geist"],
+                      "body-md": ["Geist"],
+                      "label-uppercase": ["JetBrains Mono"],
+                      "code-md": ["JetBrains Mono"],
+                      "code-sm": ["JetBrains Mono"],
+                      "h2": ["Geist"],
+                      "body-lg": ["Geist"],
+                      "h1": ["Geist"]
+              },
+              "fontSize": {
+                      "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                      "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-surface-container-lowest min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-surface-container dark:bg-surface-container border-b border-outline-variant dark:border-outline-variant docked full-width top-0 flex justify-between items-center w-full px-margin-desktop h-16 z-50">
+<div class="flex items-center gap-xl">
+<span class="font-h2 text-h2 font-semibold text-primary dark:text-primary">DevInterview</span>
+<nav class="hidden md:flex gap-md">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-primary font-semibold border-b-2 border-primary pb-1" href="#">Historial</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Práctica</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-bright p-sm rounded-full transition-all">notifications</button>
+<img alt="Avatar del desarrollador" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXRD2FC8b-dHrjbzpdKpN9kOMIjqBHsqVa194MVVQMMLLfuqLjfK8iqCO7SdxSaW_7z1FaQLLWO0fD-7IS_dqmyL14zUK9cgnrzkZvGfUc4R39XD_uxaYD8pFfOUgHO7CPegCSd2nVsMKU_tUenfCGlbDYDBBmx9WikMbv0dTUV4SPcwkmn6l1dbVEmPmle1dpYSmkGtAKva3xZlTvvjzfEYOUM08xDMxhmx45gD7Euvs6u8z8UhZL5gsjWcZ_kSWH0wOSawGEWZgu"/>
+</div>
+</header>
+<main class="flex-grow w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg space-y-lg">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-sm text-on-surface-variant font-body-sm">
+<a class="hover:text-primary transition-colors" href="#">Historial</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Detalle de Sesión</span>
+</nav>
+<!-- Session Overview Header -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-md bg-surface-container p-lg rounded-xl border border-outline-variant">
+<div class="space-y-xs">
+<p class="font-label-uppercase text-label-uppercase text-on-surface-variant">TEMA DE EVALUACIÓN</p>
+<h1 class="font-h2 text-h2 text-on-surface">Frontend React</h1>
+</div>
+<div class="flex flex-col justify-center">
+<p class="font-label-uppercase text-label-uppercase text-on-surface-variant">FECHA</p>
+<p class="font-body-lg text-body-lg text-on-surface">24 Oct, 2023</p>
+</div>
+<div class="flex flex-col justify-center">
+<p class="font-label-uppercase text-label-uppercase text-on-surface-variant">DURACIÓN</p>
+<p class="font-body-lg text-body-lg text-on-surface">45m 12s</p>
+</div>
+<div class="flex items-center gap-md bg-surface-variant p-md rounded-lg border border-outline-variant">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-outline-variant" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-accent-blue" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="175.9" stroke-dashoffset="24.6" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-h3 text-h3 text-accent-blue">86%</span>
+</div>
+<div>
+<p class="font-label-uppercase text-label-uppercase text-on-surface-variant">PUNTUACIÓN TOTAL</p>
+<p class="font-body-sm text-body-sm text-on-surface">Nivel Senior A-</p>
+</div>
+</div>
+</section>
+<!-- Evaluator Synthesis -->
+<section class="bg-surface-container-high p-lg rounded-xl border border-outline-variant space-y-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-accent-blue" data-weight="fill">analytics</span>
+<h2 class="font-h3 text-h3 text-on-surface">Síntesis del Evaluador</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                El candidato demuestra un dominio sólido de los conceptos fundamentales de React, especialmente en la gestión de efectos secundarios y la composición de componentes. Su capacidad para explicar la reconciliación de la UI y el uso de <span class="font-code-sm text-accent-blue bg-surface-variant px-xs rounded">useMemo</span> para optimización fue notable. Se sugiere profundizar en patrones avanzados de <span class="italic">state machines</span> para flujos complejos.
+            </p>
+<div class="flex flex-wrap gap-sm">
+<span class="bg-primary/10 text-primary px-md py-xs rounded-full font-body-sm border border-primary/20">Excelencia en Hooks</span>
+<span class="bg-primary/10 text-primary px-md py-xs rounded-full font-body-sm border border-primary/20">Arquitectura Limpia</span>
+<span class="bg-tertiary-container/10 text-tertiary px-md py-xs rounded-full font-body-sm border border-tertiary-container/20">Mejorar Testing</span>
+</div>
+</section>
+<!-- Transcription Section -->
+<section class="space-y-lg">
+<div class="flex items-center justify-between border-b border-outline-variant pb-md">
+<h2 class="font-h2 text-h2 text-on-surface">Transcripción de la Sesión</h2>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-sm bg-surface-variant hover:bg-surface-bright rounded-lg font-body-sm transition-all border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Exportar PDF
+                    </button>
+</div>
+</div>
+<!-- Chat / Interaction List -->
+<div class="space-y-xl">
+<!-- Turn 1 -->
+<div class="space-y-md">
+<!-- AI Question -->
+<div class="flex gap-md items-start max-w-3xl">
+<div class="w-10 h-10 rounded-lg bg-accent-blue/10 flex items-center justify-center shrink-0 border border-accent-blue/20">
+<span class="material-symbols-outlined text-accent-blue">smart_toy</span>
+</div>
+<div class="bg-surface-container p-md rounded-r-xl rounded-bl-xl border border-outline-variant space-y-sm">
+<p class="font-body-md text-on-surface">¿Podrías explicar la diferencia entre <span class="font-code-sm text-accent-blue">useEffect</span> y <span class="font-code-sm text-accent-blue">useLayoutEffect</span>? ¿En qué escenario específico preferirías el segundo?</p>
+</div>
+</div>
+<!-- User Answer -->
+<div class="flex gap-md items-start justify-end ml-auto max-w-3xl">
+<div class="bg-accent-blue/5 p-md rounded-l-xl rounded-br-xl border border-accent-blue/20 space-y-md order-1">
+<p class="font-body-md text-on-surface">
+<span class="font-code-md text-code-md bg-surface-container-lowest p-xs rounded block mb-sm">useEffect</span> es asíncrono y se ejecuta después de que el navegador haya pintado en pantalla, evitando bloquear el renderizado visual. En cambio, <span class="font-code-md text-code-md bg-surface-container-lowest p-xs rounded block mt-sm mb-sm">useLayoutEffect</span> se ejecuta de forma síncrona después de todas las mutaciones del DOM pero antes de que el navegador pinte. Lo usaría si necesito medir la posición de un elemento y ajustar el estilo antes de que el usuario vea el cambio, evitando parpadeos visuales.
+                            </p>
+</div>
+<img alt="Usuario" class="w-10 h-10 rounded-lg border border-outline-variant order-2 shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4bg2iN4m3Bsx1KBjrlVsLcm2_Eyxnj9lQHIyGsRkpGuktKLf8z_Sd8x6NjI5TF1C1vPonTsFirUbHRv5n-fT_rCcuY6Ei6laj_Te4Wa_ZVAJJASgrwJ8cm-if9UK4TWMioWcDo-imSrSJQoDkG0r0ycGMZUwgqz9J1MiX723jBntivMOOocMpcBnoXOsIAzPtKoMI0yYEw-M9m4vwm6NZuLjrfegANZZc5CGlZXh6UrOU-TRHgQWN1X_NJhh_Knu9TGKLwi3Cggph"/>
+</div>
+<!-- AI Contextual Feedback -->
+<div class="ml-14 max-w-2xl bg-surface-container-low border-l-4 border-accent-blue p-md rounded-r-lg">
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-accent-blue text-[18px]">verified</span>
+<span class="font-label-uppercase text-label-uppercase text-accent-blue">COMENTARIO DE LA IA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+                            "Respuesta técnicamente precisa. Identificó correctamente la naturaleza síncrona vs asíncrona y proporcionó un caso de uso válido (medición del DOM). Puntuación alta en claridad conceptual."
+                        </p>
+</div>
+</div>
+<!-- Turn 2: Code Interaction -->
+<div class="space-y-md">
+<div class="flex gap-md items-start max-w-3xl">
+<div class="w-10 h-10 rounded-lg bg-accent-blue/10 flex items-center justify-center shrink-0 border border-accent-blue/20">
+<span class="material-symbols-outlined text-accent-blue">code</span>
+</div>
+<div class="bg-surface-container p-md rounded-r-xl rounded-bl-xl border border-outline-variant space-y-sm">
+<p class="font-body-md text-on-surface">Observa este bloque de código. ¿Notas algún problema potencial de rendimiento o fugas de memoria?</p>
+<div class="font-code-md text-code-md bg-[#1D212A] p-md rounded-lg text-secondary border border-outline-variant">
+<pre><code>useEffect(() =&gt; {
+  const timer = setInterval(() =&gt; {
+    console.log('Tick');
+  }, 1000);
+}, []);</code></pre>
+</div>
+</div>
+</div>
+<div class="flex gap-md items-start justify-end ml-auto max-w-3xl">
+<div class="bg-accent-blue/5 p-md rounded-l-xl rounded-br-xl border border-accent-blue/20 space-y-md order-1">
+<p class="font-body-md text-on-surface">
+                                Sí, falta la función de limpieza (cleanup function). El intervalo seguirá ejecutándose incluso si el componente se desmonta, causando una fuga de memoria. Debería retornar una función que llame a <span class="font-code-sm text-accent-blue">clearInterval(timer)</span>.
+                            </p>
+</div>
+<img alt="Usuario" class="w-10 h-10 rounded-lg border border-outline-variant order-2 shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi3sYqXpZagmACs7EPNC55siV7H9SMFIZGp94GzBokz4gfni2Pn3J5Ja3NfRLg2fTxTmDdyTN94z-ArFYb0arcH9l8I72w7kFMT3sajFVf0cccSXS2KD-Scmh-YQsvSlv_FkWqESgiWH5e4RvUoxisKsOZ2v1hMcgmFdyS2FY0KBhgYMLROykSvna8t_nPE8r4mNxCNR30siEr89XSJkk8mkG_Sy3pSJQePdNCUOnMy7e4NVJZktxMckLKjEiiTNSt-FbGvo9BKbhM"/>
+</div>
+<div class="ml-14 max-w-2xl bg-surface-container-low border-l-4 border-error p-md rounded-r-lg">
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-error text-[18px]">priority_high</span>
+<span class="font-label-uppercase text-label-uppercase text-error">NOTA DE ATENCIÓN</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+                            "Detección rápida del problema de limpieza. Sin embargo, no mencionó la posibilidad de usar un enfoque declarativo o cómo las dependencias del array podrían afectar esto si se introdujeran variables externas."
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-dim dark:bg-surface-dim border-t border-outline-variant dark:border-outline-variant flex flex-col md:flex-row justify-between items-center py-lg px-margin-desktop w-full mt-xl">
+<div class="flex flex-col items-center md:items-start gap-xs">
+<span class="font-h3 text-h3 font-bold text-on-surface">DevInterview</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 DevInterview. Todos los derechos reservados.</p>
+</div>
+<nav class="flex gap-lg mt-md md:mt-0">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Privacidad</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Términos</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">Soporte</a>
+</nav>
+</footer>
+</body></html>

@@ -1,0 +1,17 @@
+{
+  "name": "entrevistas-tecnicas",
+  "version": "1.0.0",
+  "description": "Plataforma de simulacion de entrevistas tecnicas",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0"
+  }
+}

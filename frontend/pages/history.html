@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#33343d",
+                    "secondary-fixed-dim": "#b9c7e4",
+                    "outline-variant": "#444654",
+                    "outline": "#8e90a0",
+                    "primary-container": "#6b89ff",
+                    "secondary-fixed": "#d6e3ff",
+                    "on-tertiary": "#4d2600",
+                    "on-error": "#690005",
+                    "surface-container": "#1e1f27",
+                    "secondary": "#b9c7e4",
+                    "surface-tint": "#b7c4ff",
+                    "on-tertiary-fixed": "#2f1500",
+                    "tertiary": "#ffb77e",
+                    "surface-dim": "#12131a",
+                    "surface-bright": "#383941",
+                    "surface-container-lowest": "#0c0e15",
+                    "surface-container-highest": "#33343d",
+                    "inverse-primary": "#2e53d0",
+                    "primary-fixed": "#dde1ff",
+                    "tertiary-container": "#d87813",
+                    "surface": "#12131a",
+                    "on-primary": "#002584",
+                    "on-tertiary-container": "#442100",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "on-surface-variant": "#c4c5d6",
+                    "on-primary-container": "#002074",
+                    "on-primary-fixed": "#001453",
+                    "on-secondary-fixed": "#0d1c32",
+                    "primary-fixed-dim": "#b7c4ff",
+                    "on-error-container": "#ffdad6",
+                    "inverse-surface": "#e2e1ec",
+                    "error-container": "#93000a",
+                    "on-secondary": "#233148",
+                    "surface-container-high": "#282932",
+                    "primary": "#b7c4ff",
+                    "background": "#12131a",
+                    "on-surface": "#e2e1ec",
+                    "on-secondary-fixed-variant": "#39475f",
+                    "secondary-container": "#39475f",
+                    "on-background": "#e2e1ec",
+                    "tertiary-fixed": "#ffdcc3",
+                    "inverse-on-surface": "#2f3038",
+                    "tertiary-fixed-dim": "#ffb77e",
+                    "on-secondary-container": "#a7b6d2",
+                    "surface-container-low": "#1a1b23",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed-variant": "#0038b8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "xl": "40px",
+                    "md": "16px",
+                    "base": "4px",
+                    "margin-desktop": "32px"
+            },
+            "fontFamily": {
+                    "h3": ["Geist"],
+                    "code-sm": ["JetBrains Mono"],
+                    "body-lg": ["Geist"],
+                    "body-md": ["Geist"],
+                    "h1": ["Geist"],
+                    "body-sm": ["Geist"],
+                    "label-uppercase": ["JetBrains Mono"],
+                    "code-md": ["JetBrains Mono"],
+                    "h2": ["Geist"]
+            },
+            "fontSize": {
+                    "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0F1115;
+            color: #E6E8EE;
+            font-family: 'Geist', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container border-b border-outline-variant dark:border-outline-variant flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 z-50">
+<div class="flex items-center gap-xl">
+<span class="font-h2 text-h2 font-semibold text-primary dark:text-primary">DevInterview</span>
+<div class="hidden md:flex gap-lg items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-primary font-semibold border-b-2 border-primary pb-1" href="#">Historial</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Práctica</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-sm text-on-surface-variant hover:bg-surface-bright transition-all duration-150 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Avatar del desarrollador" class="w-full h-full object-cover" data-alt="A high-quality 3D rendered profile avatar of a software developer with glasses, set against a dark, tech-oriented background. The lighting is subtle with neon blue accents, reflecting a modern and professional tech persona. The overall aesthetic is clean and minimalist, following a deep charcoal and blue color palette consistent with high-end SaaS applications." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsfH-gLj-s7RUZC6xEJCJwLBFp_2wLz-WSIORJTCdcomwEJkevK3RW9xl_UZ1rbveL-i6MqvK8s2AOzJoKm38M3XAM4f6l9pWybTAAWk-VeKv08Ad1DDEQDKTw7GaAUrYjYnTTOKxd_7CLmTEsaa3TVfPZjwHCSeggBJsC03FT_4go2FH5Y2psER8B_o743EDtuqVW6EcVx_0uJ1ajCjefkE3eDkEokTxyfZGnaSDB_2jdOFVVJ2TUGX-6rgA5RMbIiXNHTfBsn5x8"/>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<!-- Header Section -->
+<header class="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-lg">
+<div>
+<h1 class="font-h1 text-h1 text-on-surface mb-xs">Tu Historial de Entrevistas</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Revisa tu progreso y analiza tus sesiones anteriores para seguir mejorando.</p>
+</div>
+<div class="flex gap-md">
+<div class="bg-surface-container-high px-lg py-sm rounded-lg border border-outline-variant flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase">Entrevistas Totales</span>
+<span class="font-h2 text-h2 text-primary">24</span>
+</div>
+<div class="bg-surface-container-high px-lg py-sm rounded-lg border border-outline-variant flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase">Promedio</span>
+<span class="font-h2 text-h2 text-tertiary">8.4</span>
+</div>
+</div>
+</header>
+<!-- Filters Section -->
+<section class="mb-lg bg-surface-container-low p-md rounded-xl border border-outline-variant flex flex-wrap gap-md items-center">
+<div class="flex items-center gap-sm bg-surface-container border border-outline-variant rounded-lg px-md py-xs flex-grow md:flex-grow-0">
+<span class="material-symbols-outlined text-outline text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface placeholder-outline w-full md:w-48" placeholder="Buscar sesión..." type="text"/>
+</div>
+<div class="flex items-center gap-md flex-wrap">
+<div class="flex flex-col">
+<select class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary-container focus:ring-primary-container block p-xs px-md">
+<option selected="">Tema: Todos</option>
+<option>React &amp; Frontend</option>
+<option>Arquitectura Backend</option>
+<option>Algoritmos &amp; DS</option>
+<option>System Design</option>
+</select>
+</div>
+<div class="flex flex-col">
+<select class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary-container focus:ring-primary-container block p-xs px-md">
+<option selected="">Fecha: Reciente</option>
+<option>Última semana</option>
+<option>Último mes</option>
+<option>Más antiguas</option>
+</select>
+</div>
+<div class="flex flex-col">
+<select class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary-container focus:ring-primary-container block p-xs px-md">
+<option selected="">Puntuación: Todas</option>
+<option>Alta (9.0+)</option>
+<option>Media (7.0 - 8.9)</option>
+<option>Baja (&lt; 7.0)</option>
+</select>
+</div>
+<button class="bg-surface-bright hover:bg-surface-variant transition-colors border border-outline-variant p-sm rounded-lg flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</section>
+<!-- Sessions List -->
+<div class="grid gap-md">
+<!-- Card 1 -->
+<div class="group bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all duration-300 rounded-xl overflow-hidden flex flex-col md:flex-row items-center p-lg gap-lg">
+<div class="h-14 w-14 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[32px]">code</span>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-lg items-center w-full">
+<div class="flex flex-col">
+<h3 class="font-h3 text-h3 text-on-surface">React &amp; Performance</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">14 de Octubre, 2024</p>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Nivel</span>
+<div class="flex">
+<span class="px-md py-xs rounded-full bg-tertiary/10 text-tertiary font-body-sm text-body-sm">Senior</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Puntuación</span>
+<div class="flex items-baseline gap-xs">
+<span class="font-h2 text-h2 text-on-surface">9.2</span>
+<span class="font-body-sm text-body-sm text-outline">/ 10</span>
+</div>
+</div>
+<div class="flex justify-end">
+<a class="flex items-center gap-xs text-primary font-body-md text-body-md font-semibold hover:gap-md transition-all duration-200" href="#">
+                            Ver detalles
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all duration-300 rounded-xl overflow-hidden flex flex-col md:flex-row items-center p-lg gap-lg">
+<div class="h-14 w-14 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[32px]">database</span>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-lg items-center w-full">
+<div class="flex flex-col">
+<h3 class="font-h3 text-h3 text-on-surface">System Design: Escalabilidad</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">10 de Octubre, 2024</p>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Nivel</span>
+<div class="flex">
+<span class="px-md py-xs rounded-full bg-secondary/10 text-secondary font-body-sm text-body-sm">Mid-Level</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Puntuación</span>
+<div class="flex items-baseline gap-xs">
+<span class="font-h2 text-h2 text-on-surface">7.8</span>
+<span class="font-body-sm text-body-sm text-outline">/ 10</span>
+</div>
+</div>
+<div class="flex justify-end">
+<a class="flex items-center gap-xs text-primary font-body-md text-body-md font-semibold hover:gap-md transition-all duration-200" href="#">
+                            Ver detalles
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all duration-300 rounded-xl overflow-hidden flex flex-col md:flex-row items-center p-lg gap-lg">
+<div class="h-14 w-14 rounded-lg bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[32px]">terminal</span>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-lg items-center w-full">
+<div class="flex flex-col">
+<h3 class="font-h3 text-h3 text-on-surface">Algoritmos Avanzados</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">03 de Octubre, 2024</p>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Nivel</span>
+<div class="flex">
+<span class="px-md py-xs rounded-full bg-tertiary/10 text-tertiary font-body-sm text-body-sm">Senior</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Puntuación</span>
+<div class="flex items-baseline gap-xs">
+<span class="font-h2 text-h2 text-error">6.4</span>
+<span class="font-body-sm text-body-sm text-outline">/ 10</span>
+</div>
+</div>
+<div class="flex justify-end">
+<a class="flex items-center gap-xs text-primary font-body-md text-body-md font-semibold hover:gap-md transition-all duration-200" href="#">
+                            Ver detalles
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-low border border-outline-variant hover:border-primary/50 transition-all duration-300 rounded-xl overflow-hidden flex flex-col md:flex-row items-center p-lg gap-lg">
+<div class="h-14 w-14 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[32px]">integration_instructions</span>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-lg items-center w-full">
+<div class="flex flex-col">
+<h3 class="font-h3 text-h3 text-on-surface">Node.js Internals</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">28 de Septiembre, 2024</p>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Nivel</span>
+<div class="flex">
+<span class="px-md py-xs rounded-full bg-primary/10 text-primary font-body-sm text-body-sm">Junior</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-uppercase text-label-uppercase text-outline uppercase mb-xs">Puntuación</span>
+<div class="flex items-baseline gap-xs">
+<span class="font-h2 text-h2 text-on-surface">8.9</span>
+<span class="font-body-sm text-body-sm text-outline">/ 10</span>
+</div>
+</div>
+<div class="flex justify-end">
+<a class="flex items-center gap-xs text-primary font-body-md text-body-md font-semibold hover:gap-md transition-all duration-200" href="#">
+                            Ver detalles
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-xl flex items-center justify-center gap-sm">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary font-semibold">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-bright transition-colors">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-bright transition-colors">3</button>
+<span class="text-outline px-sm">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-dim dark:bg-surface-dim border-t border-outline-variant dark:border-outline-variant flex flex-col md:flex-row justify-between items-center py-lg px-margin-desktop w-full mt-xl">
+<div class="flex flex-col md:flex-row items-center gap-lg mb-md md:mb-0">
+<span class="font-h3 text-h3 font-bold text-on-surface">DevInterview</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">© 2024 DevInterview. Todos los derechos reservados.</span>
+</div>
+<div class="flex gap-lg">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidad</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Términos</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Soporte</a>
+</div>
+</footer>
+</body></html>

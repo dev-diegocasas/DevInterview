@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0F1115;
+            color: #E6E8EE;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#33343d",
+                    "secondary-fixed-dim": "#b9c7e4",
+                    "outline-variant": "#444654",
+                    "outline": "#8e90a0",
+                    "primary-container": "#6b89ff",
+                    "secondary-fixed": "#d6e3ff",
+                    "on-tertiary": "#4d2600",
+                    "on-error": "#690005",
+                    "surface-container": "#1e1f27",
+                    "secondary": "#b9c7e4",
+                    "surface-tint": "#b7c4ff",
+                    "on-tertiary-fixed": "#2f1500",
+                    "tertiary": "#ffb77e",
+                    "surface-dim": "#12131a",
+                    "surface-bright": "#383941",
+                    "surface-container-lowest": "#0c0e15",
+                    "surface-container-highest": "#33343d",
+                    "inverse-primary": "#2e53d0",
+                    "primary-fixed": "#dde1ff",
+                    "tertiary-container": "#d87813",
+                    "surface": "#12131a",
+                    "on-primary": "#002584",
+                    "on-tertiary-container": "#442100",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "on-surface-variant": "#c4c5d6",
+                    "on-primary-container": "#002074",
+                    "on-primary-fixed": "#001453",
+                    "on-secondary-fixed": "#0d1c32",
+                    "primary-fixed-dim": "#b7c4ff",
+                    "on-error-container": "#ffdad6",
+                    "inverse-surface": "#e2e1ec",
+                    "error-container": "#93000a",
+                    "on-secondary": "#233148",
+                    "surface-container-high": "#282932",
+                    "primary": "#b7c4ff",
+                    "background": "#12131a",
+                    "on-surface": "#e2e1ec",
+                    "on-secondary-fixed-variant": "#39475f",
+                    "secondary-container": "#39475f",
+                    "on-background": "#e2e1ec",
+                    "tertiary-fixed": "#ffdcc3",
+                    "inverse-on-surface": "#2f3038",
+                    "tertiary-fixed-dim": "#ffb77e",
+                    "on-secondary-container": "#a7b6d2",
+                    "surface-container-low": "#1a1b23",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed-variant": "#0038b8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "xl": "40px",
+                    "md": "16px",
+                    "base": "4px",
+                    "margin-desktop": "32px"
+            },
+            "fontFamily": {
+                    "h3": ["Geist"],
+                    "code-sm": ["JetBrains Mono"],
+                    "body-lg": ["Geist"],
+                    "body-md": ["Geist"],
+                    "h1": ["Geist"],
+                    "body-sm": ["Geist"],
+                    "label-uppercase": ["JetBrains Mono"],
+                    "code-md": ["JetBrains Mono"],
+                    "h2": ["Geist"]
+            },
+            "fontSize": {
+                    "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="flex flex-col min-h-screen">
+<nav class="bg-surface-container dark:bg-surface-container border-b border-outline-variant dark:border-outline-variant flex justify-between items-center w-full px-margin-desktop h-16 docked full-width top-0 z-50">
+<div class="font-h2 text-h2 font-semibold text-primary dark:text-primary">DevInterview</div>
+<div class="hidden md:flex items-center space-x-lg">
+<a class="font-body-md text-body-md text-primary font-semibold border-b-2 border-primary pb-1" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Historial</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Práctica</a>
+</div>
+<div class="flex items-center space-x-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<img alt="Avatar del desarrollador" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuStbWmLko7W3jmESstlG7b7GY6hs-W9lfJjqr2E052yylYZD_gyIiYlYK5gy6atfksmWVW0RizSv9klDaWcfCpXJ2aNPmKeeSROmAwtbp94k88hqPNxqowexYOtNbzYe6AoiZaDOwHMeCxqfnoGIHwLlNnLsypFXfi8GWiTLZ2PmXH5KGDvNIo56it-e3Xc3Gq3Wy9cQbMxTcQqj6Zd81w3dlBtIIQ2iVe_1-lzFoZX9Tgsh3T-7EEnoxy-NVtNuAV-SgPdXrNdf2"/>
+</div>
+</nav>
+<main class="flex-grow px-margin-mobile md:px-margin-desktop py-lg max-w-7xl mx-auto w-full">
+<header class="mb-xl">
+<h1 class="font-h1 text-h1 text-on-surface mb-xs">Bienvenido de nuevo, Javier 👋</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Tu preparación técnica está al 75% del objetivo semanal.</p>
+</header>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-uppercase text-label-uppercase text-on-surface-variant">SESIONES TOTALES</span>
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+</div>
+<div class="font-h1 text-h1 text-on-surface">42</div>
+<div class="text-sm text-green-400 mt-xs">↑ 12% vs mes anterior</div>
+</div>
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-uppercase text-label-uppercase text-on-surface-variant">PUNTUACIÓN MEDIA</span>
+<span class="material-symbols-outlined text-tertiary" data-icon="analytics">analytics</span>
+</div>
+<div class="font-h1 text-h1 text-on-surface">8.4</div>
+<div class="text-sm text-on-surface-variant mt-xs">Rango: Senior Engineer</div>
+</div>
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg">
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-uppercase text-label-uppercase text-on-surface-variant">RACHA ACTUAL</span>
+<span class="material-symbols-outlined text-error" data-icon="local_fire_department" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div class="font-h1 text-h1 text-on-surface">7 Días</div>
+<div class="text-sm text-on-surface-variant mt-xs">Siguiente hito: 10 días</div>
+</div>
+</section>
+<section class="mb-xl">
+<h2 class="font-h2 text-h2 text-on-surface mb-lg">Rutas de Práctica</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg flex flex-col hover:border-primary transition-all group">
+<div class="w-12 h-12 rounded bg-primary-container/10 flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="javascript">javascript</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Frontend</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg flex-grow">React, Vue, Web APIs y optimización de rendimiento.</p>
+<button class="w-full bg-[#5B7CFA] hover:bg-[#4C6EF5] text-[#E6E8EE] py-sm rounded font-body-md transition-colors">Practicar</button>
+</div>
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg flex flex-col hover:border-primary transition-all group">
+<div class="w-12 h-12 rounded bg-tertiary-container/10 flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-tertiary text-2xl" data-icon="database">database</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Backend</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg flex-grow">Node.js, PostgreSQL, Arquitectura y Microservicios.</p>
+<button class="w-full bg-[#5B7CFA] hover:bg-[#4C6EF5] text-[#E6E8EE] py-sm rounded font-body-md transition-colors">Practicar</button>
+</div>
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg flex flex-col hover:border-primary transition-all group">
+<div class="w-12 h-12 rounded bg-secondary-container/10 flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-secondary text-2xl" data-icon="cloud">cloud</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Cloud &amp; Devops</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg flex-grow">Docker, Kubernetes, AWS y CI/CD pipelines.</p>
+<button class="w-full bg-[#5B7CFA] hover:bg-[#4C6EF5] text-[#E6E8EE] py-sm rounded font-body-md transition-colors">Practicar</button>
+</div>
+<div class="bg-[#20242D] border border-[#2B313C] p-lg rounded-lg flex flex-col hover:border-primary transition-all group">
+<div class="w-12 h-12 rounded bg-error-container/10 flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-error text-2xl" data-icon="data_object">data_object</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Algoritmos</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-lg flex-grow">Estructuras de datos, Big O y resolución de problemas.</p>
+<button class="w-full bg-[#5B7CFA] hover:bg-[#4C6EF5] text-[#E6E8EE] py-sm rounded font-body-md transition-colors">Practicar</button>
+</div>
+</div>
+</section>
+<section class="mb-xl">
+<div class="flex items-center justify-between mb-lg">
+<h2 class="font-h2 text-h2 text-on-surface">Sesiones Recientes</h2>
+<a class="text-primary hover:underline font-body-sm" href="#">Ver todo el historial</a>
+</div>
+<div class="bg-[#171A21] border border-[#2B313C] rounded-lg overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-[#2B313C] bg-surface-container-low">
+<th class="p-md font-label-uppercase text-label-uppercase text-on-surface-variant">FECHA</th>
+<th class="p-md font-label-uppercase text-label-uppercase text-on-surface-variant">TEMA</th>
+<th class="p-md font-label-uppercase text-label-uppercase text-on-surface-variant">PUNTUACIÓN</th>
+<th class="p-md font-label-uppercase text-label-uppercase text-on-surface-variant text-right">ACCIÓN</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#2B313C]">
+<tr class="hover:bg-[#1D212A] transition-colors">
+<td class="p-md font-body-sm text-on-surface">Hoy, 14:20</td>
+<td class="p-md font-body-md text-on-surface flex items-center">
+<span class="w-2 h-2 rounded-full bg-primary mr-2"></span> React Hooks &amp; Virtual DOM
+                            </td>
+<td class="p-md">
+<span class="bg-[#4CAF7A]/10 text-[#4CAF7A] px-2 py-1 rounded text-xs font-semibold">92/100</span>
+</td>
+<td class="p-md text-right">
+<button class="text-[#A7ADB8] border border-[#2B313C] px-3 py-1 rounded hover:bg-[#2B313C] transition-colors font-body-sm">Revisar</button>
+</td>
+</tr>
+<tr class="hover:bg-[#1D212A] transition-colors">
+<td class="p-md font-body-sm text-on-surface">Ayer, 10:05</td>
+<td class="p-md font-body-md text-on-surface flex items-center">
+<span class="w-2 h-2 rounded-full bg-tertiary mr-2"></span> SQL Join Strategies
+                            </td>
+<td class="p-md">
+<span class="bg-[#4CAF7A]/10 text-[#4CAF7A] px-2 py-1 rounded text-xs font-semibold">78/100</span>
+</td>
+<td class="p-md text-right">
+<button class="text-[#A7ADB8] border border-[#2B313C] px-3 py-1 rounded hover:bg-[#2B313C] transition-colors font-body-sm">Revisar</button>
+</td>
+</tr>
+<tr class="hover:bg-[#1D212A] transition-colors">
+<td class="p-md font-body-sm text-on-surface">24 Oct, 18:45</td>
+<td class="p-md font-body-md text-on-surface flex items-center">
+<span class="w-2 h-2 rounded-full bg-error mr-2"></span> Binary Search Trees
+                            </td>
+<td class="p-md">
+<span class="bg-error-container/20 text-error px-2 py-1 rounded text-xs font-semibold">45/100</span>
+</td>
+<td class="p-md text-right">
+<button class="text-[#A7ADB8] border border-[#2B313C] px-3 py-1 rounded hover:bg-[#2B313C] transition-colors font-body-sm">Revisar</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<footer class="bg-surface-dim dark:bg-surface-dim border-t border-outline-variant dark:border-outline-variant py-lg px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center mt-auto">
+<div class="font-h3 text-h3 font-bold text-on-surface mb-md md:mb-0">DevInterview</div>
+<div class="flex space-x-lg mb-md md:mb-0">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidad</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Términos</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Soporte</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+            © 2024 DevInterview. Todos los derechos reservados.
+        </div>
+</footer>
+</body></html>

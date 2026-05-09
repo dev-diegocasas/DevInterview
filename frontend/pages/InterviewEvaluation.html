@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#33343d",
+                        "secondary-fixed-dim": "#b9c7e4",
+                        "outline-variant": "#444654",
+                        "outline": "#8e90a0",
+                        "primary-container": "#6b89ff",
+                        "secondary-fixed": "#d6e3ff",
+                        "on-tertiary": "#4d2600",
+                        "on-error": "#690005",
+                        "surface-container": "#1e1f27",
+                        "secondary": "#b9c7e4",
+                        "surface-tint": "#b7c4ff",
+                        "on-tertiary-fixed": "#2f1500",
+                        "tertiary": "#ffb77e",
+                        "surface-dim": "#12131a",
+                        "surface-bright": "#383941",
+                        "surface-container-lowest": "#0c0e15",
+                        "surface-container-highest": "#33343d",
+                        "inverse-primary": "#2e53d0",
+                        "primary-fixed": "#dde1ff",
+                        "tertiary-container": "#d87813",
+                        "surface": "#12131a",
+                        "on-primary": "#002584",
+                        "on-tertiary-container": "#442100",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-surface-variant": "#c4c5d6",
+                        "on-primary-container": "#002074",
+                        "on-primary-fixed": "#001453",
+                        "on-secondary-fixed": "#0d1c32",
+                        "primary-fixed-dim": "#b7c4ff",
+                        "on-error-container": "#ffdad6",
+                        "inverse-surface": "#e2e1ec",
+                        "error-container": "#93000a",
+                        "on-secondary": "#233148",
+                        "surface-container-high": "#282932",
+                        "primary": "#b7c4ff",
+                        "background": "#12131a",
+                        "on-surface": "#e2e1ec",
+                        "on-secondary-fixed-variant": "#39475f",
+                        "secondary-container": "#39475f",
+                        "on-background": "#e2e1ec",
+                        "tertiary-fixed": "#ffdcc3",
+                        "inverse-on-surface": "#2f3038",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-secondary-container": "#a7b6d2",
+                        "surface-container-low": "#1a1b23",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#0038b8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "xl": "40px",
+                        "md": "16px",
+                        "base": "4px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Geist"],
+                        "code-sm": ["JetBrains Mono"],
+                        "body-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "h1": ["Geist"],
+                        "body-sm": ["Geist"],
+                        "label-uppercase": ["JetBrains Mono"],
+                        "code-md": ["JetBrains Mono"],
+                        "h2": ["Geist"]
+                    },
+                    "fontSize": {
+                        "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "h1": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-uppercase": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0F1115;
+            color: #E6E8EE;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .glass-card {
+            background: rgba(32, 36, 45, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid #2B313C;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- TopNavBar Component -->
+<nav class="bg-surface-container dark:bg-surface-container border-b border-outline-variant dark:border-outline-variant docked full-width top-0 flex justify-between items-center w-full px-margin-desktop h-16 z-50 sticky">
+<div class="flex items-center gap-xl">
+<span class="font-h2 text-h2 font-semibold text-primary dark:text-primary">DevInterview</span>
+<div class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Historial</a>
+<a class="text-primary font-semibold border-b-2 border-primary pb-1 font-body-md text-body-md" href="#">Práctica</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary dark:text-primary p-2 hover:bg-surface-bright transition-all duration-150 rounded-full">notifications</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Avatar del desarrollador" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx2gWa9VfH_aSYVrEooMRU0cjmxTagMFKoiLFRbC8f3tV0YlSlN6K8j0XsgjMFuxlh2KoAMfveaZ6EYY5kc2lG8o2CsrXLHEdFaVAVgngzc49Uhwc-6ycYJH86M5PgMAVLZtiP57OsTJL4KfFttu60qso9e-RAOWygJFFbvMBQr0tADeydTQC_dBEgAG1Oj1duy_VjtfqtqEYIjpEza-7ZJuycSjKEiDMO7k4HWVZLGBlLnbqgKP2PJr3X4qIHg49Mps3uenLkb0gS"/>
+</div>
+</div>
+</nav>
+<main class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<!-- Hero Section -->
+<header class="mb-xl text-center md:text-left">
+<h1 class="font-h1 text-h1 text-on-surface mb-xs">¡Entrevista completada! 🎉</h1>
+<p class="text-on-surface-variant font-body-lg">Has finalizado tu sesión técnica de System Design. Revisa tus métricas a continuación.</p>
+</header>
+<div class="bento-grid">
+<!-- Global Score Card -->
+<section class="col-span-12 md:col-span-4 glass-card p-lg rounded-xl flex flex-col items-center justify-center text-center">
+<h3 class="font-h3 text-h3 text-on-surface mb-lg">Puntuación General</h3>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-primary" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-dasharray="552.92" stroke-dashoffset="110.58" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-h1 text-[48px] font-extrabold text-on-surface">80%</span>
+<span class="font-label-uppercase text-label-uppercase text-on-surface-variant uppercase">Nivel Senior</span>
+</div>
+</div>
+<div class="mt-lg flex gap-md">
+<span class="flex items-center gap-xs text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">timer</span> 45 min
+                    </span>
+<span class="flex items-center gap-xs text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">task_alt</span> 12 Pruebas
+                    </span>
+</div>
+</section>
+<!-- Detailed Metrics -->
+<section class="col-span-12 md:col-span-8 bg-surface-container rounded-xl p-lg border border-outline-variant">
+<h3 class="font-h3 text-h3 text-on-surface mb-lg">Análisis de Competencias</h3>
+<div class="space-y-lg">
+<!-- Tech Precision -->
+<div>
+<div class="flex justify-between items-end mb-xs">
+<span class="font-body-md font-semibold text-on-surface">Precisión técnica</span>
+<span class="text-body-sm text-primary">85%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 85%"></div>
+</div>
+</div>
+<!-- Clarity -->
+<div>
+<div class="flex justify-between items-end mb-xs">
+<span class="font-body-md font-semibold text-on-surface">Claridad</span>
+<span class="text-body-sm text-primary">70%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 70%"></div>
+</div>
+</div>
+<!-- Depth -->
+<div>
+<div class="flex justify-between items-end mb-xs">
+<span class="font-body-md font-semibold text-on-surface">Profundidad</span>
+<span class="text-body-sm text-primary">92%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 92%"></div>
+</div>
+</div>
+<!-- Communication -->
+<div>
+<div class="flex justify-between items-end mb-xs">
+<span class="font-body-md font-semibold text-on-surface">Comunicación</span>
+<span class="text-body-sm text-primary">78%</span>
+</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 78%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Strengths -->
+<section class="col-span-12 md:col-span-6 bg-surface-container-low border border-outline-variant rounded-xl p-lg">
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-[#4CAF7A]">check_circle</span>
+<h3 class="font-h3 text-h3 text-on-surface">Fortalezas</h3>
+</div>
+<ul class="space-y-md">
+<li class="flex gap-md p-md bg-[#4CAF7A]/10 border border-[#4CAF7A]/20 rounded-lg">
+<span class="material-symbols-outlined text-[#4CAF7A] shrink-0">star</span>
+<div>
+<p class="font-body-md font-semibold text-on-surface">Arquitectura de Microservicios</p>
+<p class="text-body-sm text-on-surface-variant">Excelente comprensión del desacoplamiento y estrategias de comunicación asíncrona.</p>
+</div>
+</li>
+<li class="flex gap-md p-md bg-[#4CAF7A]/10 border border-[#4CAF7A]/20 rounded-lg">
+<span class="material-symbols-outlined text-[#4CAF7A] shrink-0">star</span>
+<div>
+<p class="font-body-md font-semibold text-on-surface">Manejo de Errores</p>
+<p class="text-body-sm text-on-surface-variant">Propuesta sólida de patrones de resiliencia como Circuit Breaker.</p>
+</div>
+</li>
+</ul>
+</section>
+<!-- Areas for Improvement -->
+<section class="col-span-12 md:col-span-6 bg-surface-container-low border border-outline-variant rounded-xl p-lg">
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-tertiary">error</span>
+<h3 class="font-h3 text-h3 text-on-surface">Áreas de mejora</h3>
+</div>
+<ul class="space-y-md">
+<li class="flex gap-md p-md bg-tertiary/10 border border-tertiary/20 rounded-lg">
+<span class="material-symbols-outlined text-tertiary shrink-0">warning</span>
+<div>
+<p class="font-body-md font-semibold text-on-surface">Escalabilidad de Bases de Datos</p>
+<p class="text-body-sm text-on-surface-variant">Falta profundizar en técnicas de Sharding y replicación geográfica.</p>
+</div>
+</li>
+<li class="flex gap-md p-md bg-tertiary/10 border border-tertiary/20 rounded-lg">
+<span class="material-symbols-outlined text-tertiary shrink-0">warning</span>
+<div>
+<p class="font-body-md font-semibold text-on-surface">Estimación de Latencia</p>
+<p class="text-body-sm text-on-surface-variant">Los cálculos de RTT no consideraron la sobrecarga de serialización JSON.</p>
+</div>
+</li>
+</ul>
+</section>
+<!-- Recommendations / Image -->
+<section class="col-span-12 glass-card rounded-xl overflow-hidden flex flex-col md:flex-row items-center">
+<div class="p-lg flex-1">
+<h3 class="font-h3 text-h3 text-on-surface mb-md">Próximos pasos recomendados</h3>
+<p class="text-on-surface-variant mb-lg">Basado en tu desempeño, te sugerimos revisar los conceptos de consistencia eventual y el teorema CAP para tu próxima sesión.</p>
+<div class="flex flex-wrap gap-md">
+<button class="bg-[#5B7CFA] hover:bg-[#4C6EF5] text-[#E6E8EE] px-lg py-md rounded-lg font-semibold transition-all active:scale-95">Intentar de nuevo</button>
+<button class="border border-[#2B313C] hover:bg-surface-bright text-[#A7ADB8] px-lg py-md rounded-lg font-semibold transition-all active:scale-95">Nueva entrevista</button>
+</div>
+</div>
+<div class="w-full md:w-1/3 h-48 md:h-full min-h-[200px]">
+<img class="w-full h-full object-cover opacity-60" data-alt="A professional data visualization dashboard displayed on a dark sleek monitor in a modern engineering workspace. The screen shows glowing blue charts and code snippets, reflecting a high-tech analytical environment. Soft atmospheric lighting highlights the deep blacks and metallic textures of the room. The mood is focused and sophisticated, emphasizing technical mastery and precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuvu8MzQzYU1vkgSH_lD5EYmQw_bwkhtW6eKE5eRoCTr-Rqc5irINmzK3Pd2paGBt4Cvl-N2jE7zpMCliu08OdyJt-og6-y27NpLvtDWXioHdJc90omZSMgpDNg-I_Xt5VVqcn6e7tZsMGQTpShjUm_hF2YgjBXOMVBSknfnIBmWMFcokyv7dloTchNE5F3dR8zJUkVbqEpG9jTVGZ7Y4y2QBkSJFemoL_Zqx6M6roirCU1RftsKpHlv8lZwUKpkYdEVMBTYdyBURi"/>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="bg-surface-dim dark:bg-surface-dim border-t border-outline-variant dark:border-outline-variant full-width flex flex-col md:flex-row justify-between items-center py-lg px-margin-desktop w-full mt-xl">
+<div class="mb-md md:mb-0">
+<span class="font-h3 text-h3 font-bold text-on-surface">DevInterview</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">© 2024 DevInterview. Todos los derechos reservados.</p>
+</div>
+<div class="flex gap-lg">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm opacity-80 hover:opacity-100" href="#">Privacidad</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm opacity-80 hover:opacity-100" href="#">Términos</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm opacity-80 hover:opacity-100" href="#">Soporte</a>
+</div>
+</footer>
+</body></html>
