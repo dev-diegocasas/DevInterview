@@ -540,8 +540,28 @@ async function recordPracticeDay(userId, practiceDate) {
 }
 
 // ====================================================================
-// EXPORTACIÓN
+// RESTABLECER CONTRASEÑA
 // ====================================================================
+
+async function createPasswordReset(userId, token, expiresAt) {
+  const result = await pool.query(
+    'INSERT INTO password_resets (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING *',
+    [userId, token, expiresAt]
+  );
+  return result.rows[0];
+}
+
+async function getPasswordResetByToken(token) {
+  const result = await pool.query(
+    'SELECT * FROM password_resets WHERE token = $1 AND used = false AND expires_at > NOW()',
+    [token]
+  );
+  return result.rows[0] || null;
+}
+
+async function markPasswordResetUsed(token) {
+  await pool.query('UPDATE password_resets SET used = true WHERE token = $1', [token]);
+}
 
 module.exports = {
   // Áreas
@@ -599,5 +619,10 @@ module.exports = {
   getCurrentStreak,
   getLongestStreak,
   getLastPracticeDate,
-  recordPracticeDay
+  recordPracticeDay,
+
+  // Restablecer contraseña
+  createPasswordReset,
+  getPasswordResetByToken,
+  markPasswordResetUsed
 };

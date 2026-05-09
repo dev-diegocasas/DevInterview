@@ -3,12 +3,15 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const API_KEY = process.env.API_KEY;
-const MODEL = 'nvidia/nemotron-nano-9b-v2:free';
+const FALLBACK_API_KEY = process.env.FALLBACK_API_KEY || API_KEY;
 
-function callOpenRouter(messages) {
+const PRIMARY_MODEL = 'nvidia/nemotron-nano-9b-v2:free';
+const FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+
+function callModel(messages, model, apiKey) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
-      model: MODEL,
+      model: model,
       messages: messages
     });
 
@@ -18,7 +21,7 @@ function callOpenRouter(messages) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'HTTP-Referer': 'http://localhost:3000',
         'X-Title': 'Entrevistas Tecnicas'
       }
@@ -31,7 +34,18 @@ function callOpenRouter(messages) {
         try {
           const json = JSON.parse(data);
           if (json.error) {
-            reject(new Error(json.error.message || 'Error de OpenRouter'));
+            const isRateLimit = json.error.message && (
+              json.error.message.toLowerCase().includes('rate limit') ||
+              json.error.message.toLowerCase().includes('429') ||
+              json.error.message.toLowerCase().includes('too many requests') ||
+              json.error.message.toLowerCase().includes('quota') ||
+              json.error.message.includes('free-models-per-day')
+            );
+            if (isRateLimit) {
+              reject(new Error('RATE_LIMIT: ' + json.error.message));
+            } else {
+              reject(new Error(json.error.message || 'Error de OpenRouter'));
+            }
           } else if (json.choices && json.choices[0]) {
             resolve(json.choices[0].message.content.trim());
           } else {
@@ -49,12 +63,32 @@ function callOpenRouter(messages) {
   });
 }
 
+async function callWithFallback(messages) {
+  try {
+    return await callModel(messages, PRIMARY_MODEL, API_KEY);
+  } catch (primaryError) {
+    if (primaryError.message && primaryError.message.startsWith('RATE_LIMIT')) {
+      console.log('Rate limit en modelo primario, usando fallback...');
+      try {
+        return await callModel(messages, FALLBACK_MODEL, FALLBACK_API_KEY);
+      } catch (fallbackError) {
+        throw new Error('Ambos modelos agotaron su cuota. ' + fallbackError.message);
+      }
+    }
+    throw primaryError;
+  }
+}
+
 async function testConnection() {
-  const messages = [
-    { role: 'user', content: 'Responde SOLO con la palabra: OK' }
-  ];
-  const response = await callOpenRouter(messages);
-  return response.includes('OK');
+  try {
+    const messages = [
+      { role: 'user', content: 'Responde SOLO con la palabra: OK' }
+    ];
+    const response = await callWithFallback(messages);
+    return response.includes('OK');
+  } catch (e) {
+    return false;
+  }
 }
 
 function difficultyPrompt(difficulty) {
@@ -80,7 +114,7 @@ async function generateQuestion(areaName, difficulty) {
       content: `Genera una pregunta tecnica de nivel ${level} sobre ${areaName}. La pregunta debe evaluar conocimiento practico de ${levelDesc}. Solo responde con la pregunta.`
     }
   ];
-  return callOpenRouter(messages);
+  return callWithFallback(messages);
 }
 
 async function generateFirstQuestion(areaName, difficulty) {
@@ -97,7 +131,7 @@ async function generateFirstQuestion(areaName, difficulty) {
       content: `Genera la PRIMERA pregunta de una entrevista tecnica de nivel ${level} sobre ${areaName}. Debe ser introductoria, sobre ${levelDesc}. Solo responde con la pregunta.`
     }
   ];
-  return callOpenRouter(messages);
+  return callWithFallback(messages);
 }
 
 async function generateFollowUpQuestion(areaName, difficulty, previousAnswer) {
@@ -114,7 +148,7 @@ async function generateFollowUpQuestion(areaName, difficulty, previousAnswer) {
       content: `La respuesta anterior del candidato fue: "${previousAnswer}". Genera una pregunta de seguimiento sobre ${areaName} de nivel ${level}. Si la respuesta fue buena, profundiza mas. Si fue debil, haz una pregunta relacionada mas accesible. Solo responde con la pregunta.`
     }
   ];
-  return callOpenRouter(messages);
+  return callWithFallback(messages);
 }
 
 async function evaluateAnswer(question, answer, areaName) {
@@ -141,7 +175,7 @@ Devuelve UNICAMENTE un JSON con este formato exacto:
 Donde score es el promedio de los 3 criterios multiplicado por 3.33 para escalarlo a 100.`
     }
   ];
-  const response = await callOpenRouter(messages);
+  const response = await callWithFallback(messages);
   try {
     const cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);
@@ -185,7 +219,7 @@ Responde UNICAMENTE con este JSON exacto:
 {"score": <numero>, "feedback": "<texto>", "strengths": "<texto>", "improvements": "<texto>", "criteriaScores": {"precision": <numero>, "claridad": <numero>, "profundidad": <numero>, "comunicacion": <numero>}, "tags": ["<tag1>", "<tag2>", "<tag3>"]}`
     }
   ];
-  const response = await callOpenRouter(messages);
+  const response = await callWithFallback(messages);
   try {
     const cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);

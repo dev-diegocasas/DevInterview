@@ -11,7 +11,7 @@ const { startInterview, submitAnswer, finishInterviewRoute, getInterviewDetailRo
 const { historyRoute, deleteInterviewRoute, historyStatsRoute, sessionDetailRoute } = require('./routes/history');
 const { dashboardStatsRoute } = require('./routes/dashboard');
 const { getProfile, updateProfile, changePassword } = require('./routes/user');
-const { register, login, logout, me } = require('./routes/auth');
+const { register, login, logout, me, forgotPassword, resetPassword } = require('./routes/auth');
 
 const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
@@ -79,6 +79,14 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/auth/me' && req.method === 'GET') {
     return me(req, res);
+  }
+
+  if (pathname === '/api/auth/forgot-password' && req.method === 'POST') {
+    return forgotPassword(req, res);
+  }
+
+  if (pathname === '/api/auth/reset-password' && req.method === 'POST') {
+    return resetPassword(req, res);
   }
 
   if (pathname === '/api/areas' && req.method === 'GET') {

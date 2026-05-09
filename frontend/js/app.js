@@ -39,6 +39,43 @@
   var loadingOverlay = document.getElementById('loading-overlay');
   var loadingText = document.getElementById('loading-text');
 
+  // ─── Auth view sections (must be defined before showAuthView) ──
+
+  function showLoginSection() {
+    var loginSec = document.getElementById('login-form-section');
+    var forgotSec = document.getElementById('forgot-form-section');
+    var resetSec = document.getElementById('reset-form-section');
+    if (loginSec) loginSec.classList.remove('view-hidden');
+    if (forgotSec) forgotSec.classList.add('view-hidden');
+    if (resetSec) resetSec.classList.add('view-hidden');
+  }
+
+  function showForgotSection() {
+    var loginSec = document.getElementById('login-form-section');
+    var forgotSec = document.getElementById('forgot-form-section');
+    var resetSec = document.getElementById('reset-form-section');
+    if (loginSec) loginSec.classList.add('view-hidden');
+    if (forgotSec) forgotSec.classList.remove('view-hidden');
+    if (resetSec) resetSec.classList.add('view-hidden');
+    var err = document.getElementById('forgot-error');
+    var suc = document.getElementById('forgot-success');
+    if (err) err.classList.add('view-hidden');
+    if (suc) suc.classList.add('hidden');
+  }
+
+  function showResetSection() {
+    var loginSec = document.getElementById('login-form-section');
+    var forgotSec = document.getElementById('forgot-form-section');
+    var resetSec = document.getElementById('reset-form-section');
+    if (loginSec) loginSec.classList.add('view-hidden');
+    if (forgotSec) forgotSec.classList.add('view-hidden');
+    if (resetSec) resetSec.classList.remove('view-hidden');
+    var err = document.getElementById('reset-error');
+    var suc = document.getElementById('reset-success');
+    if (err) err.classList.add('view-hidden');
+    if (suc) suc.classList.add('hidden');
+  }
+
   function showLoading(text) {
     loadingText.textContent = text || 'Cargando...';
     loadingOverlay.classList.remove('view-hidden');
@@ -70,6 +107,9 @@
     if (authViews[viewName]) {
       authViews[viewName].classList.remove('view-hidden');
       authViews[viewName].classList.add('view-active');
+    }
+    if (viewName === 'login') {
+      showLoginSection();
     }
   }
 
@@ -109,6 +149,18 @@
     return data.data;
   }
 
+  // ─── URL params detection for password reset ─────────
+
+  function checkResetToken() {
+    var params = new URLSearchParams(window.location.search);
+    var token = params.get('token');
+    if (token) {
+      showAuthView('login');
+      showResetSection();
+      document.getElementById('reset-token').value = token;
+    }
+  }
+
   // ─── AUTH: Session check on load ─────────────────────
 
   var savedToken = localStorage.getItem('token');
@@ -117,6 +169,7 @@
     verifySession();
   } else {
     showAuthView('login');
+    checkResetToken();
   }
 
   async function verifySession() {
@@ -376,6 +429,115 @@
   document.getElementById('link-to-login').addEventListener('click', function (e) {
     e.preventDefault();
     showAuthView('login');
+  });
+
+  // ─── Forgot Password ────────────────────────────────
+
+  document.getElementById('link-forgot-password').addEventListener('click', function (e) {
+    e.preventDefault();
+    showForgotSection();
+  });
+
+  document.getElementById('btn-go-to-reset').addEventListener('click', function () {
+    var td = document.getElementById('forgot-token-display');
+    var token = td && td.textContent !== '—' ? td.textContent : '';
+    showResetSection();
+    if (token) { document.getElementById('reset-token').value = token; }
+  });
+
+  document.getElementById('link-back-to-login-from-forgot').addEventListener('click', function (e) {
+    e.preventDefault();
+    showLoginSection();
+  });
+
+  document.getElementById('link-back-to-login-from-reset').addEventListener('click', function (e) {
+    e.preventDefault();
+    showLoginSection();
+  });
+
+  document.getElementById('btn-copy-token').addEventListener('click', function () {
+    var tokenText = document.getElementById('forgot-token-display').textContent;
+    if (tokenText && tokenText !== '—') {
+      navigator.clipboard.writeText(tokenText).then(function () {
+        document.getElementById('btn-copy-token').textContent = 'Copiado!';
+        setTimeout(function () { document.getElementById('btn-copy-token').textContent = 'Copiar'; }, 2000);
+      }).catch(function () {});
+    }
+  });
+
+  document.getElementById('form-forgot').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var errorEl = document.getElementById('forgot-error');
+    var successEl = document.getElementById('forgot-success');
+    errorEl.classList.add('view-hidden');
+    successEl.classList.add('hidden');
+
+    var email = document.getElementById('forgot-email').value.trim();
+    if (!email) {
+      errorEl.textContent = 'Ingresa tu correo electrónico.';
+      errorEl.classList.remove('view-hidden');
+      return;
+    }
+
+    try {
+      showLoading('Generando token...');
+      var data = await apiRequest('/auth/forgot-password', 'POST', { email: email });
+      if (data.emailSkipped) {
+        document.getElementById('forgot-success-text').textContent = data.message || 'Servicio de email no disponible. Usa el token manualmente.';
+        document.getElementById('forgot-token-display').textContent = data.token || '—';
+        var contBtn = document.getElementById('btn-go-to-reset');
+        if (contBtn) contBtn.style.display = 'block';
+        successEl.classList.remove('hidden');
+      } else {
+        document.getElementById('forgot-success-text').textContent = data.message || 'Revisa tu correo para continuar.';
+        document.getElementById('forgot-token-display').textContent = '—';
+        var contBtn2 = document.getElementById('btn-go-to-reset');
+        if (contBtn2) contBtn2.style.display = 'none';
+        successEl.classList.remove('hidden');
+      }
+      document.getElementById('forgot-email').value = '';
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('view-hidden');
+    } finally {
+      hideLoading();
+    }
+  });
+
+  document.getElementById('form-reset').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var errorEl = document.getElementById('reset-error');
+    var successEl = document.getElementById('reset-success');
+    errorEl.classList.add('view-hidden');
+    successEl.classList.add('hidden');
+
+    var token = document.getElementById('reset-token').value.trim();
+    var newPwd = document.getElementById('reset-new-password').value;
+
+    if (!token || !newPwd) {
+      errorEl.textContent = 'Completa todos los campos.';
+      errorEl.classList.remove('view-hidden');
+      return;
+    }
+    if (newPwd.length < 6) {
+      errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+      errorEl.classList.remove('view-hidden');
+      return;
+    }
+
+    try {
+      showLoading('Restableciendo contraseña...');
+      await apiRequest('/auth/reset-password', 'POST', { token: token, newPassword: newPwd });
+      successEl.classList.remove('hidden');
+      document.getElementById('reset-token').value = '';
+      document.getElementById('reset-new-password').value = '';
+      setTimeout(function () { showLoginSection(); }, 3000);
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.classList.remove('view-hidden');
+    } finally {
+      hideLoading();
+    }
   });
 
   // ─── Home ───────────────────────────────────────────

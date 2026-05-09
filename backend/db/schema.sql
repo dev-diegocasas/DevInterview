@@ -205,6 +205,20 @@ COMMENT ON COLUMN practice_days.practice_date IS 'Fecha en que el usuario practi
 CREATE INDEX IF NOT EXISTS idx_practice_days_user_id ON practice_days (user_id);
 CREATE INDEX IF NOT EXISTS idx_practice_days_user_date ON practice_days (user_id, practice_date DESC);
 
+-- Tabla: password_resets
+CREATE TABLE IF NOT EXISTS password_resets (
+    id          SERIAL PRIMARY KEY,
+    user_id     INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token       VARCHAR(255)    NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ     NOT NULL,
+    used        BOOLEAN         NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE password_resets IS 'Tokens para restablecimiento de contraseña';
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets (token);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets (user_id);
+
 -- ====================================================================
 -- MÓDULO 7: Vistas auxiliares (v3.0 actualizadas)
 -- ====================================================================

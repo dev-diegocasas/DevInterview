@@ -96,24 +96,80 @@
                 </div>
             </section>
             <section class="flex-grow md:w-1/2 flex items-center justify-center p-margin-mobile md:p-xl">
-                <div class="w-full max-w-[400px]">
-                    <div class="md:hidden mb-xl"><span class="font-h1 text-h1 font-semibold text-primary">DevInterview</span></div>
-                    <h2 class="font-h2 text-h2 text-on-surface mb-xs">Inicia sesión</h2>
-                    <p class="font-body-md text-body-md text-on-surface-variant mb-xl">Accede a tu cuenta para continuar practicando.</p>
-                    <div id="login-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
-                    <form id="form-login" class="space-y-lg">
-                        <div class="space-y-xs">
-                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-email">Correo electrónico</label>
-                            <input id="login-email" type="email" placeholder="nombre@ejemplo.com" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                    <div class="w-full max-w-[400px]">
+                        <div class="md:hidden mb-xl"><span class="font-h1 text-h1 font-semibold text-primary">DevInterview</span></div>
+
+                        <!-- Login Form -->
+                        <div id="login-form-section">
+                            <h2 class="font-h2 text-h2 text-on-surface mb-xs">Inicia sesión</h2>
+                            <p class="font-body-md text-body-md text-on-surface-variant mb-xl">Accede a tu cuenta para continuar practicando.</p>
+                            <div id="login-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
+                            <form id="form-login" class="space-y-lg">
+                                <div class="space-y-xs">
+                                    <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-email">Correo electrónico</label>
+                                    <input id="login-email" type="email" placeholder="nombre@ejemplo.com" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-password">Contraseña</label>
+                                    <input id="login-password" type="password" placeholder="••••••••" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                                </div>
+                                <div class="flex justify-end -mt-sm">
+                                    <a id="link-forgot-password" href="#" class="font-body-sm text-body-sm text-primary hover:text-[#4C6EF5] transition-colors">¿Olvidaste tu contraseña?</a>
+                                </div>
+                                <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Iniciar sesión</button>
+                            </form>
+                            <div class="mt-lg text-center"><p class="font-body-md text-on-surface-variant">¿No tienes cuenta? <a id="link-to-register" href="#" class="text-primary hover:text-[#4C6EF5] font-semibold transition-colors">Regístrate aquí</a></p></div>
                         </div>
-                        <div class="space-y-xs">
-                            <label class="font-body-sm text-on-surface-variant block ml-xs" for="login-password">Contraseña</label>
-                            <input id="login-password" type="password" placeholder="••••••••" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+
+                        <!-- Forgot Password Form -->
+                        <div id="forgot-form-section" class="view-hidden">
+                            <h2 class="font-h2 text-h2 text-on-surface mb-xs">Recuperar contraseña</h2>
+                            <p class="font-body-md text-body-md text-on-surface-variant mb-xl">Ingresa tu correo para recibir un token de recuperación.</p>
+                            <div id="forgot-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
+                            <div id="forgot-success" class="hidden" style="margin-bottom:16px;padding:12px;background:rgba(76,175,122,0.1);border:1px solid rgba(76,175,122,0.3);border-radius:8px;">
+                                <p id="forgot-success-text" style="color:#4CAF7A;font-size:14px;margin-bottom:8px">Token generado. Usalo para restablecer tu contraseña.</p>
+                                <div style="display:flex;align-items:center;gap:8px;background:#171A21;padding:10px 14px;border-radius:6px;border:1px solid #2B313C;margin-bottom:10px">
+                                    <span class="font-code-md" id="forgot-token-display" style="color:#E6E8EE;font-size:13px;word-break:break-all">—</span>
+                                    <button id="btn-copy-token" style="background:#5B7CFA;color:white;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;flex-shrink:0">Copiar</button>
+                                </div>
+                                <button id="btn-go-to-reset" style="width:100%;background:transparent;color:#5B7CFA;border:1px solid #5B7CFA;padding:8px;border-radius:6px;font-size:14px;cursor:pointer;transition:all 0.15s">Continuar para restablecer →</button>
+                            </div>
+                            <form id="form-forgot" class="space-y-lg">
+                                <div class="space-y-xs">
+                                    <label class="font-body-sm text-on-surface-variant block ml-xs" for="forgot-email">Correo electrónico</label>
+                                    <input id="forgot-email" type="email" placeholder="nombre@ejemplo.com" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                                </div>
+                                <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Enviar token</button>
+                            </form>
+                            <div class="mt-lg flex justify-between">
+                                <a id="link-back-to-login-from-forgot" href="#" class="font-body-sm text-body-sm text-primary hover:text-[#4C6EF5] transition-colors">← Volver al inicio de sesión</a>
+                            </div>
                         </div>
-                        <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Iniciar sesión</button>
-                    </form>
-                    <div class="mt-lg text-center"><p class="font-body-md text-on-surface-variant">¿No tienes cuenta? <a id="link-to-register" href="#" class="text-primary hover:text-[#4C6EF5] font-semibold transition-colors">Regístrate aquí</a></p></div>
-                </div>
+
+                        <!-- Reset Password Form -->
+                        <div id="reset-form-section" class="view-hidden">
+                            <h2 class="font-h2 text-h2 text-on-surface mb-xs">Restablecer contraseña</h2>
+                            <p class="font-body-md text-body-md text-on-surface-variant mb-xl">Ingresa el token de recuperación y tu nueva contraseña.</p>
+                            <div id="reset-error" class="view-hidden bg-error/20 border border-error text-error px-md py-sm rounded-lg mb-lg text-sm"></div>
+                            <div id="reset-success" class="hidden" style="margin-bottom:16px;padding:12px;background:rgba(76,175,122,0.1);border:1px solid rgba(76,175,122,0.3);border-radius:8px;">
+                                <p id="reset-success-text" style="color:#4CAF7A;font-size:14px">Contraseña restablecida. Ahora puedes iniciar sesión.</p>
+                            </div>
+                            <form id="form-reset" class="space-y-lg">
+                                <div class="space-y-xs">
+                                    <label class="font-body-sm text-on-surface-variant block ml-xs" for="reset-token">Token de recuperación</label>
+                                    <input id="reset-token" type="text" placeholder="pega el token aquí" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                                </div>
+                                <div class="space-y-xs">
+                                    <label class="font-body-sm text-on-surface-variant block ml-xs" for="reset-new-password">Nueva contraseña</label>
+                                    <input id="reset-new-password" type="password" placeholder="mínimo 6 caracteres" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"/>
+                                </div>
+                                <button type="submit" class="w-full bg-primary hover:bg-[#4C6EF5] text-on-surface font-h3 py-sm rounded-lg transition-all duration-150 active:scale-[0.98] shadow-lg shadow-primary/20">Restablecer contraseña</button>
+                            </form>
+                            <div class="mt-lg flex justify-between">
+                                <a id="link-back-to-login-from-reset" href="#" class="font-body-sm text-body-sm text-primary hover:text-[#4C6EF5] transition-colors">← Volver al inicio de sesión</a>
+                            </div>
+                        </div>
+                    </div>
             </section>
         </main>
     </div>

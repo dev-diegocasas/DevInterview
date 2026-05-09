@@ -1,12 +1,16 @@
 const { parseRequestBody, sendJSON, extractToken } = require('./helpers');
 const { hashPassword, verifyPassword, generateToken } = require('../services/auth');
+const { sendPasswordResetEmail } = require('../services/email');
 const {
   createUser,
   getUserByEmail,
   updateLastLogin,
   createSession,
   getSessionByToken,
-  deleteSession
+  deleteSession,
+  createPasswordReset,
+  getPasswordResetByToken,
+  markPasswordResetUsed
 } = require('../db/queries');
 
 const SESSION_DAYS = 7;
@@ -149,4 +153,78 @@ async function requireAuth(req) {
   return session || null;
 }
 
-module.exports = { register, login, logout, me, requireAuth };
+const RESET_TOKEN_EXPIRY_HOURS = 1;
+
+async function forgotPassword(req, res) {
+  try {
+    const body = await parseRequestBody(req);
+    const { email } = body;
+
+    if (!email) {
+      return sendJSON(res, 400, { success: false, error: 'Email es requerido' });
+    }
+
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return sendJSON(res, 200, { success: true, data: { message: 'Si el email existe, recibiras un enlace de recuperacion.' } });
+    }
+
+    const resetToken = generateToken();
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    await createPasswordReset(user.id, resetToken, expiresAt);
+
+    const emailResult = await sendPasswordResetEmail(user.email, user.full_name, resetToken);
+
+    if (emailResult.sent) {
+      sendJSON(res, 200, {
+        success: true,
+        data: {
+          message: 'Te hemos enviado un enlace de recuperacion a ' + user.email
+        }
+      });
+    } else {
+      sendJSON(res, 200, {
+        success: true,
+        data: {
+          message: 'Servicio de email no configurado. Usa este token manualmente.',
+          token: resetToken,
+          expiresIn: RESET_TOKEN_EXPIRY_HOURS + ' hora(s)',
+          emailSkipped: true
+        }
+      });
+    }
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const body = await parseRequestBody(req);
+    const { token, newPassword } = body;
+
+    if (!token || !newPassword) {
+      return sendJSON(res, 400, { success: false, error: 'Token y nueva password son requeridos' });
+    }
+
+    if (newPassword.length < 6) {
+      return sendJSON(res, 400, { success: false, error: 'La password debe tener al menos 6 caracteres' });
+    }
+
+    const reset = await getPasswordResetByToken(token);
+    if (!reset) {
+      return sendJSON(res, 400, { success: false, error: 'Token invalido o expirado' });
+    }
+
+    const { updateUserPassword } = require('../db/queries');
+    const newHash = hashPassword(newPassword);
+    await updateUserPassword(reset.user_id, newHash);
+    await markPasswordResetUsed(token);
+
+    sendJSON(res, 200, { success: true, data: { message: 'Password restablecida correctamente. Puedes iniciar sesion.' } });
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
+module.exports = { register, login, logout, me, requireAuth, forgotPassword, resetPassword };
