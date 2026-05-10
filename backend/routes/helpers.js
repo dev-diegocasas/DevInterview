@@ -21,6 +21,7 @@ function parseQueryParams(parsedUrl) {
     search: params.search,
     areaId: params.areaId,
     difficulty: params.difficulty,
+    type: params.type,
     status: params.status,
     scoreMin: params.scoreMin,
     scoreMax: params.scoreMax,

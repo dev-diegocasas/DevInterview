@@ -21,7 +21,7 @@ async function historyRoute(req, res) {
     const parsedUrl = url.parse(req.url, true);
     const filters = parseQueryParams(parsedUrl);
 
-    if (filters.page || filters.limit || filters.search || filters.areaId || filters.difficulty || filters.scoreMin || filters.scoreMax) {
+    if (filters.page || filters.limit || filters.search || filters.areaId || filters.difficulty || filters.type || filters.scoreMin || filters.scoreMax) {
       const result = await getHistoryPaginated(session.user_id, filters);
       return sendJSON(res, 200, { success: true, data: result.data, pagination: result.pagination });
     }
