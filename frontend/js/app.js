@@ -20,6 +20,8 @@
     historyFilters: { search: '', areaId: '', difficulty: '', scoreMin: '', scoreMax: '' }
   };
 
+  var landingView = document.getElementById('view-landing');
+
   var authViews = {
     login: document.getElementById('view-login'),
     register: document.getElementById('view-register')
@@ -88,6 +90,18 @@
     loadingOverlay.classList.add('view-hidden');
   }
 
+  function showLanding() {
+    if (landingView) {
+      Object.keys(authViews).forEach(function (key) {
+        authViews[key].classList.remove('view-active');
+        authViews[key].classList.add('view-hidden');
+      });
+      appMain.classList.add('view-hidden');
+      landingView.classList.remove('view-hidden');
+      landingView.classList.add('view-active');
+    }
+  }
+
   function showAppView(viewName) {
     Object.keys(appViews).forEach(function (key) {
       if (appViews[key]) {
@@ -102,6 +116,10 @@
   }
 
   function showAuthView(viewName) {
+    if (landingView) {
+      landingView.classList.remove('view-active');
+      landingView.classList.add('view-hidden');
+    }
     Object.keys(authViews).forEach(function (key) {
       authViews[key].classList.remove('view-active');
       authViews[key].classList.add('view-hidden');
@@ -117,6 +135,10 @@
   }
 
   function showApp() {
+    if (landingView) {
+      landingView.classList.remove('view-active');
+      landingView.classList.add('view-hidden');
+    }
     Object.keys(authViews).forEach(function (key) {
       authViews[key].classList.remove('view-active');
       authViews[key].classList.add('view-hidden');
@@ -171,7 +193,7 @@
     state.token = savedToken;
     verifySession();
   } else {
-    showAuthView('login');
+    showLanding();
     checkResetToken();
   }
 
@@ -1581,6 +1603,19 @@
   window.showAppView = showAppView;
   window.showAuthView = showAuthView;
   window.showApp = showApp;
+  window.showLanding = showLanding;
+
+  window.goToLogin = function () {
+    showAuthView('login');
+  };
+
+  window.goToRegister = function () {
+    showAuthView('register');
+  };
+
+  window.goLanding = function () {
+    showLanding();
+  };
 
   window.goHome = function () {
     showAppView('home');
