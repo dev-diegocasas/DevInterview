@@ -1585,14 +1585,8 @@
 
   window.setDifficultyJS = function (level) {
     state.difficultyLevel = level;
-    document.querySelectorAll('.difficulty-btn').forEach(function (btn) {
-      var isActive = btn.getAttribute('data-level') === level;
-      btn.className = isActive
-        ? 'difficulty-btn px-md py-xs rounded border border-primary bg-primary/10 text-primary text-body-sm font-semibold'
-        : 'difficulty-btn px-md py-xs rounded border border-outline-variant text-body-sm text-on-surface-variant hover:bg-surface-bright transition-colors';
-    });
-    document.getElementById('selected-difficulty-label').textContent =
-      'Nivel: ' + (level === 'junior' ? 'Junior' : level === 'senior' ? 'Senior' : 'Mid');
+    var label = document.getElementById('selected-difficulty-label');
+    if (label) label.textContent = 'Nivel: ' + (level === 'junior' ? 'Junior' : level === 'senior' ? 'Senior' : 'Mid');
   };
 
 })();
