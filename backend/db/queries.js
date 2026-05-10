@@ -595,6 +595,10 @@ async function getQuizQuestionById(id) {
 }
 
 async function saveQuizEvaluation(interviewId, score, resultsJson, correctCount, totalQuestions) {
+  var criteriaScores = {
+    precision: score, claridad: score, profundidad: score, comunicacion: score,
+    quizResults: resultsJson || []
+  };
   const result = await pool.query(
     `INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements, criteria_scores, tags)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -603,7 +607,7 @@ async function saveQuizEvaluation(interviewId, score, resultsJson, correctCount,
       'Cuestionario completado. ' + correctCount + ' de ' + totalQuestions + ' correctas.',
       correctCount >= Math.ceil(totalQuestions / 2) ? 'Buen desempeno en el cuestionario.' : '',
       correctCount < Math.ceil(totalQuestions / 2) ? 'Repasar los conceptos fallidos.' : '',
-      JSON.stringify({ precision: score, claridad: score, profundidad: score, comunicacion: score }),
+      JSON.stringify(criteriaScores),
       ['Cuestionario', score >= 70 ? 'Aprobado' : 'Repaso necesario']
     ]
   );

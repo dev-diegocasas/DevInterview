@@ -97,6 +97,9 @@ ALTER TABLE interviews ADD COLUMN IF NOT EXISTS difficulty_level VARCHAR(20) NOT
 ALTER TABLE interviews ADD COLUMN IF NOT EXISTS questions_total INTEGER NOT NULL DEFAULT 5
     CHECK (questions_total > 0 AND questions_total <= 20);
 ALTER TABLE interviews ADD COLUMN IF NOT EXISTS duration_seconds INTEGER CHECK (duration_seconds >= 0);
+ALTER TABLE interviews ADD COLUMN IF NOT EXISTS type VARCHAR(10) NOT NULL DEFAULT 'chat'
+    CHECK (type IN ('chat', 'quiz'));
+UPDATE interviews SET type = 'chat' WHERE type IS NULL;
 
 COMMENT ON TABLE interviews IS 'Sesiones de entrevista técnica';
 COMMENT ON COLUMN interviews.difficulty_level IS 'Nivel de dificultad configurado al iniciar';

@@ -1456,7 +1456,45 @@
 
     // Transcripcion
     var transcriptDiv = document.getElementById('session-transcript');
-    if (transcript && transcript.length > 0) {
+
+    if (session.type === 'quiz') {
+      var quizResults = null;
+      if (session.criteria_scores && typeof session.criteria_scores === 'object' && session.criteria_scores.quizResults) {
+        quizResults = session.criteria_scores.quizResults;
+      } else if (session.criteria_scores && typeof session.criteria_scores === 'string') {
+        try {
+          var parsed = JSON.parse(session.criteria_scores);
+          quizResults = parsed.quizResults || null;
+        } catch (e) {}
+      }
+
+      if (quizResults && quizResults.length > 0) {
+        var qHtml = '';
+        quizResults.forEach(function (r, i) {
+          var borderColor = r.isCorrect ? '#4CAF7A' : '#D96B6B';
+          var icon = r.isCorrect ? 'check_circle' : 'cancel';
+          var iconColor = r.isCorrect ? '#4CAF7A' : '#D96B6B';
+          var statusLabel = r.isCorrect ? 'Correcta' : 'Incorrecta';
+          qHtml +=
+            '<div style="border:1px solid ' + borderColor + ';border-radius:8px;padding:14px;margin-bottom:12px;background:#171A21">' +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
+                '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:16px">' + icon + '</span>' +
+                '<span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.03em;color:' + iconColor + '">Pregunta ' + (i + 1) + ' — ' + statusLabel + '</span>' +
+              '</div>' +
+              '<p style="font-size:14px;color:#E6E8EE;margin-bottom:8px;line-height:1.4">' + escapeHTML(r.questionText) + '</p>' +
+              '<div style="font-size:12px;margin-bottom:6px">' +
+                '<span style="color:#7D8593">Tu respuesta: </span>' +
+                '<span style="color:' + (r.isCorrect ? '#4CAF7A' : '#D96B6B') + ';font-weight:600">' + escapeHTML(r.options[r.selected] || r.selected) + '</span>' +
+              '</div>' +
+              (!r.isCorrect ? '<div style="font-size:12px;margin-bottom:6px"><span style="color:#7D8593">Respuesta correcta: </span><span style="color:#4CAF7A;font-weight:600">' + escapeHTML(r.options[r.correctAnswer] || r.correctAnswer) + '</span></div>' : '') +
+              (r.explanation ? '<div style="padding:8px 10px;background:#20242D;border-radius:6px;border:1px solid #2B313C;margin-top:8px"><span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.03em;color:#5B7CFA">Explicacion</span><p style="font-size:12px;color:#A7ADB8;margin:4px 0 0;line-height:1.4">' + escapeHTML(r.explanation) + '</p></div>' : '') +
+            '</div>';
+        });
+        transcriptDiv.innerHTML = qHtml;
+      } else {
+        transcriptDiv.innerHTML = '<div style="text-align:center;padding:24px;color:#7D8593;font-size:14px">Resultados del cuestionario no disponibles.</div>';
+      }
+    } else if (transcript && transcript.length > 0) {
       var tHtml = '';
       transcript.forEach(function (turn) {
         tHtml +=
