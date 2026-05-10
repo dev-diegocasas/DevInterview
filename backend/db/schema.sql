@@ -76,9 +76,13 @@ COMMENT ON COLUMN technical_areas.popular IS 'TRUE si el área tiene badge de po
 
 CREATE TABLE IF NOT EXISTS interviews (
     id                  SERIAL PRIMARY KEY,
-    user_id             INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    area_id             INTEGER         REFERENCES technical_areas(id) ON DELETE RESTRICT,
-    status              VARCHAR(20)     NOT NULL DEFAULT 'in_progress'
+    user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    area_id             INTEGER REFERENCES technical_areas(id) ON DELETE RESTRICT,
+    difficulty_level    VARCHAR(20) NOT NULL DEFAULT 'mid'
+                        CHECK (difficulty_level IN ('junior', 'mid', 'senior')), -- v3.0
+    type                VARCHAR(10) NOT NULL DEFAULT 'chat'
+                        CHECK (type IN ('chat', 'quiz')), -- v4.0: chat con IA o quiz multiple choice
+    status              VARCHAR(20) NOT NULL DEFAULT 'in_progress'
                         CHECK (status IN ('in_progress', 'completed', 'abandoned')),
     questions_answered  INTEGER         NOT NULL DEFAULT 0
                         CHECK (questions_answered >= 0),

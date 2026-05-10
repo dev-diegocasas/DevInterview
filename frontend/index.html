@@ -255,6 +255,10 @@
                         <div class="font-h2 text-h2 text-primary" id="stat-total">—</div>
                     </div>
                     <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
+                        <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">CUESTIONARIOS</div>
+                        <div class="font-h2 text-h2 text-[#D6A54A]" id="stat-quizzes">—</div>
+                    </div>
+                    <div class="bg-surface-container-high border border-outline-variant p-md rounded-lg text-center">
                         <div class="font-label-uppercase text-label-uppercase text-on-surface-variant mb-xs">PROMEDIO</div>
                         <div class="font-h2 text-h2 text-tertiary" id="stat-avg">—</div>
                     </div>
@@ -369,8 +373,11 @@
                         </div>
                         <span id="quiz-area-badge" class="font-label-uppercase text-label-uppercase text-primary bg-primary/10 px-sm py-xs rounded border border-primary/20"></span>
                     </div>
-                    <div class="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden mt-md">
-                        <div id="quiz-progress" class="h-full bg-primary transition-all duration-300" style="width:0%"></div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+                        <div class="h-1 flex-grow bg-surface-container-highest rounded-full overflow-hidden">
+                            <div id="quiz-progress" class="h-full bg-primary transition-all duration-300" style="width:0%"></div>
+                        </div>
+                        <div id="quiz-timer" style="font-size:13px;font-family:JetBrains Mono;color:#7D8593;white-space:nowrap">10:00</div>
                     </div>
                 </header>
                 <div id="quiz-content">
@@ -419,6 +426,11 @@
                         <span class="material-symbols-outlined text-outline text-[20px]">search</span>
                         <input id="history-filter-search" type="text" class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface placeholder-outline w-full outline-none" placeholder="Buscar área..."/>
                     </div>
+                    <select id="history-filter-type" class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary px-md py-xs outline-none">
+                        <option value="">Tipo: Todos</option>
+                        <option value="chat">Chat IA</option>
+                        <option value="quiz">Cuestionario</option>
+                    </select>
                     <select id="history-filter-difficulty" class="bg-surface-container border border-outline-variant text-on-surface text-body-sm font-body-sm rounded-lg focus:border-primary px-md py-xs outline-none">
                         <option value="">Dificultad: Todas</option>
                         <option value="junior">Junior</option>

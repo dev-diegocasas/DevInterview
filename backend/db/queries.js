@@ -128,27 +128,27 @@ async function deleteSession(token) {
 // ENTREVISTAS
 // ====================================================================
 
-async function createInterview(areaId, userId, difficultyLevel) {
+async function createInterview(areaId, userId, difficultyLevel, type) {
   const result = await pool.query(
-    `INSERT INTO interviews (area_id, user_id, difficulty_level)
-     VALUES ($1, $2, $3)
-     RETURNING id, area_id, user_id, difficulty_level, questions_total, started_at, finished_at, score`,
-    [areaId, userId, difficultyLevel || 'mid']
+    `INSERT INTO interviews (area_id, user_id, difficulty_level, type)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, area_id, user_id, difficulty_level, type, questions_total, started_at, finished_at, score`,
+    [areaId, userId, difficultyLevel || 'mid', type || 'chat']
   );
   return result.rows[0];
 }
 
-async function finishInterview(interviewId, score, durationSeconds) {
+async function finishInterview(interviewId, score, durationSeconds, totalQuestions) {
   const result = await pool.query(
     `UPDATE interviews
      SET finished_at = NOW(),
          score = $2,
          duration_seconds = $3,
          status = 'completed',
-         questions_answered = (SELECT COUNT(*) FROM questions WHERE interview_id = $1)
+         questions_answered = COALESCE($4, (SELECT COUNT(*) FROM questions WHERE interview_id = $1))
      WHERE id = $1
      RETURNING *`,
-    [interviewId, score, durationSeconds]
+    [interviewId, score, durationSeconds, totalQuestions || null]
   );
   return result.rows[0];
 }
@@ -315,6 +315,11 @@ async function getHistoryPaginated(userId, filters) {
     values.push(filters.difficulty);
   }
 
+  if (filters.type) {
+    conditions.push(`i.type = $${paramIndex++}`);
+    values.push(filters.type);
+  }
+
   if (filters.status) {
     conditions.push(`i.status = $${paramIndex++}`);
     values.push(filters.status);
@@ -353,14 +358,14 @@ async function getHistoryPaginated(userId, filters) {
   const total = parseInt(countResult.rows[0].count, 10);
 
   const dataResult = await pool.query(
-    `SELECT i.id, i.area_id, i.difficulty_level, i.started_at, i.finished_at,
-            i.score, i.status, i.questions_answered, i.questions_total,
-            ta.name AS area_name, ta.icon AS area_icon
-     FROM interviews i
-     JOIN technical_areas ta ON i.area_id = ta.id
-     WHERE ${whereClause}
-     ORDER BY ${sortCol} ${sortOrder}
-     LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+      `SELECT i.id, i.area_id, i.difficulty_level, i.type, i.started_at, i.finished_at,
+             i.score, i.status, i.questions_answered, i.questions_total,
+             ta.name AS area_name, ta.icon AS area_icon
+      FROM interviews i
+      JOIN technical_areas ta ON i.area_id = ta.id
+      WHERE ${whereClause}
+      ORDER BY ${sortCol} ${sortOrder}
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
     [...values, limit, offset]
   );
 
@@ -392,7 +397,7 @@ async function getHistoryStats(userId) {
 
 async function getSessionDetail(interviewId, userId) {
   const result = await pool.query(
-    `SELECT i.id, i.area_id, i.difficulty_level, i.status, i.questions_answered,
+    `SELECT i.id, i.area_id, i.difficulty_level, i.type, i.status, i.questions_answered,
             i.questions_total, i.score, i.duration_seconds,
             i.started_at, i.finished_at,
             ta.name AS area_name, ta.slug AS area_slug, ta.icon AS area_icon,
@@ -422,11 +427,13 @@ async function deleteInterview(interviewId, userId) {
 async function getDashboardStats(userId) {
   const result = await pool.query(
     `SELECT
-       COUNT(i.id) AS total_interviews,
-       COUNT(i.id) FILTER (WHERE i.status = 'completed') AS completed_interviews,
-       ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
-       MAX(i.score) FILTER (WHERE i.status = 'completed') AS best_score,
-       MIN(i.score) FILTER (WHERE i.status = 'completed') AS worst_score
+        COUNT(i.id) AS total_interviews,
+        COUNT(i.id) FILTER (WHERE i.status = 'completed') AS completed_interviews,
+        COUNT(i.id) FILTER (WHERE i.status = 'completed' AND i.type = 'quiz') AS completed_quizzes,
+        COUNT(i.id) FILTER (WHERE i.status = 'completed' AND i.type = 'chat') AS completed_chats,
+        ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
+        MAX(i.score) FILTER (WHERE i.status = 'completed') AS best_score,
+        MIN(i.score) FILTER (WHERE i.status = 'completed') AS worst_score
      FROM interviews i
      WHERE i.user_id = $1`,
     [userId]
@@ -587,6 +594,34 @@ async function getQuizQuestionById(id) {
   return result.rows[0] || null;
 }
 
+async function saveQuizEvaluation(interviewId, score, resultsJson, correctCount, totalQuestions) {
+  const result = await pool.query(
+    `INSERT INTO evaluations (interview_id, score, feedback, strengths, improvements, criteria_scores, tags)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [interviewId, score,
+      'Cuestionario completado. ' + correctCount + ' de ' + totalQuestions + ' correctas.',
+      correctCount >= Math.ceil(totalQuestions / 2) ? 'Buen desempeno en el cuestionario.' : '',
+      correctCount < Math.ceil(totalQuestions / 2) ? 'Repasar los conceptos fallidos.' : '',
+      JSON.stringify({ precision: score, claridad: score, profundidad: score, comunicacion: score }),
+      ['Cuestionario', score >= 70 ? 'Aprobado' : 'Repaso necesario']
+    ]
+  );
+  return result.rows[0];
+}
+
+async function updateInterviewFromQuiz(interviewId, score, correctCount, totalQuestions, durationSeconds) {
+  const result = await pool.query(
+    `UPDATE interviews
+     SET finished_at = NOW(), score = $2, duration_seconds = $3,
+         status = 'completed', questions_answered = $4, questions_total = $5
+     WHERE id = $1
+     RETURNING *`,
+    [interviewId, score, durationSeconds, correctCount, totalQuestions]
+  );
+  return result.rows[0];
+}
+
 module.exports = {
   // Áreas
   getAreas,
@@ -623,6 +658,7 @@ module.exports = {
   // Evaluaciones
   saveEvaluation,
   saveEvaluationFull,
+  saveQuizEvaluation,
   getEvaluationByInterviewId,
 
   // Historial
@@ -652,5 +688,7 @@ module.exports = {
 
   // Quiz
   getQuizQuestions,
-  getQuizQuestionById
+  getQuizQuestionById,
+  saveQuizEvaluation,
+  updateInterviewFromQuiz
 };

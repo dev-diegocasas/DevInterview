@@ -573,6 +573,7 @@
     try {
       var stats = await apiRequest('/dashboard/stats');
       document.getElementById('stat-total').textContent = stats.totalInterviews;
+      document.getElementById('stat-quizzes').textContent = stats.completedQuizzes || 0;
       document.getElementById('stat-avg').textContent = stats.avgScore;
       document.getElementById('stat-streak').textContent = stats.currentStreak + ' dias';
       if (stats.weeklyTarget) {
@@ -715,17 +716,19 @@
       state.areaId = areaId;
       state.areaName = areaName;
 
-      var result = await apiRequest('/interview/start', 'POST', {
+      var data = await apiRequest('/quiz/start', 'POST', {
         areaId: areaId,
-        difficultyLevel: state.difficultyLevel,
-        mode: 'quiz'
+        difficulty: state.difficultyLevel,
+        limit: 5
       });
 
-      if (result.quizMode) {
-        startQuiz(result.quiz);
-      } else {
-        showToast('No hay preguntas de cuestionario disponibles.');
-      }
+      startQuiz({
+        interviewId: data.interviewId,
+        area: data.area,
+        difficulty: data.difficulty,
+        totalQuestions: data.totalQuestions,
+        questions: data.questions
+      });
     } catch (error) {
       showToast('Error: ' + error.message);
     } finally {
@@ -918,7 +921,7 @@
 
   // ─── Quiz ───────────────────────────────────────────
 
-  var quizState = { questions: [], currentIndex: 0, answers: {}, area: '', difficulty: '' };
+  var quizState = { questions: [], currentIndex: 0, answers: {}, area: '', difficulty: '', interviewId: null, timerInterval: null, startTime: null };
 
   function startQuiz(quizData) {
     quizState.questions = quizData.questions || [];
@@ -926,11 +929,36 @@
     quizState.answers = {};
     quizState.area = quizData.area || '';
     quizState.difficulty = quizData.difficulty || 'mid';
+    quizState.interviewId = quizData.interviewId || null;
+
+    if (quizState.timerInterval) clearInterval(quizState.timerInterval);
+    quizState.startTime = Date.now();
+    quizState.timerInterval = setInterval(updateQuizTimer, 1000);
+    document.getElementById('quiz-timer').textContent = '10:00';
+    document.getElementById('quiz-timer').style.color = '#7D8593';
 
     document.getElementById('quiz-area-badge').textContent = quizData.area + ' [' + difficultyLabel(quizData.difficulty) + ']';
 
     showAppView('quiz');
     renderQuizQuestion();
+  }
+
+  function updateQuizTimer() {
+    var elapsed = Math.floor((Date.now() - quizState.startTime) / 1000);
+    var remaining = Math.max(0, 600 - elapsed);
+    var min = Math.floor(remaining / 60);
+    var sec = remaining % 60;
+    var display = (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
+    document.getElementById('quiz-timer').textContent = display;
+    if (remaining <= 60) {
+      document.getElementById('quiz-timer').style.color = '#D96B6B';
+    } else if (remaining <= 180) {
+      document.getElementById('quiz-timer').style.color = '#D6A54A';
+    }
+    if (remaining === 0) {
+      clearInterval(quizState.timerInterval);
+      submitQuizAnswers();
+    }
   }
 
   function renderQuizQuestion() {
@@ -1007,17 +1035,21 @@
     if (quizState.currentIndex < quizState.questions.length - 1) { quizState.currentIndex++; renderQuizQuestion(); }
   });
 
-  document.getElementById('quiz-submit-btn').addEventListener('click', async function () {
+  async function submitQuizAnswers() {
+    if (quizState.timerInterval) clearInterval(quizState.timerInterval);
     var answers = quizState.questions.map(function (q) {
       return { questionId: q.id, selected: quizState.answers[q.id] || '' };
     });
 
     try {
       showLoading('Evaluando respuestas...');
+      var durationSeconds = Math.floor((Date.now() - quizState.startTime) / 1000);
       var result = await apiRequest('/quiz/submit', 'POST', {
         answers: answers,
         area: quizState.area,
-        difficulty: quizState.difficulty
+        difficulty: quizState.difficulty,
+        interviewId: quizState.interviewId,
+        durationSeconds: durationSeconds
       });
       showQuizResults(result);
     } catch (error) {
@@ -1025,7 +1057,9 @@
     } finally {
       hideLoading();
     }
-  });
+  }
+
+  document.getElementById('quiz-submit-btn').addEventListener('click', submitQuizAnswers);
 
   function showQuizResults(result) {
     showAppView('quizResults');
@@ -1210,6 +1244,7 @@
       var filters = state.historyFilters || {};
       var query = '?page=' + page + '&limit=10';
       if (filters.search) query += '&search=' + encodeURIComponent(filters.search);
+      if (filters.type) query += '&type=' + filters.type;
       if (filters.difficulty) query += '&difficulty=' + filters.difficulty;
       if (filters.scoreMin) query += '&scoreMin=' + filters.scoreMin;
       if (filters.scoreMax) query += '&scoreMax=' + filters.scoreMax;
@@ -1257,10 +1292,14 @@
       if (item.status === 'in_progress') statusLabel = ' (en curso)';
       if (item.status === 'abandoned') statusLabel = ' (abandonada)';
       var badge = getDifficultyBadge(item.difficulty_level);
+      var typeLabel = item.type === 'quiz' ? 'Cuestionario' : 'Chat IA';
+      var typeColor = item.type === 'quiz' ? '#D6A54A' : '#5B7CFA';
+      var typeBg = item.type === 'quiz' ? 'rgba(214,165,74,0.15)' : 'rgba(91,124,250,0.15)';
       div.innerHTML =
         '<div class="history-info">' +
           '<div class="history-area">' + escapeHTML(item.area_name) + statusLabel + '</div>' +
-          '<div class="history-date" style="margin-top:4px">' + date + ' ' + badge + '</div>' +
+          '<div class="history-date" style="margin-top:4px">' + date + ' ' + badge +
+          ' <span style="background:' + typeBg + ';color:' + typeColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em">' + typeLabel + '</span></div>' +
         '</div>' +
         '<div class="history-score">' + (item.score !== null ? item.score : '-') + '</div>' +
         '<div style="display:flex;gap:6px">' +
@@ -1337,6 +1376,10 @@
     state.historyFilters.search = e.target.value;
   });
 
+  document.getElementById('history-filter-type') && document.getElementById('history-filter-type').addEventListener('change', function (e) {
+    state.historyFilters.type = e.target.value;
+  });
+
   document.getElementById('history-filter-difficulty') && document.getElementById('history-filter-difficulty').addEventListener('change', function (e) {
     state.historyFilters.difficulty = e.target.value;
   });
@@ -1362,7 +1405,8 @@
   }
 
   function renderSessionDetail(session, transcript) {
-    document.getElementById('session-detail-title').textContent = session.area_name + ' — ' + difficultyLabel(session.difficulty_level);
+    var typeTag = session.type === 'quiz' ? 'Cuestionario' : 'Chat IA';
+    document.getElementById('session-detail-title').textContent = session.area_name + ' — ' + difficultyLabel(session.difficulty_level) + ' [' + typeTag + ']';
     var date = new Date(session.started_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     var duration = '';
     if (session.duration_seconds) {

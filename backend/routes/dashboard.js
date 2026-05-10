@@ -42,6 +42,8 @@ async function dashboardStatsRoute(req, res) {
       data: {
         totalInterviews: parseInt(stats.total_interviews, 10) || 0,
         completedInterviews: parseInt(stats.completed_interviews, 10) || 0,
+        completedQuizzes: parseInt(stats.completed_quizzes, 10) || 0,
+        completedChats: parseInt(stats.completed_chats, 10) || 0,
         avgScore: stats.avg_score ? parseFloat(stats.avg_score) : 0,
         bestScore: stats.best_score || 0,
         worstScore: stats.worst_score || 0,
