@@ -1372,21 +1372,31 @@
 
   // ─── History Filters ────────────────────────────────
 
-  document.getElementById('history-filter-search') && document.getElementById('history-filter-search').addEventListener('input', function (e) {
-    state.historyFilters.search = e.target.value;
-  });
-
-  document.getElementById('history-filter-type') && document.getElementById('history-filter-type').addEventListener('change', function (e) {
-    state.historyFilters.type = e.target.value;
-  });
-
-  document.getElementById('history-filter-difficulty') && document.getElementById('history-filter-difficulty').addEventListener('change', function (e) {
-    state.historyFilters.difficulty = e.target.value;
-  });
+  function readFilterValues() {
+    var searchEl = document.getElementById('history-filter-search');
+    var typeEl = document.getElementById('history-filter-type');
+    var diffEl = document.getElementById('history-filter-difficulty');
+    return {
+      search: searchEl ? searchEl.value : '',
+      type: typeEl ? typeEl.value : '',
+      difficulty: diffEl ? diffEl.value : '',
+      scoreMin: state.historyFilters.scoreMin || '',
+      scoreMax: state.historyFilters.scoreMax || ''
+    };
+  }
 
   document.getElementById('history-filter-apply') && document.getElementById('history-filter-apply').addEventListener('click', function () {
+    state.historyFilters = readFilterValues();
     state.historyPage = 1;
     loadHistory(1);
+  });
+
+  document.getElementById('history-filter-search') && document.getElementById('history-filter-search').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      state.historyFilters = readFilterValues();
+      state.historyPage = 1;
+      loadHistory(1);
+    }
   });
 
   // ─── Session Detail ─────────────────────────────────
