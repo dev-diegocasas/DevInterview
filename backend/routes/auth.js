@@ -8,6 +8,7 @@ const {
   createSession,
   getSessionByToken,
   deleteSession,
+  getRecentPasswordReset,
   createPasswordReset,
   getPasswordResetByToken,
   markPasswordResetUsed
@@ -169,6 +170,12 @@ async function forgotPassword(req, res) {
       return sendJSON(res, 200, { success: true, data: { message: 'Si el email existe, recibiras un enlace de recuperacion.' } });
     }
 
+    // Rate limiting: 5 min entre solicitudes
+    const recent = await getRecentPasswordReset(user.id, 5);
+    if (recent) {
+      return sendJSON(res, 429, { success: false, error: 'Ya enviamos un enlace recientemente. Revisa tu correo o espera 5 minutos.' });
+    }
+
     const resetToken = generateToken();
     const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
     await createPasswordReset(user.id, resetToken, expiresAt);
@@ -183,15 +190,7 @@ async function forgotPassword(req, res) {
         }
       });
     } else {
-      sendJSON(res, 200, {
-        success: true,
-        data: {
-          message: 'Servicio de email no configurado. Usa este token manualmente.',
-          token: resetToken,
-          expiresIn: RESET_TOKEN_EXPIRY_HOURS + ' hora(s)',
-          emailSkipped: true
-        }
-      });
+      sendJSON(res, 500, { success: false, error: 'No se pudo enviar el correo. Intenta de nuevo mas tarde.' });
     }
   } catch (error) {
     sendJSON(res, 500, { success: false, error: error.message });

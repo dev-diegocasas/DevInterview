@@ -66,6 +66,8 @@
     var suc = document.getElementById('forgot-success');
     if (err) err.classList.add('view-hidden');
     if (suc) suc.classList.add('hidden');
+    var emailInput = document.getElementById('forgot-email');
+    if (emailInput) emailInput.value = '';
   }
 
   function showResetSection() {
@@ -463,13 +465,6 @@
     showForgotSection();
   });
 
-  document.getElementById('btn-go-to-reset').addEventListener('click', function () {
-    var td = document.getElementById('forgot-token-display');
-    var token = td && td.textContent !== '—' ? td.textContent : '';
-    showResetSection();
-    if (token) { document.getElementById('reset-token').value = token; }
-  });
-
   document.getElementById('link-back-to-login-from-forgot').addEventListener('click', function (e) {
     e.preventDefault();
     showLoginSection();
@@ -478,16 +473,6 @@
   document.getElementById('link-back-to-login-from-reset').addEventListener('click', function (e) {
     e.preventDefault();
     showLoginSection();
-  });
-
-  document.getElementById('btn-copy-token').addEventListener('click', function () {
-    var tokenText = document.getElementById('forgot-token-display').textContent;
-    if (tokenText && tokenText !== '—') {
-      navigator.clipboard.writeText(tokenText).then(function () {
-        document.getElementById('btn-copy-token').textContent = 'Copiado!';
-        setTimeout(function () { document.getElementById('btn-copy-token').textContent = 'Copiar'; }, 2000);
-      }).catch(function () {});
-    }
   });
 
   document.getElementById('form-forgot').addEventListener('submit', async function (e) {
@@ -505,21 +490,10 @@
     }
 
     try {
-      showLoading('Generando token...');
+      showLoading('Enviando enlace...');
       var data = await apiRequest('/auth/forgot-password', 'POST', { email: email });
-      if (data.emailSkipped) {
-        document.getElementById('forgot-success-text').textContent = data.message || 'Servicio de email no disponible. Usa el token manualmente.';
-        document.getElementById('forgot-token-display').textContent = data.token || '—';
-        var contBtn = document.getElementById('btn-go-to-reset');
-        if (contBtn) contBtn.style.display = 'block';
-        successEl.classList.remove('hidden');
-      } else {
-        document.getElementById('forgot-success-text').textContent = data.message || 'Revisa tu correo para continuar.';
-        document.getElementById('forgot-token-display').textContent = '—';
-        var contBtn2 = document.getElementById('btn-go-to-reset');
-        if (contBtn2) contBtn2.style.display = 'none';
-        successEl.classList.remove('hidden');
-      }
+      document.getElementById('forgot-success-text').textContent = data.message || 'Revisa tu correo para continuar.';
+      successEl.classList.remove('hidden');
       document.getElementById('forgot-email').value = '';
     } catch (err) {
       errorEl.textContent = err.message;

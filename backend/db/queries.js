@@ -550,6 +550,14 @@ async function recordPracticeDay(userId, practiceDate) {
 // RESTABLECER CONTRASEÑA
 // ====================================================================
 
+async function getRecentPasswordReset(userId, minutes) {
+  const result = await pool.query(
+    'SELECT id FROM password_resets WHERE user_id = $1 AND created_at > NOW() - make_interval(mins => $2) LIMIT 1',
+    [userId, minutes || 5]
+  );
+  return result.rows[0] || null;
+}
+
 async function createPasswordReset(userId, token, expiresAt) {
   const result = await pool.query(
     'INSERT INTO password_resets (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING *',
@@ -686,6 +694,7 @@ module.exports = {
   recordPracticeDay,
 
   // Restablecer contraseña
+  getRecentPasswordReset,
   createPasswordReset,
   getPasswordResetByToken,
   markPasswordResetUsed,
