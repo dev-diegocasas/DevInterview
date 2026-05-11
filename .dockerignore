@@ -1,0 +1,14 @@
+node_modules/
+.env
+*.log
+.git/
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+dist/
+build/
+render.yaml
+Procfile

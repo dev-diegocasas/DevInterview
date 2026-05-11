@@ -14,7 +14,7 @@ const { getProfile, updateProfile, changePassword } = require('./routes/user');
 const { getQuizRoute, startQuizRoute, submitQuizRoute } = require('./routes/quiz');
 const { register, login, logout, me, forgotPassword, resetPassword } = require('./routes/auth');
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT, 10) || 8080;
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
 
 const MIME_TYPES = {
