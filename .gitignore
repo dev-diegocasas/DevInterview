@@ -1,6 +1,9 @@
 node_modules/
 .env
+.env.*
+!.env.example
 *.log
+npm-debug.log*
 
 # OS files
 Thumbs.db
@@ -18,3 +21,6 @@ build/
 
 # Editor config
 ~/.config/
+
+# Deployment
+*.tar.gz

@@ -15,7 +15,9 @@ const { getQuizRoute, startQuizRoute, submitQuizRoute } = require('./routes/quiz
 const { register, login, logout, me, forgotPassword, resetPassword } = require('./routes/auth');
 
 const PORT = parseInt(process.env.PORT, 10) || 8080;
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
+const isProd = process.env.NODE_ENV === 'production';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -41,17 +43,27 @@ function serveStaticFile(res, filePath) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('500 Internal Server Error');
       }
-    } else {
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content);
+      return;
     }
+
+    const headers = { 'Content-Type': contentType };
+    if (isProd) {
+      headers['Cache-Control'] = ext === '.html' ? 'no-cache' : 'public, max-age=86400';
+    }
+    res.writeHead(200, headers);
+    res.end(content);
   });
 }
 
 function setCORSHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const allowedOrigin = process.env.FRONTEND_URL || '*';
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (isProd) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+  }
 }
 
 const server = http.createServer(async (req, res) => {
@@ -65,6 +77,12 @@ const server = http.createServer(async (req, res) => {
 
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
+
+  if (pathname === '/api/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+    return;
+  }
 
   if (pathname === '/api/auth/register' && req.method === 'POST') {
     return register(req, res);
@@ -188,8 +206,24 @@ async function start() {
     await setupDatabase();
     console.log('Base de datos lista.');
 
-    server.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    server.listen(PORT, HOST, () => {
+      console.log(`Servidor corriendo en http://${HOST}:${PORT}`);
+    });
+
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM recibido, cerrando servidor...');
+      server.close(() => {
+        console.log('Servidor cerrado.');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      console.log('SIGINT recibido, cerrando servidor...');
+      server.close(() => {
+        console.log('Servidor cerrado.');
+        process.exit(0);
+      });
     });
   } catch (error) {
     console.error('Error al iniciar el servidor:', error.message);
