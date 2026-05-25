@@ -1053,22 +1053,21 @@
     var idx = quizState.currentIndex;
     var q = quizState.questions[idx];
     var hasAnswer = q ? quizState.answers[q.id] !== undefined : false;
+    var isLastQuestion = idx >= total - 1;
 
     document.getElementById('quiz-prev-btn').disabled = idx === 0;
-    document.getElementById('quiz-next-btn').disabled = !hasAnswer || idx >= total - 1;
+
+    var nextBtn = document.getElementById('quiz-next-btn');
+    if (isLastQuestion) {
+      nextBtn.textContent = 'Enviar respuestas';
+      nextBtn.disabled = !hasAnswer;
+    } else {
+      nextBtn.textContent = 'Siguiente';
+      nextBtn.disabled = !hasAnswer;
+    }
 
     document.getElementById('quiz-selection-status').textContent = hasAnswer ? 'Opción seleccionada' : 'Selecciona una opción';
     document.getElementById('quiz-selection-status').style.color = hasAnswer ? '#4CAF7A' : '#7D8593';
-
-    var allAnswered = quizState.questions.every(function (q) { return quizState.answers[q.id] !== undefined; });
-    var submitBtn = document.getElementById('quiz-submit-btn');
-    if (allAnswered) {
-      submitBtn.classList.remove('hidden');
-      submitBtn.style.display = 'block';
-    } else {
-      submitBtn.classList.add('hidden');
-      submitBtn.style.display = '';
-    }
   }
 
   document.getElementById('quiz-prev-btn').addEventListener('click', function () {
@@ -1076,7 +1075,13 @@
   });
 
   document.getElementById('quiz-next-btn').addEventListener('click', function () {
-    if (quizState.currentIndex < quizState.questions.length - 1) { quizState.currentIndex++; renderQuizQuestion(); }
+    var isLastQuestion = quizState.currentIndex >= quizState.questions.length - 1;
+    if (isLastQuestion) {
+      submitQuizAnswers();
+    } else {
+      quizState.currentIndex++;
+      renderQuizQuestion();
+    }
   });
 
   async function submitQuizAnswers() {
@@ -1102,8 +1107,6 @@
       hideLoading();
     }
   }
-
-  document.getElementById('quiz-submit-btn').addEventListener('click', submitQuizAnswers);
 
   function showQuizResults(result) {
     showAppView('quizResults');
