@@ -2,7 +2,7 @@ const { parseRequestBody, sendJSON } = require('./helpers');
 const { requireAuth } = require('./auth');
 
 async function startQuizRoute(req, res) {
-  const { getQuizQuestions, getAreaById, createInterview } = require('../db/queries');
+  const { getQuizQuestionsWithFallback, getAreaById, createInterview } = require('../db/queries');
 
   try {
     const session = await requireAuth(req);
@@ -18,7 +18,7 @@ async function startQuizRoute(req, res) {
     const area = await getAreaById(areaId);
     if (!area) return sendJSON(res, 404, { success: false, error: 'Area no encontrada' });
 
-    const questions = await getQuizQuestions(areaId, difficulty, limit);
+    const questions = await getQuizQuestionsWithFallback(areaId, difficulty, limit);
     if (!questions || questions.length === 0) {
       return sendJSON(res, 404, { success: false, error: 'No hay preguntas de quiz para esta area y dificultad' });
     }

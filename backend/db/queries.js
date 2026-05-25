@@ -594,6 +594,37 @@ async function getQuizQuestions(areaId, difficulty, limit) {
   return result.rows;
 }
 
+// Cross-difficulty fallback: intenta la dificultad preferida primero,
+// completa con otras dificultades del mismo area si no hay suficientes
+async function getQuizQuestionsWithFallback(areaId, difficulty, limit) {
+  const all = await pool.query(
+    `SELECT id, question_text, options, difficulty
+     FROM quiz_questions
+     WHERE area_id = $1
+     ORDER BY RANDOM()`,
+    [areaId]
+  );
+
+  var preferred = all.rows.filter(function (q) { return q.difficulty === difficulty; });
+  var other = all.rows.filter(function (q) { return q.difficulty !== difficulty; });
+
+  // Tomar maximas posibles de la dificultad preferida, completar con otras
+  var selected = preferred.slice(0, limit);
+  if (selected.length < limit) {
+    selected = selected.concat(other.slice(0, limit - selected.length));
+  }
+
+  // Shuffle final con Fisher-Yates
+  for (var i = selected.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = selected[i];
+    selected[i] = selected[j];
+    selected[j] = temp;
+  }
+
+  return selected;
+}
+
 async function getQuizQuestionById(id) {
   const result = await pool.query(
     'SELECT id, area_id, question_text, options, correct_answer, explanation, difficulty FROM quiz_questions WHERE id = $1',
@@ -701,6 +732,7 @@ module.exports = {
 
   // Quiz
   getQuizQuestions,
+  getQuizQuestionsWithFallback,
   getQuizQuestionById,
   saveQuizEvaluation,
   updateInterviewFromQuiz

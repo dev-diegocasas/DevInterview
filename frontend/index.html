@@ -611,9 +611,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <span class="font-label-uppercase text-label-uppercase text-primary">Área: <span id="chat-area-name">-</span></span>
                             <h2 class="font-h2 text-h2 text-on-surface mt-xs" id="chat-question-counter">Pregunta 1 de 5</h2>
                         </div>
-                        <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
+                        <div class="flex items-center gap-sm">
+                            <span id="chat-model-badge" class="model-badge font-label-uppercase text-label-uppercase px-sm py-xs rounded-lg border transition-all duration-150" style="display:none;font-size:11px;background:rgba(76,110,245,0.1);border-color:rgba(76,110,245,0.25);color:#4C6EF5">Nemotron Nano</span>
+                            <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
                     </div>
                     <div id="chat-token-banner" class="hidden items-center gap-md mb-md p-sm rounded-lg" style="background:rgba(214,165,74,0.12);border:1px solid rgba(214,165,74,0.3);display:none">
                         <span class="material-symbols-outlined" style="color:#D6A54A;font-size:20px">info</span>

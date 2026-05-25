@@ -15,23 +15,25 @@ const {
   getInterviewTranscript,
   getInterviewById,
   recordPracticeDay,
-  getQuizQuestions
+  getQuizQuestions,
+  getQuizQuestionsWithFallback
 } = require('../db/queries');
 
 const MAX_QUESTIONS = 5;
 
-async function tryChatMode(area, difficulty, userId) {
+// Tracking de preguntas del banco usadas por sesion de entrevista (evita repeticiones)
+var interviewUsedQuestions = {};
+
+async function tryChatMode(area, difficulty, userId, usedQuestions) {
   try {
-    var result = await generateFirstQuestion(area.name, difficulty);
-    if (result.fromBank) {
-      return {
-        mode: 'chat', text: result.text,
-        fromBank: true, rateLimited: result.rateLimited
-      };
-    }
-    return { mode: 'chat', text: result.text, fromBank: false, rateLimited: false };
+    var result = await generateFirstQuestion(area.name, difficulty, usedQuestions);
+    return {
+      mode: 'chat', text: result.text,
+      fromBank: result.fromBank, rateLimited: result.rateLimited,
+      model: result.model
+    };
   } catch (aiError) {
-    const questions = await getQuizQuestions(area.id, difficulty, MAX_QUESTIONS);
+    const questions = await getQuizQuestionsWithFallback(area.id, difficulty, MAX_QUESTIONS);
     if (questions.length > 0) {
       return {
         mode: 'quiz',
@@ -50,7 +52,7 @@ async function tryChatMode(area, difficulty, userId) {
 }
 
 async function tryQuizMode(area, difficulty, userId) {
-  const questions = await getQuizQuestions(area.id, difficulty, MAX_QUESTIONS);
+  const questions = await getQuizQuestionsWithFallback(area.id, difficulty, MAX_QUESTIONS);
   if (questions.length > 0) {
     return {
       mode: 'quiz',
@@ -117,21 +119,27 @@ async function startInterview(req, res) {
 
       if (questions.length === 0) {
         const interview = await createInterview(areaId, session.user_id, difficulty);
-        var aiResult = await tryChatMode(area, difficulty, session.user_id);
+        var aiResult = await tryChatMode(area, difficulty, session.user_id, []);
         if (aiResult.mode === 'quiz') {
           return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+        }
+        if (aiResult.fromBank) {
+          interviewUsedQuestions[interview.id] = [aiResult.text];
         }
         const question = await saveQuestion(interview.id, aiResult.text, 1);
         return sendJSON(res, 200, {
           success: true, data: {
             interviewId: interview.id, area: area.name, difficulty: difficulty,
             resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
-            fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
+            fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false,
+            model: aiResult.model || 'Nemotron Nano'
           }
         });
       }
 
       if (unanswered.length > 0) {
+        // Reconstruir preguntas ya usadas del banco para evitar repeticiones
+        interviewUsedQuestions[existing.id] = qaPairs.map(function (qa) { return qa.question; });
         const currentQ = unanswered[0];
         return sendJSON(res, 200, {
           success: true, data: {
@@ -145,31 +153,39 @@ async function startInterview(req, res) {
       }
 
       const interview = await createInterview(areaId, session.user_id, difficulty);
-      var aiResult = await tryChatMode(area, difficulty, session.user_id);
+      var aiResult = await tryChatMode(area, difficulty, session.user_id, []);
       if (aiResult.mode === 'quiz') {
         return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+      }
+      if (aiResult.fromBank) {
+        interviewUsedQuestions[interview.id] = [aiResult.text];
       }
       const question = await saveQuestion(interview.id, aiResult.text, 1);
       return sendJSON(res, 200, {
         success: true, data: {
           interviewId: interview.id, area: area.name, difficulty: difficulty,
           resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
-          fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
+          fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false,
+          model: aiResult.model || 'Nemotron Nano'
         }
       });
     }
 
     const interview = await createInterview(areaId, session.user_id, difficulty);
-    var aiResult = await tryChatMode(area, difficulty, session.user_id);
+    var aiResult = await tryChatMode(area, difficulty, session.user_id, []);
     if (aiResult.mode === 'quiz') {
       return sendJSON(res, 200, { success: true, data: { quizMode: true, quiz: aiResult.quizData } });
+    }
+    if (aiResult.fromBank) {
+      interviewUsedQuestions[interview.id] = [aiResult.text];
     }
     const question = await saveQuestion(interview.id, aiResult.text, 1);
     sendJSON(res, 200, {
       success: true, data: {
         interviewId: interview.id, area: area.name, difficulty: difficulty,
         resumed: false, question: { id: question.id, text: aiResult.text, order: 1 },
-        fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false
+        fromBank: aiResult.fromBank || false, rateLimited: aiResult.rateLimited || false,
+        model: aiResult.model || 'Nemotron Nano'
       }
     });
   } catch (error) {
@@ -219,15 +235,21 @@ async function submitAnswer(req, res) {
 
     const lastAnswer = previousAnswer || answer;
     const diffLevel = difficulty || 'mid';
-    const newQuestionText = await generateFollowUpQuestion(areaName || 'tecnologia', diffLevel, lastAnswer);
-    const newQuestion = await saveQuestion(interviewId, newQuestionText, currentQ + 1);
+    var usedList = interviewUsedQuestions[interviewId] || [];
+    var followUpResult = await generateFollowUpQuestion(areaName || 'tecnologia', diffLevel, lastAnswer, usedList);
+    if (followUpResult.model === 'Banco local') {
+      usedList.push(followUpResult.text);
+      interviewUsedQuestions[interviewId] = usedList;
+    }
+    const newQuestion = await saveQuestion(interviewId, followUpResult.text, currentQ + 1);
 
     sendJSON(res, 200, {
       success: true,
       data: {
         finished: false,
-        question: { id: newQuestion.id, text: newQuestionText, order: currentQ + 1 },
-        lastFeedback: aiEval.score != null ? { score: Math.round(aiEval.score), feedback: aiEval.feedback } : null
+        question: { id: newQuestion.id, text: followUpResult.text, order: currentQ + 1 },
+        lastFeedback: aiEval.score != null ? { score: Math.round(aiEval.score), feedback: aiEval.feedback } : null,
+        model: followUpResult.model
       }
     });
   } catch (error) {
@@ -285,6 +307,9 @@ async function finishInterviewRoute(req, res) {
       evaluation.tags || null
     );
     await recordPracticeDay(session.user_id);
+
+    // Limpiar tracking de preguntas del banco
+    delete interviewUsedQuestions[interviewId];
 
     sendJSON(res, 200, {
       success: true,

@@ -88,57 +88,156 @@ function callHuggingFace(prompt) {
 
 var QUESTION_BANK = {
   frontend: {
-    junior: ['Explica la diferencia entre una variable let y una variable const en JavaScript.',
-             'Que es el DOM y como se relaciona con HTML y JavaScript?',
-             'Describe que hace la propiedad CSS display: flex en un contenedor.',
-             'Que es un evento onclick en JavaScript? Pon un ejemplo basico.',
-             'Explica para que sirve la etiqueta meta viewport en HTML.'],
-    mid: ['Explica como funciona el event delegation en JavaScript y da un ejemplo.',
-          'Describe la diferencia entre flexbox y CSS Grid. Cuando usarias cada uno?',
-          'Que es el Virtual DOM y como mejora el rendimiento en React?',
-          'Explica que son los closures en JavaScript y da un ejemplo practico.',
-          'Como funciona el patron de estado elevado (state lifting) en React?'],
-    senior: ['Explica las diferencias entre prop drilling, context API y state managers como Redux. Cuando usarias cada uno?',
-             'Como optimizarias el rendimiento de una aplicacion React con renders pesados?',
-             'Describe como implementarias una arquitectura de micro-frontends. Ventajas y desventajas.',
-             'Explica el concepto de CSS-in-JS vs CSS Modules. Cuales son sus trade-offs?',
-             'Como manejarias la seguridad XSS y CSRF en una aplicacion frontend moderna?']
+    junior: [
+      'Explica la diferencia entre una variable let y una variable const en JavaScript.',
+      'Que es el DOM y como se relaciona con HTML y JavaScript?',
+      'Describe que hace la propiedad CSS display: flex en un contenedor.',
+      'Que es un evento onclick en JavaScript? Pon un ejemplo basico.',
+      'Explica para que sirve la etiqueta meta viewport en HTML.',
+      'Que funcion de JavaScript se usa para agregar un elemento al final de un array?',
+      'Cual es la diferencia entre == y === en JavaScript?',
+      'Que atributo HTML se usa para abrir un enlace en una nueva pestania?',
+      'Para que sirve la propiedad position: relative en CSS?',
+      'Que es una funcion flecha (arrow function) en JavaScript?'
+    ],
+    mid: [
+      'Explica como funciona el event delegation en JavaScript y da un ejemplo.',
+      'Describe la diferencia entre flexbox y CSS Grid. Cuando usarias cada uno?',
+      'Que es el Virtual DOM y como mejora el rendimiento en React?',
+      'Explica que son los closures en JavaScript y da un ejemplo practico.',
+      'Como funciona el patron de estado elevado (state lifting) en React?',
+      'Que es el patron de modulo en JavaScript y como ayuda a encapsular codigo?',
+      'Explica como funciona el renderizado condicional en React con un ejemplo.',
+      'Que son los CSS Custom Properties (variables CSS) y como se usan?',
+      'Describe el ciclo de vida de un componente de React con hooks (useEffect).',
+      'Que es el Shadow DOM y como se relaciona con los Web Components?'
+    ],
+    senior: [
+      'Explica las diferencias entre prop drilling, context API y state managers como Redux. Cuando usarias cada uno?',
+      'Como optimizarias el rendimiento de una aplicacion React con renders pesados?',
+      'Describe como implementarias una arquitectura de micro-frontends. Ventajas y desventajas.',
+      'Explica el concepto de CSS-in-JS vs CSS Modules. Cuales son sus trade-offs?',
+      'Como manejarias la seguridad XSS y CSRF en una aplicacion frontend moderna?',
+      'Como implementarias server-side rendering (SSR) con React y cuales son sus ventajas?',
+      'Describe las diferencias entre arquitectura Flux, Redux y Zustand para manejo de estado.',
+      'Que estrategias de Code Splitting conoces y cuando usarias cada una?',
+      'Explica como optimizar el Core Web Vitals (LCP, FID, CLS) en una aplicacion web.',
+      'Como manejarias la accesibilidad (WCAG 2.1) en una SPA compleja?'
+    ]
   },
   backend: {
-    junior: ['Explica la diferencia entre una API REST y una API GraphQL.',
-             'Que es un middleware en Node.js y para que sirve?',
-             'Explica el concepto de variable de entorno y por que es importante.',
-             'Que es una base de datos relacional y en que se diferencia de una no relacional?'],
-    mid: ['Explica como funciona el patron Repository en el diseno de APIs.',
-          'Describe la diferencia entre autenticacion y autorizacion.',
-          'Que es JWT y como se utiliza en la autenticacion de APIs?',
-          'Explica el concepto de middleware pipeline en Express o en Node puro.'],
-    senior: ['Como disenarias una arquitectura de microservicios con comunicacion por eventos?',
-             'Explica el teorema CAP y como afecta el diseno de bases de datos distribuidas.',
-             'Describe estrategias de caching para una API con alto trafico (Redis, CDN, etc.).',
-             'Como implementarias un sistema de rate limiting robusto para una API publica?']
+    junior: [
+      'Explica la diferencia entre una API REST y una API GraphQL.',
+      'Que es un middleware en Node.js y para que sirve?',
+      'Explica el concepto de variable de entorno y por que es importante.',
+      'Que es una base de datos relacional y en que se diferencia de una no relacional?',
+      'Que es un endpoint en una API y como se define?',
+      'Explica que es el manejo de errores con try/catch en JavaScript.',
+      'Que es una promesa en JavaScript y para que sirve?',
+      'Cual es la diferencia entre SQL y NoSQL?',
+      'Que es el archivo package.json y para que se usa?',
+      'Explica que es una funcion asincrona con async/await.'
+    ],
+    mid: [
+      'Explica como funciona el patron Repository en el diseno de APIs.',
+      'Describe la diferencia entre autenticacion y autorizacion.',
+      'Que es JWT y como se utiliza en la autenticacion de APIs?',
+      'Explica el concepto de middleware pipeline en Express o en Node puro.',
+      'Como implementarias un sistema de cache en una API REST?',
+      'Explica la diferencia entre los patrones de diseno Factory y Singleton.',
+      'Que es un webhook y como se diferencia de una API tradicional?',
+      'Describe como funciona el protocolo OAuth 2.0 para autenticacion.',
+      'Que es la inyeccion de dependencias y por que es util?',
+      'Explica como manejarias la paginacion en una API con muchos resultados.'
+    ],
+    senior: [
+      'Como disenarias una arquitectura de microservicios con comunicacion por eventos?',
+      'Explica el teorema CAP y como afecta el diseno de bases de datos distribuidas.',
+      'Describe estrategias de caching para una API con alto trafico (Redis, CDN, etc.).',
+      'Como implementarias un sistema de rate limiting robusto para una API publica?',
+      'Como diseniarias un sistema de colas de mensajes con RabbitMQ o Kafka?',
+      'Explica las diferencias entre escalado horizontal y vertical en sistemas distribuidos.',
+      'Que es el patron CQRS y en que casos es recomendable?',
+      'Describe como implementarias un sistema de logging centralizado en microservicios.',
+      'Que estrategias de migracion de bases de datos conoces (blue-green, rolling, etc.)?',
+      'Explica el concepto de observabilidad (logging, metricas, tracing) en sistemas.'
+    ]
   },
   databases: {
-    junior: ['Que es una clave primaria y una clave foranea?',
-             'Explica la diferencia entre INNER JOIN y LEFT JOIN.',
-             'Que es un indice en una base de datos y para que sirve?'],
-    mid: ['Explica que son las transacciones ACID y por que son importantes.',
-          'Describe la diferencia entre normalizacion y desnormalizacion.',
-          'Que es un EXPLAIN en PostgreSQL y como ayuda a optimizar consultas?'],
-    senior: ['Como disenarias un esquema para un sistema de manejo de inventario en tiempo real?',
-             'Explica tecnicas de sharding y particionamiento en bases de datos distribuidas.',
-             'Describe como implementarias un sistema de replicacion maestro-esclavo y sus desafios.']
+    junior: [
+      'Que es una clave primaria y una clave foranea?',
+      'Explica la diferencia entre INNER JOIN y LEFT JOIN.',
+      'Que es un indice en una base de datos y para que sirve?',
+      'Que es una clave compuesta en una base de datos?',
+      'Para que sirve la clausula WHERE en SQL?',
+      'Que es la normalizacion de bases de datos?',
+      'Explica la diferencia entre DELETE y TRUNCATE en SQL.',
+      'Que es una vista (VIEW) en SQL?',
+      'Cual es la funcion de GROUP BY en una consulta SQL?',
+      'Que es un JOIN en SQL y por que se usa?'
+    ],
+    mid: [
+      'Explica que son las transacciones ACID y por que son importantes.',
+      'Describe la diferencia entre normalizacion y desnormalizacion.',
+      'Que es un EXPLAIN en PostgreSQL y como ayuda a optimizar consultas?',
+      'Que es un CTE (Common Table Expression) y como se usa?',
+      'Explica la diferencia entre los niveles de aislamiento en transacciones SQL.',
+      'Que son las funciones de ventana (window functions) en SQL?',
+      'Describe como funciona el versionado de esquemas en bases de datos.',
+      'Que es la desnormalizacion y cuando tiene sentido usarla?',
+      'Explica como funcionan los indices parciales en PostgreSQL.',
+      'Que es el plan de ejecucion de una consulta y como interpretarlo?'
+    ],
+    senior: [
+      'Como diseniarias un esquema para un sistema de manejo de inventario en tiempo real?',
+      'Explica tecnicas de sharding y particionamiento en bases de datos distribuidas.',
+      'Describe como implementarias un sistema de replicacion maestro-esclavo y sus desafios.',
+      'Como implementarias un sistema de replicacion multi-maestro en PostgreSQL?',
+      'Explica las diferencias entre sharding y particionamiento horizontal.',
+      'Que estrategias de backup y recuperacion ante desastres conoces?',
+      'Describe como manejarias la consistencia eventual en sistemas distribuidos.',
+      'Como optimizarias una base de datos con mas de 100 millones de registros?',
+      'Que es el vacuum en PostgreSQL y por que es importante?',
+      'Explica el concepto de Change Data Capture (CDC) y sus aplicaciones.'
+    ]
   },
   algoritmos: {
-    junior: ['Explica la diferencia entre una pila (stack) y una cola (queue).',
-             'Que es la complejidad Big O y por que es importante?',
-             'Explica como funciona el algoritmo de busqueda binaria.'],
-    mid: ['Describe como funciona el algoritmo QuickSort y su complejidad.',
-          'Explica la diferencia entre un arbol binario de busqueda y un heap.',
-          'Que es la programacion dinamica? Da un ejemplo basico como Fibonacci.'],
-    senior: ['Explica el algoritmo de Dijkstra y en que casos se utiliza.',
-             'Describe como resolverias el problema del viajante (TSP) con aproximaciones.',
-             'Como implementarias un sistema de recomendacion usando filtrado colaborativo?']
+    junior: [
+      'Explica la diferencia entre una pila (stack) y una cola (queue).',
+      'Que es la complejidad Big O y por que es importante?',
+      'Explica como funciona el algoritmo de busqueda binaria.',
+      'Que es un array y como se diferencia de una lista enlazada?',
+      'Explica como funciona el algoritmo de ordenamiento por burbuja (bubble sort).',
+      'Que es la recursion y da un ejemplo simple?',
+      'Cual es la diferencia entre un conjunto (Set) y un mapa (Map)?',
+      'Explica como funciona el algoritmo de busqueda lineal.',
+      'Que es un hash table y como funciona?',
+      'Explica la diferencia entre un arbol y un grafo.'
+    ],
+    mid: [
+      'Describe como funciona el algoritmo QuickSort y su complejidad.',
+      'Explica la diferencia entre un arbol binario de busqueda y un heap.',
+      'Que es la programacion dinamica? Da un ejemplo basico como Fibonacci.',
+      'Como funciona el algoritmo MergeSort y cual es su complejidad?',
+      'Explica la diferencia entre BFS y DFS en recorrido de grafos.',
+      'Que es el algoritmo de two pointers y da un ejemplo de uso.',
+      'Describe como funciona un Trie (arbol de prefijos) y sus aplicaciones.',
+      'Que es la memoria cache en el contexto de algoritmos (principio de localidad)?',
+      'Explica el algoritmo de ordenamiento por insercion (insertion sort) y su complejidad.',
+      'Que son los algoritmos voraces (greedy) y da un ejemplo?'
+    ],
+    senior: [
+      'Explica el algoritmo de Dijkstra y en que casos se utiliza.',
+      'Describe como resolverias el problema del viajante (TSP) con aproximaciones.',
+      'Como implementarias un sistema de recomendacion usando filtrado colaborativo?',
+      'Como resolverias el problema de la subsequencia comun mas larga (LCS)?',
+      'Explica el algoritmo A* para busqueda de caminos y sus aplicaciones.',
+      'Que es la tecnica de ventana deslizante (sliding window) y cuando usarla?',
+      'Describe como implementarias un sistema de recomendacion basado en contenido.',
+      'Como funciona el algoritmo de Floyd-Warshall para caminos mas cortos?',
+      'Explica el concepto de backtesting de algoritmos de trading.',
+      'Que es la complejidad amortizada y como se calcula?'
+    ]
   }
 };
 
@@ -146,7 +245,7 @@ var QUESTION_BANK = {
 
 var bankIndex = {};
 
-function getFallbackQuestion(areaName, difficulty) {
+function getFallbackQuestion(areaName, difficulty, usedQuestions) {
   var area = areaName ? areaName.toLowerCase() : '';
   var diff = difficulty || 'mid';
   var bank = null;
@@ -157,16 +256,28 @@ function getFallbackQuestion(areaName, difficulty) {
   else bank = QUESTION_BANK.frontend;
 
   var questions = bank[diff] || bank.mid;
+  usedQuestions = usedQuestions || [];
+
+  // Filtrar preguntas ya usadas en esta sesion para evitar repeticiones
+  var available = usedQuestions.length > 0
+    ? questions.filter(function (q) { return usedQuestions.indexOf(q) === -1; })
+    : questions;
+
+  // Si todas las preguntas se han agotado, reiniciar el ciclo
+  if (available.length === 0) {
+    available = questions;
+  }
+
   var key = areaName + ':' + diff;
   if (!bankIndex[key]) bankIndex[key] = 0;
-  var idx = bankIndex[key] % questions.length;
+  var idx = bankIndex[key] % available.length;
   bankIndex[key]++;
-  return questions[idx] || 'Describe tu experiencia tecnica con ' + areaName + '.';
+  return available[idx] || 'Describe tu experiencia tecnica con ' + areaName + '.';
 }
 
 // ─── Call with multi-tier fallback ───────────────────
 
-async function callWithFallback(messages, areaName, difficulty) {
+async function callWithFallback(messages, areaName, difficulty, usedQuestions) {
   var prompt = '';
   if (messages && messages.length > 0) {
     prompt = messages.map(function (m) { return m.role + ': ' + m.content; }).join('\n');
@@ -176,7 +287,8 @@ async function callWithFallback(messages, areaName, difficulty) {
 
   // Tier 1: OpenRouter primario
   try {
-    return await callOpenRouter(messages, PRIMARY_MODEL, API_KEY);
+    var text = await callOpenRouter(messages, PRIMARY_MODEL, API_KEY);
+    return { text: text, model: 'Nemotron Nano', rateLimited: false };
   } catch (e) {
     if (e.message && (e.message === 'RATE_LIMIT' || e.message.startsWith('RATE_LIMIT'))) {
       sawRateLimit = true;
@@ -188,7 +300,8 @@ async function callWithFallback(messages, areaName, difficulty) {
 
   // Tier 2: OpenRouter secundario
   try {
-    return await callOpenRouter(messages, FALLBACK_MODEL, API_KEY);
+    var text = await callOpenRouter(messages, FALLBACK_MODEL, API_KEY);
+    return { text: text, model: 'Llama 70B', rateLimited: false };
   } catch (e) {
     if (e.message === 'RATE_LIMIT') sawRateLimit = true;
     console.log('Fallback OpenRouter fallo, intentando Hugging Face...');
@@ -198,17 +311,14 @@ async function callWithFallback(messages, areaName, difficulty) {
   try {
     var hfPrompt = prompt || 'Genera una pregunta tecnica sobre ' + (areaName || 'programacion') + ' de nivel ' + (difficulty || 'intermedio') + '.';
     var result = await callHuggingFace(hfPrompt);
-    if (result && result.length > 10) return result;
+    if (result && result.length > 10) return { text: result, model: 'Mistral 7B', rateLimited: false };
   } catch (e) {
     console.log('Hugging Face fallo, usando banco estatico...');
   }
 
   // Tier 4: Banco de preguntas estatico (siempre funciona)
-  var fallbackQ = getFallbackQuestion(areaName, difficulty);
-  if (sawRateLimit) {
-    throw new Error('RATE_LIMITED_Q:' + fallbackQ);
-  }
-  throw new Error('FALLBACK_Q:' + fallbackQ);
+  var fallbackQ = getFallbackQuestion(areaName, difficulty, usedQuestions);
+  return { text: fallbackQ, model: 'Banco local', rateLimited: sawRateLimit };
 }
 
 // ─── Funciones publicas ──────────────────────────────
@@ -238,50 +348,30 @@ async function generateQuestion(areaName, difficulty) {
     { role: 'system', content: 'Eres un entrevistador tecnico profesional. Genera preguntas claras, relevantes y de nivel ' + level + '. Responde UNICAMENTE con la pregunta. No uses markdown. Maximo 3 oraciones.' },
     { role: 'user', content: 'Genera una pregunta tecnica de nivel ' + level + ' sobre ' + areaName + '. ' + levelDesc + '. Solo responde con la pregunta.' }
   ];
-  try {
-    return await callWithFallback(messages, areaName, level);
-  } catch (e) {
-    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) return e.message.replace('RATE_LIMITED_Q:', '');
-    if (e.message && e.message.startsWith('FALLBACK_Q:')) return e.message.replace('FALLBACK_Q:', '');
-    throw e;
-  }
+  var result = await callWithFallback(messages, areaName, level);
+  return result.text;
 }
 
-async function generateFirstQuestion(areaName, difficulty) {
+async function generateFirstQuestion(areaName, difficulty, usedQuestions) {
   var level = difficulty || 'mid';
   var levelDesc = difficultyPrompt(level);
   var messages = [
     { role: 'system', content: 'Eres un entrevistador tecnico profesional. Genera preguntas de nivel ' + level + ' (' + levelDesc + '). Esta es la PRIMERA pregunta de calentamiento. Responde UNICAMENTE con la pregunta.' },
     { role: 'user', content: 'Genera la PRIMERA pregunta de una entrevista tecnica de nivel ' + level + ' sobre ' + areaName + '. Debe ser introductoria. Solo responde con la pregunta.' }
   ];
-  try {
-    var result = await callWithFallback(messages, areaName, level);
-    return { text: result, fromBank: false, rateLimited: false };
-  } catch (e) {
-    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) {
-      return { text: e.message.replace('RATE_LIMITED_Q:', ''), fromBank: true, rateLimited: true };
-    }
-    if (e.message && e.message.startsWith('FALLBACK_Q:')) {
-      return { text: e.message.replace('FALLBACK_Q:', ''), fromBank: true, rateLimited: false };
-    }
-    throw e;
-  }
+  var result = await callWithFallback(messages, areaName, level, usedQuestions);
+  return { text: result.text, fromBank: result.model === 'Banco local', rateLimited: result.rateLimited, model: result.model };
 }
 
-async function generateFollowUpQuestion(areaName, difficulty, previousAnswer) {
+async function generateFollowUpQuestion(areaName, difficulty, previousAnswer, usedQuestions) {
   var level = difficulty || 'mid';
   var levelDesc = difficultyPrompt(level);
   var messages = [
     { role: 'system', content: 'Eres un entrevistador tecnico profesional. Genera preguntas de nivel ' + level + '. Adapta segun la calidad de la respuesta anterior. Responde UNICAMENTE con la pregunta.' },
     { role: 'user', content: 'Respuesta anterior: "' + (previousAnswer || '').substring(0, 300) + '". Genera una pregunta de seguimiento sobre ' + areaName + ' de nivel ' + level + '. Si fue buena, profundiza. Si fue debil, hazla mas accesible.' }
   ];
-  try {
-    return await callWithFallback(messages, areaName, level);
-  } catch (e) {
-    if (e.message && e.message.startsWith('RATE_LIMITED_Q:')) return e.message.replace('RATE_LIMITED_Q:', '');
-    if (e.message && e.message.startsWith('FALLBACK_Q:')) return e.message.replace('FALLBACK_Q:', '');
-    throw e;
-  }
+  var result = await callWithFallback(messages, areaName, level, usedQuestions);
+  return { text: result.text, model: result.model, rateLimited: result.rateLimited };
 }
 
 async function evaluateAnswer(question, answer, areaName) {
@@ -290,8 +380,8 @@ async function evaluateAnswer(question, answer, areaName) {
     { role: 'user', content: 'Pregunta: "' + question + '"\nRespuesta: "' + answer + '"\nEvalua claridad, precision y profundidad. Devuelve JSON.' }
   ];
   try {
-    var response = await callWithFallback(messages, areaName);
-    var cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
+    var result = await callWithFallback(messages, areaName);
+    var cleaned = result.text.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
     return localEvaluateAnswer(question, answer);
@@ -305,8 +395,8 @@ async function generateFinalEvaluation(questionsAndAnswers, areaName) {
     { role: 'user', content: 'Entrevista de ' + areaName + ':\n' + qaText + '\n\nResponde JSON exacto: {"score": 0-100, "feedback": "...", "strengths": "...", "improvements": "...", "criteriaScores": {"precision": 0-100, "claridad": 0-100, "profundidad": 0-100, "comunicacion": 0-100}, "tags": ["tag1", "tag2"]}' }
   ];
   try {
-    var response = await callWithFallback(messages, areaName);
-    var cleaned = response.replace(/```json\s*|\s*```/g, '').trim();
+    var result = await callWithFallback(messages, areaName);
+    var cleaned = result.text.replace(/```json\s*|\s*```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
     return localFinalEvaluation(questionsAndAnswers, areaName);

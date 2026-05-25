@@ -515,4 +515,19 @@ INSERT INTO quiz_questions (area_id, difficulty, question_text, options, correct
 
 ON CONFLICT DO NOTHING;
 
+-- Índice único para evitar preguntas duplicadas (elimina duplicados previos si existen)
+DO $$
+BEGIN
+  DELETE FROM quiz_questions q1
+  USING quiz_questions q2
+  WHERE q1.id > q2.id
+    AND q1.area_id = q2.area_id
+    AND q1.question_text = q2.question_text;
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_quiz_question ON quiz_questions (area_id, question_text);
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'uq_quiz_question: %', SQLERRM;
+END;
+$$;
+
 COMMIT;

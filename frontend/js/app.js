@@ -21,6 +21,7 @@
     questionNumber: 0,
     questionsAndAnswers: [],
     isProcessing: false,
+    lastModel: null,
     historyPage: 1,
     historyFilters: { search: '', areaId: '', difficulty: '', scoreMin: '', scoreMax: '' }
   };
@@ -817,6 +818,8 @@
 
       showTokenBanner(result.rateLimited);
 
+      state.lastModel = result.model || 'Nemotron Nano';
+
       if (result.resumed) {
         state.currentQuestion = result.currentQuestion;
         state.questionNumber = result.questionNumber;
@@ -838,6 +841,7 @@
         addSystemMessage(result.question.text);
         updateQuestionCounter();
       }
+      updateModelBadge(state.lastModel);
     } catch (error) {
       showToast('Error al iniciar entrevista: ' + error.message);
     } finally {
@@ -850,6 +854,25 @@
     messagesDiv.innerHTML = '';
     document.getElementById('chat-area-name').textContent = state.areaName + ' [' + difficultyLabel(state.difficultyLevel) + ']';
     updateQuestionCounter();
+    updateModelBadge(state.lastModel || 'Nemotron Nano');
+  }
+
+  function updateModelBadge(model) {
+    var badge = document.getElementById('chat-model-badge');
+    if (!badge) return;
+    if (model === 'Banco local') {
+      badge.textContent = 'Banco local';
+      badge.style.background = 'rgba(214,165,74,0.12)';
+      badge.style.borderColor = 'rgba(214,165,74,0.3)';
+      badge.style.color = '#D6A54A';
+      badge.style.display = 'inline';
+    } else {
+      badge.textContent = model;
+      badge.style.background = 'rgba(76,110,245,0.1)';
+      badge.style.borderColor = 'rgba(76,110,245,0.25)';
+      badge.style.color = '#4C6EF5';
+      badge.style.display = 'inline';
+    }
   }
 
   function difficultyLabel(level) {
@@ -953,6 +976,10 @@
       } else {
         state.currentQuestion = result.question;
         state.questionNumber = result.question.order;
+        if (result.model) {
+          state.lastModel = result.model;
+          updateModelBadge(result.model);
+        }
         addSystemMessage(result.question.text);
         updateQuestionCounter();
       }
