@@ -1,6 +1,11 @@
 (function () {
   'use strict';
 
+  function listen(id, event, handler) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener(event, handler);
+  }
+
   var API_BASE = '/api';
   var MAX_QUESTIONS = 5;
 
@@ -218,7 +223,7 @@
 
   // ─── AUTH: Login ─────────────────────────────────────
 
-  document.getElementById('form-login').addEventListener('submit', async function (e) {
+  listen('form-login', 'submit', async function (e) {
     e.preventDefault();
     var errorEl = document.getElementById('login-error');
     errorEl.classList.add('view-hidden');
@@ -255,7 +260,7 @@
 
   // ─── AUTH: Register ──────────────────────────────────
 
-  document.getElementById('form-register').addEventListener('submit', async function (e) {
+  listen('form-register', 'submit', async function (e) {
     e.preventDefault();
     var errorEl = document.getElementById('register-error');
     errorEl.classList.add('view-hidden');
@@ -326,7 +331,7 @@
     if (emailEl) emailEl.textContent = user.email;
   }
 
-  document.getElementById('avatar-trigger').addEventListener('click', function (e) {
+  listen('avatar-trigger', 'click', function (e) {
     e.stopPropagation();
     var dd = document.getElementById('profile-dropdown');
     dd.classList.toggle('hidden');
@@ -344,7 +349,7 @@
     }
   });
 
-  document.getElementById('btn-go-profile').addEventListener('click', function () {
+  listen('btn-go-profile', 'click', function () {
     hideDropdown();
     loadProfile();
     showAppView('profile');
@@ -364,9 +369,9 @@
     document.body.style.overflow = '';
   }
 
-  document.getElementById('btn-mobile-nav').addEventListener('click', openMobileNav);
-  document.getElementById('btn-mobile-nav-close').addEventListener('click', closeMobileNav);
-  document.getElementById('mobile-nav-overlay').addEventListener('click', closeMobileNav);
+  listen('btn-mobile-nav', 'click', openMobileNav);
+  listen('btn-mobile-nav-close', 'click', closeMobileNav);
+  listen('mobile-nav-overlay', 'click', closeMobileNav);
 
   document.querySelectorAll('.mobile-nav-link').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -384,7 +389,7 @@
     });
   });
 
-  document.getElementById('btn-mobile-logout').addEventListener('click', function () {
+  listen('btn-mobile-logout', 'click', function () {
     closeMobileNav();
     doLogout();
   });
@@ -435,7 +440,7 @@
     }
   }
 
-  document.getElementById('btn-save-profile').addEventListener('click', async function () {
+  listen('btn-save-profile', 'click', async function () {
     var btn = this;
     btn.disabled = true;
     btn.textContent = 'Guardando...';
@@ -458,7 +463,7 @@
     }
   });
 
-  document.getElementById('btn-save-password').addEventListener('click', async function () {
+  listen('btn-save-password', 'click', async function () {
     var btn = this;
     var current = document.getElementById('pf-current-pwd').value;
     var newPwd = document.getElementById('pf-new-pwd').value;
@@ -505,34 +510,34 @@
 
   // ─── AUTH: Switch views ──────────────────────────────
 
-  document.getElementById('link-to-register').addEventListener('click', function (e) {
+  listen('link-to-register', 'click', function (e) {
     e.preventDefault();
     showAuthView('register');
   });
 
-  document.getElementById('link-to-login').addEventListener('click', function (e) {
+  listen('link-to-login', 'click', function (e) {
     e.preventDefault();
     showAuthView('login');
   });
 
   // ─── Forgot Password ────────────────────────────────
 
-  document.getElementById('link-forgot-password').addEventListener('click', function (e) {
+  listen('link-forgot-password', 'click', function (e) {
     e.preventDefault();
     showForgotSection();
   });
 
-  document.getElementById('link-back-to-login-from-forgot').addEventListener('click', function (e) {
+  listen('link-back-to-login-from-forgot', 'click', function (e) {
     e.preventDefault();
     showLoginSection();
   });
 
-  document.getElementById('link-back-to-login-from-reset').addEventListener('click', function (e) {
+  listen('link-back-to-login-from-reset', 'click', function (e) {
     e.preventDefault();
     showLoginSection();
   });
 
-  document.getElementById('form-forgot').addEventListener('submit', async function (e) {
+  listen('form-forgot', 'submit', async function (e) {
     e.preventDefault();
     var errorEl = document.getElementById('forgot-error');
     var successEl = document.getElementById('forgot-success');
@@ -560,7 +565,7 @@
     }
   });
 
-  document.getElementById('form-reset').addEventListener('submit', async function (e) {
+  listen('form-reset', 'submit', async function (e) {
     e.preventDefault();
     var errorEl = document.getElementById('reset-error');
     var successEl = document.getElementById('reset-success');
@@ -598,23 +603,23 @@
 
   // ─── Home ───────────────────────────────────────────
 
-  document.getElementById('btn-start').addEventListener('click', function () {
+  listen('btn-start', 'click', function () {
     loadAreas();
     showAppView('areas');
   });
 
-  document.getElementById('btn-start-home').addEventListener('click', function () {
+  listen('btn-start-home', 'click', function () {
     loadAreas();
     showAppView('areas');
   });
 
-  document.getElementById('btn-history-nav').addEventListener('click', function () {
+  listen('btn-history-nav', 'click', function () {
     state.historyPage = 1;
     loadHistory();
     showAppView('history');
   });
 
-  document.getElementById('btn-history-home').addEventListener('click', function () {
+  listen('btn-history-home', 'click', function () {
     state.historyPage = 1;
     loadHistory();
     showAppView('history');
@@ -897,8 +902,8 @@
     }, 100);
   }
 
-  document.getElementById('btn-send').addEventListener('click', submitAnswerHandler);
-  document.getElementById('chat-input').addEventListener('keydown', function (e) {
+  listen('btn-send', 'click', submitAnswerHandler);
+  listen('chat-input', 'keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       submitAnswerHandler();
@@ -1070,11 +1075,11 @@
     document.getElementById('quiz-selection-status').style.color = hasAnswer ? '#4CAF7A' : '#7D8593';
   }
 
-  document.getElementById('quiz-prev-btn').addEventListener('click', function () {
+  listen('quiz-prev-btn', 'click', function () {
     if (quizState.currentIndex > 0) { quizState.currentIndex--; renderQuizQuestion(); }
   });
 
-  document.getElementById('quiz-next-btn').addEventListener('click', function () {
+  listen('quiz-next-btn', 'click', function () {
     var isLastQuestion = quizState.currentIndex >= quizState.questions.length - 1;
     if (isLastQuestion) {
       submitQuizAnswers();
@@ -1205,7 +1210,7 @@
     return html;
   }
 
-  document.getElementById('btn-quiz-new').addEventListener('click', function () {
+  listen('btn-quiz-new', 'click', function () {
     loadAreas();
     showAppView('areas');
   });
@@ -1275,7 +1280,7 @@
       '</div>';
   }
 
-  document.getElementById('btn-new-interview').addEventListener('click', function () {
+  listen('btn-new-interview', 'click', function () {
     loadAreas();
     showAppView('areas');
   });
@@ -1432,13 +1437,13 @@
     };
   }
 
-  document.getElementById('history-filter-apply') && document.getElementById('history-filter-apply').addEventListener('click', function () {
+  listen('history-filter-apply', 'click', function () {
     state.historyFilters = readFilterValues();
     state.historyPage = 1;
     loadHistory(1);
   });
 
-  document.getElementById('history-filter-search') && document.getElementById('history-filter-search').addEventListener('keydown', function (e) {
+  listen('history-filter-search', 'keydown', function (e) {
     if (e.key === 'Enter') {
       state.historyFilters = readFilterValues();
       state.historyPage = 1;
@@ -1579,13 +1584,13 @@
     }
   }
 
-  document.getElementById('btn-back-to-history') && document.getElementById('btn-back-to-history').addEventListener('click', function () {
+  listen('btn-back-to-history', 'click', function () {
     state.historyPage = 1;
     loadHistory(1);
     showAppView('history');
   });
 
-  document.getElementById('btn-close-session') && document.getElementById('btn-close-session').addEventListener('click', function () {
+  listen('btn-close-session', 'click', function () {
     showAppView('home');
     loadDashboardStats();
   });
