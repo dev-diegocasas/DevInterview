@@ -1,6 +1,4 @@
 const tls = require('tls');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 465;
@@ -8,6 +6,12 @@ const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
+
+if (!SMTP_USER && !SMTP_PASS) {
+  console.warn('[email] SMTP_USER y SMTP_PASS no configurados en .env — el envio de correos no funcionara');
+} else if (!SMTP_USER || !SMTP_PASS) {
+  console.warn('[email] Falta SMTP_USER o SMTP_PASS en .env');
+}
 
 function smtpSend(from, to, subject, html) {
   return new Promise((resolve, reject) => {
