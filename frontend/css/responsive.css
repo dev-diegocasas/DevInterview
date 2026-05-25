@@ -1,0 +1,446 @@
+/* ─── Responsive Design System ─── */
+
+/* Breakpoints:
+   xs:  ≤ 375px  (teléfonos pequeños)
+   sm:  ≤ 640px  (teléfonos grandes)
+   md:  ≤ 768px  (tablets)
+   lg:  ≤ 1024px (tablets landscape / laptops pequeños)
+   xl:  ≥ 1280px (desktop)
+   xxl: ≥ 1536px (desktop grande)
+*/
+
+/* ─── Spacing Tokens Responsive ─── */
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-mobile: 16px;
+  --space-tablet: 24px;
+  --space-desktop: 32px;
+}
+
+/* ─── Responsive Padding Utility ─── */
+.container-responsive {
+  padding-left: var(--space-mobile);
+  padding-right: var(--space-mobile);
+}
+@media (min-width: 769px) {
+  .container-responsive {
+    padding-left: var(--space-desktop);
+    padding-right: var(--space-desktop);
+  }
+}
+@media (min-width: 641px) and (max-width: 768px) {
+  .container-responsive {
+    padding-left: var(--space-tablet);
+    padding-right: var(--space-tablet);
+  }
+}
+
+/* ─── Responsive Typography ─── */
+.responsive-h1 {
+  font-size: 28px;
+}
+@media (min-width: 376px) { .responsive-h1 { font-size: 36px; } }
+@media (min-width: 641px) { .responsive-h1 { font-size: 48px; } }
+@media (min-width: 1025px) { .responsive-h1 { font-size: 72px; } }
+
+.responsive-h2 {
+  font-size: 22px;
+}
+@media (min-width: 376px) { .responsive-h2 { font-size: 24px; } }
+@media (min-width: 1025px) { .responsive-h2 { font-size: 32px; } }
+
+.responsive-score {
+  font-size: 48px;
+  line-height: 1;
+}
+@media (min-width: 376px) { .responsive-score { font-size: 56px; } }
+@media (min-width: 641px) { .responsive-score { font-size: 72px; } }
+
+.responsive-body {
+  font-size: 14px;
+}
+@media (min-width: 641px) { .responsive-body { font-size: 16px; } }
+
+/* ─── Show/Hide by Breakpoint ─── */
+.hide-mobile { display: none !important; }
+.show-mobile { display: flex !important; }
+@media (min-width: 641px) {
+  .hide-mobile { display: flex !important; }
+  .show-mobile { display: none !important; }
+}
+
+.hide-tablet { display: flex !important; }
+.show-tablet { display: none !important; }
+@media (min-width: 641px) and (max-width: 768px) {
+  .hide-tablet { display: none !important; }
+  .show-tablet { display: flex !important; }
+}
+
+.hide-desktop { display: flex !important; }
+.show-desktop { display: none !important; }
+@media (min-width: 1025px) {
+  .hide-desktop { display: none !important; }
+  .show-desktop { display: flex !important; }
+}
+
+/* ─── Responsive Grid Utilities ─── */
+.responsive-grid-1-2-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+@media (min-width: 641px) {
+  .responsive-grid-1-2-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 769px) {
+  .responsive-grid-1-2-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.responsive-grid-2-3-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+@media (min-width: 641px) {
+  .responsive-grid-2-3-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 769px) {
+  .responsive-grid-2-3-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.responsive-grid-2-4-5 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+@media (min-width: 641px) {
+  .responsive-grid-2-4-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 769px) {
+  .responsive-grid-2-4-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.responsive-grid-2-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+@media (min-width: 769px) {
+  .responsive-grid-2-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ─── Responsive Flex Utilities ─── */
+.flex-responsive {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 641px) {
+  .flex-responsive {
+    flex-direction: row;
+  }
+}
+
+.flex-stack-mobile {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 641px) {
+  .flex-stack-mobile {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ─── Responsive Card ─── */
+.card-responsive {
+  padding: var(--space-md);
+}
+@media (min-width: 641px) {
+  .card-responsive {
+    padding: var(--space-lg);
+  }
+}
+
+/* ─── Responsive Full Height ─── */
+.full-height-responsive {
+  height: calc(100dvh - 140px);
+}
+@supports not (height: 100dvh) {
+  .full-height-responsive {
+    height: calc(100vh - 140px);
+  }
+}
+
+/* ─── Hero Section ─── */
+.hero-responsive {
+  min-height: 70vh;
+}
+@media (min-width: 641px) {
+  .hero-responsive {
+    min-height: 921px;
+  }
+}
+
+/* ─── Bento Grid Responsive ─── */
+.bento-grid-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+@media (min-width: 769px) {
+  .bento-grid-responsive {
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+.bento-card-tall {
+  min-height: 320px;
+}
+@media (min-width: 641px) {
+  .bento-card-tall {
+    min-height: 320px;
+  }
+}
+
+/* ─── Mode Selector ─── */
+.mode-selector-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+@media (min-width: 641px) {
+  .mode-selector-responsive {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ─── History Item ─── */
+.history-item-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+@media (min-width: 641px) {
+  .history-item-responsive {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* ─── Quiz Option Grid ─── */
+.quiz-option-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
+}
+@media (min-width: 641px) {
+  .quiz-option-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ─── Filter Bar Responsive ─── */
+.filter-bar-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+@media (min-width: 641px) {
+  .filter-bar-responsive {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+/* ─── Responsive Widths ─── */
+.max-w-full-mobile {
+  max-width: 100%;
+}
+@media (min-width: 641px) {
+  .max-w-full-mobile {
+    max-width: 80%;
+  }
+}
+
+/* ─── Mode Selector Mobile Compact ─── */
+@media (max-width: 480px) {
+  #mode-selector > div:first-child {
+    flex-direction: column;
+    gap: 6px;
+  }
+  #mode-selector .font-label-uppercase {
+    display: block;
+    margin-bottom: 2px;
+  }
+  .mode-btn {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-btn .material-symbols-outlined {
+    font-size: 16px !important;
+  }
+  #mode-info-badge {
+    font-size: 12px !important;
+    margin-top: 4px;
+  }
+}
+
+/* ─── Touch Target Sizes ─── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+.touch-target-sm {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* ─── Mobile Navigation ─── */
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.mobile-nav-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-nav-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background: #171A21;
+  border-right: 1px solid #2B313C;
+  z-index: 70;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.mobile-nav-panel.open {
+  transform: translateX(0);
+}
+
+.mobile-nav-panel .nav-header {
+  padding: 16px;
+  border-bottom: 1px solid #2B313C;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-nav-panel .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: #A7ADB8;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+.mobile-nav-panel .nav-link:hover,
+.mobile-nav-panel .nav-link:active {
+  color: #E6E8EE;
+  background: rgba(91, 124, 250, 0.08);
+}
+
+.mobile-nav-panel .nav-link--active {
+  color: #5B7CFA;
+  background: rgba(91, 124, 250, 0.08);
+  border-left: 3px solid #5B7CFA;
+}
+
+.mobile-nav-panel .nav-divider {
+  height: 1px;
+  background: #2B313C;
+  margin: 8px 16px;
+}
+
+.mobile-nav-panel .nav-user-info {
+  padding: 16px;
+  border-bottom: 1px solid #2B313C;
+}
+
+/* ─── Toast Responsive ─── */
+.toast-responsive {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90vw;
+  background: #1e1e2e;
+  color: #e0e0e0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #2d2d3f;
+  z-index: 200;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+}
+@media (min-width: 641px) {
+  .toast-responsive {
+    bottom: 2rem;
+    max-width: 400px;
+  }
+}
+
+/* ─── Responsive Table / Data Display ─── */
+.meta-grid-responsive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+.meta-grid-responsive > * {
+  flex: 1 1 calc(50% - var(--space-md));
+  min-width: 140px;
+}
+@media (min-width: 641px) {
+  .meta-grid-responsive > * {
+    flex: 1 1 auto;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

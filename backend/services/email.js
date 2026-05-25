@@ -17,8 +17,15 @@ function smtpSend(from, to, subject, html) {
     }
 
     const CRLF = '\r\n';
-    const boundary = '----=_Part_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var now = new Date();
+    var dateStr = days[now.getUTCDay()] + ', ' + now.getUTCDate() + ' ' + months[now.getUTCMonth()] + ' ' +
+                  now.getUTCFullYear() + ' ' + now.getUTCHours().toString().padStart(2, '0') + ':' +
+                  now.getUTCMinutes().toString().padStart(2, '0') + ':' +
+                  now.getUTCSeconds().toString().padStart(2, '0') + ' +0000';
     var msg = '';
+    msg += 'Date: ' + dateStr + CRLF;
     msg += 'From: ' + from + CRLF;
     msg += 'To: ' + to + CRLF;
     msg += 'Subject: =?UTF-8?B?' + Buffer.from(subject).toString('base64') + '?=' + CRLF;
@@ -48,11 +55,13 @@ function smtpSend(from, to, subject, html) {
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var code = parseInt(line.substring(0, 3), 10);
+        var isFinal = line[3] === ' ';  // true if space (final line) vs dash (continuation)
 
         if (step === 0 && code === 220) {
           step = 1;
           send('EHLO localhost');
-        } else if (step === 1 && code === 250) {
+        } else if (step === 1 && code === 250 && isFinal) {
+          // Wait for the final EHLO line (space, not dash) before sending AUTH
           step = 2;
           send('AUTH LOGIN');
         } else if (step === 2 && code === 334) {
@@ -65,22 +74,23 @@ function smtpSend(from, to, subject, html) {
           authed = true;
           step = 5;
           send('MAIL FROM:<' + from + '>');
-        } else if (step === 5 && code === 250) {
+        } else if (step === 5 && code === 250 && isFinal) {
           step = 6;
           send('RCPT TO:<' + to + '>');
-        } else if (step === 6 && code === 250) {
+        } else if (step === 6 && code === 250 && isFinal) {
           step = 7;
           send('DATA');
         } else if (step === 7 && code === 354) {
           step = 8;
           socket.write(msg);
-        } else if (step === 8 && code === 250) {
+        } else if (step === 8 && code === 250 && isFinal) {
           step = 9;
           send('QUIT');
           socket.end();
           resolve({ sent: true });
         } else if (code >= 500) {
           socket.end();
+          console.error('[SMTP] Error response:', line.substring(0, 200));
           resolve({ sent: false, reason: 'SMTP error: ' + line.substring(0, 100) });
         }
       }
@@ -88,6 +98,7 @@ function smtpSend(from, to, subject, html) {
 
     function onError(err) {
       if (socket) socket.destroy();
+      console.error('[SMTP] Connection error:', err.message);
       resolve({ sent: false, reason: err.message });
     }
 

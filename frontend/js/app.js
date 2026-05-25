@@ -204,6 +204,7 @@
       var data = await apiRequest('/auth/me');
       state.user = data.user;
       document.getElementById('nav-user-name').textContent = state.user.fullName;
+      document.getElementById('mobile-user-name').textContent = state.user.fullName;
       state.difficultyLevel = state.user.techLevel || 'mid';
       fillDropdown(state.user);
       showApp();
@@ -239,6 +240,7 @@
       state.difficultyLevel = data.user.techLevel || 'mid';
       localStorage.setItem('token', data.token);
       document.getElementById('nav-user-name').textContent = data.user.fullName;
+      document.getElementById('mobile-user-name').textContent = data.user.fullName;
       fillDropdown(data.user);
       document.getElementById('login-email').value = '';
       document.getElementById('login-password').value = '';
@@ -286,6 +288,7 @@
       state.difficultyLevel = data.user.techLevel || 'mid';
       localStorage.setItem('token', data.token);
       document.getElementById('nav-user-name').textContent = data.user.fullName;
+      document.getElementById('mobile-user-name').textContent = data.user.fullName;
       fillDropdown(data.user);
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-email').value = '';
@@ -347,6 +350,59 @@
     showAppView('profile');
   });
 
+  // ─── Mobile Navigation ────────────────────────────
+
+  function openMobileNav() {
+    document.getElementById('mobile-nav-overlay').classList.add('open');
+    document.getElementById('mobile-nav-panel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileNav() {
+    document.getElementById('mobile-nav-overlay').classList.remove('open');
+    document.getElementById('mobile-nav-panel').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-mobile-nav').addEventListener('click', openMobileNav);
+  document.getElementById('btn-mobile-nav-close').addEventListener('click', closeMobileNav);
+  document.getElementById('mobile-nav-overlay').addEventListener('click', closeMobileNav);
+
+  document.querySelectorAll('.mobile-nav-link').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      closeMobileNav();
+      var view = this.getAttribute('data-view');
+      if (view === 'history') {
+        state.historyPage = 1;
+        loadHistory();
+      } else if (view === 'areas') {
+        loadAreas();
+      } else if (view === 'profile') {
+        loadProfile();
+      }
+      if (view) showAppView(view);
+    });
+  });
+
+  document.getElementById('btn-mobile-logout').addEventListener('click', function () {
+    closeMobileNav();
+    doLogout();
+  });
+
+  // Close mobile nav on escape key
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeMobileNav();
+    }
+  });
+
+  // Close mobile nav on resize to desktop
+  window.addEventListener('resize', function () {
+    if (window.innerWidth >= 641) {
+      closeMobileNav();
+    }
+  });
+
   // ─── Profile View ────────────────────────────────────
 
   async function loadProfile() {
@@ -391,6 +447,7 @@
       });
       state.user.fullName = document.getElementById('pf-name').value.trim();
       document.getElementById('nav-user-name').textContent = state.user.fullName;
+      document.getElementById('mobile-user-name').textContent = state.user.fullName;
       fillDropdown(state.user);
       document.getElementById('profile-saved-msg').classList.remove('hidden');
     } catch (error) {
@@ -605,7 +662,7 @@
       var selectedDiff = state.difficultyLevel || 'mid';
 
       var popularBadge = area.popular
-        ? '<span class="bg-primary/10 text-primary text-label-uppercase px-sm py-[2px] rounded-full border border-primary/20" style="font-size:10px;font-family:JetBrains Mono">Popular</span>'
+        ? '<span class="badge-popular">Popular</span>'
         : '';
 
       var iconHtml = area.icon
@@ -613,8 +670,8 @@
         : '<span class="material-symbols-outlined" style="font-size:32px;color:#5B7CFA">code</span>';
 
       card.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-          '<div style="padding:8px;background:rgba(91,124,250,0.1);border-radius:8px">' + iconHtml + '</div>' +
+        '<div class="flex-between" style="align-items:flex-start">' +
+          '<div class="icon-container">' + iconHtml + '</div>' +
           popularBadge +
         '</div>' +
         '<div>' +
@@ -625,12 +682,12 @@
           '<div style="margin-bottom:8px">' +
             '<span class="font-label-uppercase" style="font-size:11px;font-family:JetBrains Mono;color:#7D8593;text-transform:uppercase;letter-spacing:0.05em">Dificultad</span>' +
           '</div>' +
-          '<div style="display:flex;gap:6px;margin-bottom:12px">' +
-            '<button class="diff-btn" data-area="' + area.id + '" data-level="junior" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'junior' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'junior' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'junior' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'junior' ? '600' : '400') + '">Junior</button>' +
-            '<button class="diff-btn" data-area="' + area.id + '" data-level="mid" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'mid' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'mid' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'mid' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'mid' ? '600' : '400') + '">Mid</button>' +
-            '<button class="diff-btn" data-area="' + area.id + '" data-level="senior" style="flex:1;padding:6px 0;border-radius:6px;font-size:13px;cursor:pointer;transition:all 0.15s;border:1px solid ' + (selectedDiff === 'senior' ? '#5B7CFA' : '#2B313C') + ';background:' + (selectedDiff === 'senior' ? 'rgba(91,124,250,0.1)' : 'transparent') + ';color:' + (selectedDiff === 'senior' ? '#5B7CFA' : '#A7ADB8') + ';font-weight:' + (selectedDiff === 'senior' ? '600' : '400') + '">Senior</button>' +
+          '<div class="diff-btn-group">' +
+            '<button class="diff-btn' + (selectedDiff === 'junior' ? ' diff-btn--active' : '') + '" data-area="' + area.id + '" data-level="junior">Junior</button>' +
+            '<button class="diff-btn' + (selectedDiff === 'mid' ? ' diff-btn--active' : '') + '" data-area="' + area.id + '" data-level="mid">Mid</button>' +
+            '<button class="diff-btn' + (selectedDiff === 'senior' ? ' diff-btn--active' : '') + '" data-area="' + area.id + '" data-level="senior">Senior</button>' +
           '</div>' +
-          '<button class="start-interview-btn" data-area-id="' + area.id + '" data-area-name="' + escapeHTML(area.name) + '" style="width:100%;background:#5B7CFA;color:#E6E8EE;border:none;padding:10px 0;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s">Iniciar Entrevista</button>' +
+          '<button class="start-interview-btn btn-primary btn-primary--full" data-area-id="' + area.id + '" data-area-name="' + escapeHTML(area.name) + '">Iniciar Entrevista</button>' +
         '</div>';
 
       grid.appendChild(card);
@@ -644,10 +701,7 @@
         var level = this.getAttribute('data-level');
         document.querySelectorAll('.diff-btn[data-area="' + areaId + '"]').forEach(function (b) {
           var isActive = b.getAttribute('data-level') === level;
-          b.style.borderColor = isActive ? '#5B7CFA' : '#2B313C';
-          b.style.background = isActive ? 'rgba(91,124,250,0.1)' : 'transparent';
-          b.style.color = isActive ? '#5B7CFA' : '#A7ADB8';
-          b.style.fontWeight = isActive ? '600' : '400';
+          b.classList.toggle('diff-btn--active', isActive);
         });
         state.difficultyLevel = level;
       });
@@ -675,23 +729,14 @@
 
     function setMode(mode) {
       state.mode = mode;
-      if (mode === 'chat') {
-        chatBtn.style.background = '#5B7CFA';
-        chatBtn.style.color = '#E6E8EE';
-        chatBtn.style.border = 'none';
-        quizBtn.style.background = 'transparent';
-        quizBtn.style.color = '#A7ADB8';
-        quizBtn.style.border = '1px solid #2B313C';
-        descEl.textContent = 'Practica con IA generativa. Recibe feedback en cada respuesta.';
-      } else {
-        quizBtn.style.background = '#5B7CFA';
-        quizBtn.style.color = '#E6E8EE';
-        quizBtn.style.border = 'none';
-        chatBtn.style.background = 'transparent';
-        chatBtn.style.color = '#A7ADB8';
-        chatBtn.style.border = '1px solid #2B313C';
-        descEl.textContent = 'Cuestionario de opcion multiple. Evaluacion automatica al finalizar.';
-      }
+      var isChat = mode === 'chat';
+      chatBtn.classList.toggle('btn-primary', isChat);
+      chatBtn.classList.toggle('btn-secondary', !isChat);
+      quizBtn.classList.toggle('btn-primary', !isChat);
+      quizBtn.classList.toggle('btn-secondary', isChat);
+      descEl.textContent = isChat
+        ? 'Practica con IA generativa. Recibe feedback en cada respuesta.'
+        : 'Cuestionario de opcion multiple. Evaluacion automatica al finalizar.';
       document.querySelectorAll('.start-interview-btn').forEach(function (b) {
         b.textContent = mode === 'quiz' ? 'Iniciar Cuestionario' : 'Iniciar Entrevista';
       });
@@ -839,7 +884,8 @@
     msg.innerHTML =
       '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:' + scoreColor + ';margin-bottom:4px;font-family:JetBrains Mono">Feedback IA — <strong>' + score + '/100</strong></div>' +
       '<p style="font-size:13px;color:#7D8593">' + escapeHTML(feedback) + '</p>';
-    msg.style.cssText = 'align-self:flex-start;background:#171A21;border:1px solid #2B313C;border-left:3px solid ' + scoreColor + ';border-radius:8px;padding:10px 14px;margin-bottom:12px;max-width:80%';
+    msg.className = 'message-feedback';
+    msg.style.borderLeft = '3px solid ' + scoreColor;
     document.getElementById('chat-messages').appendChild(msg);
     scrollToBottom();
   }
@@ -975,15 +1021,17 @@
     labels.forEach(function (l) {
       if (!opts[l]) return;
       var selected = quizState.answers[q.id] === l;
+      var optionClass = 'quiz-option' + (selected ? ' quiz-option--selected' : '');
       optionsHtml +=
-        '<div class="quiz-option" data-qid="' + q.id + '" data-val="' + l + '" style="padding:12px 16px;border-radius:8px;border:1px solid ' + (selected ? '#5B7CFA' : '#2B313C') + ';background:' + (selected ? 'rgba(91,124,250,0.1)' : '#171A21') + ';cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px">' +
-          '<div style="width:28px;height:28px;border-radius:50%;border:2px solid ' + (selected ? '#5B7CFA' : '#2B313C') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + (selected ? '#5B7CFA' : 'transparent') + '">' +
-            '<span style="color:' + (selected ? '#E6E8EE' : '#A7ADB8') + ';font-size:13px;font-weight:600;text-transform:uppercase">' + l + '</span>' +
+        '<div class="' + optionClass + '" data-qid="' + q.id + '" data-val="' + l + '">' +
+          '<div class="quiz-option__circle">' +
+            '<span class="quiz-option__letter">' + l + '</span>' +
           '</div>' +
           '<span style="color:#E6E8EE;font-size:15px">' + escapeHTML(opts[l]) + '</span>' +
         '</div>';
     });
 
+    document.getElementById('quiz-options').className = 'quiz-option-grid';
     document.getElementById('quiz-options').innerHTML = optionsHtml;
 
     // Click handlers for options
@@ -1074,7 +1122,7 @@
     // Score gauge
     html +=
       '<div class="bg-surface-container border border-outline-variant rounded-xl p-lg text-center mb-lg" style="background:#20242D">' +
-        '<div style="font-size:56px;font-weight:700;background:linear-gradient(135deg, ' + scoreColor + ', ' + (result.score >= 70 ? '#2b8252' : result.score >= 40 ? '#a07820' : '#a04040') + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1">' +
+        '<div class="responsive-score" style="background:linear-gradient(135deg, ' + scoreColor + ', ' + (result.score >= 70 ? '#2b8252' : result.score >= 40 ? '#a07820' : '#a04040') + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700">' +
           result.score +
         '</div>' +
         '<div style="font-size:16px;color:' + scoreColor + ';font-weight:600;margin-bottom:4px">' + gradeLabel + '</div>' +
@@ -1115,19 +1163,20 @@
     var icon = isCorrect ? 'check_circle' : 'cancel';
     var iconColor = isCorrect ? '#4CAF7A' : '#D96B6B';
     var statusLabel = isCorrect ? 'Correcta' : 'Incorrecta';
+    var cardClass = isCorrect ? 'quiz-option--correct' : 'quiz-option--incorrect';
     return (
-      '<div style="border:1px solid ' + borderColor + ';border-radius:10px;padding:16px;margin-bottom:14px;background:#171A21">' +
+      '<div class="' + cardClass + '" style="padding:16px;margin-bottom:14px;background:#171A21;border-radius:10px">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
           '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:18px">' + icon + '</span>' +
-          '<span style="font-size:11px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.05em;color:' + iconColor + '">Pregunta ' + index + ' — ' + statusLabel + '</span>' +
+          '<span class="meta-item__label" style="color:' + iconColor + '">Pregunta ' + index + ' — ' + statusLabel + '</span>' +
         '</div>' +
-        '<p style="font-size:15px;color:#E6E8EE;font-weight:500;margin-bottom:12px;line-height:1.5">' + escapeHTML(r.questionText) + '</p>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+        '<p class="eval-section__text" style="font-size:15px;color:#E6E8EE;font-weight:500;margin-bottom:12px;line-height:1.5">' + escapeHTML(r.questionText) + '</p>' +
+        '<div class="quiz-option-grid" style="margin-bottom:12px">' +
           renderOptionBlock(r.options, r.selected, r.correctAnswer) +
         '</div>' +
-        '<div style="padding:12px;background:#20242D;border-radius:8px;border:1px solid #2B313C">' +
-          '<span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.05em;color:#5B7CFA">Explicacion</span>' +
-          '<p style="font-size:13px;color:#A7ADB8;margin:6px 0 0;line-height:1.5">' + escapeHTML(r.explanation) + '</p>' +
+        '<div class="card-elevated card-elevated--sm">' +
+          '<span class="meta-item__label" style="color:#5B7CFA">Explicacion</span>' +
+          '<p class="eval-section__text" style="margin:6px 0 0">' + escapeHTML(r.explanation) + '</p>' +
         '</div>' +
       '</div>'
     );
@@ -1140,14 +1189,13 @@
       if (!options[l]) return;
       var isSelected = l === selected;
       var isCorrect = l === correct;
-      var bgColor = isCorrect ? 'rgba(76,175,122,0.15)' : (isSelected && !isCorrect ? 'rgba(217,107,107,0.15)' : '#171A21');
-      var borderColor = isCorrect ? '#4CAF7A' : (isSelected && !isCorrect ? '#D96B6B' : '#2B313C');
-      var textColor = isCorrect ? '#4CAF7A' : (isSelected && !isCorrect ? '#D96B6B' : '#A7ADB8');
+      var optionClass = isCorrect ? 'quiz-option--correct' : (isSelected ? 'quiz-option--incorrect' : '');
       var prefix = isCorrect ? '✓' : (isSelected ? '✗' : '');
+      var textColor = isCorrect ? '#4CAF7A' : (isSelected ? '#D96B6B' : '#A7ADB8');
       html +=
-        '<div style="padding:8px 12px;border-radius:6px;border:1px solid ' + borderColor + ';background:' + bgColor + ';display:flex;align-items:center;gap:8px">' +
+        '<div class="' + optionClass + '" style="padding:8px 12px;border-radius:6px;display:flex;align-items:center;gap:8px">' +
           '<span class="font-code-sm" style="color:' + textColor + ';font-weight:600;text-transform:uppercase;font-size:11px">' + l + '.</span>' +
-          '<span style="font-size:13px;color:' + (isCorrect || (isSelected && !isCorrect) ? textColor : '#A7ADB8') + '">' + escapeHTML(options[l]) + '</span>' +
+          '<span style="font-size:13px;color:' + textColor + '">' + escapeHTML(options[l]) + '</span>' +
           '<span style="margin-left:auto;font-size:12px;color:' + textColor + ';font-weight:600">' + prefix + '</span>' +
         '</div>';
     });
@@ -1200,7 +1248,7 @@
         '<h3 style="font-size:16px;font-weight:600;color:#E6E8EE;margin-bottom:8px">Habilidades detectadas</h3>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px">';
       evaluation.tags.forEach(function (tag) {
-        tagsHtml += '<span style="background:#20242D;color:#A7ADB8;padding:4px 10px;border-radius:12px;font-size:12px;border:1px solid #2B313C">' + escapeHTML(tag) + '</span>';
+        tagsHtml += '<span class="tag-chip" style="padding:4px 10px;font-size:12px">' + escapeHTML(tag) + '</span>';
       });
       tagsHtml += '</div></div>';
     }
@@ -1208,7 +1256,7 @@
     container.innerHTML =
       '<div class="evaluation-card">' +
         '<div class="evaluation-score">' +
-          '<div class="score-number" style="background:linear-gradient(135deg, ' + scoreGrad + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:72px;font-weight:700;line-height:1;margin-bottom:8px">' +
+          '<div class="responsive-score" style="background:linear-gradient(135deg, ' + scoreGrad + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;margin-bottom:8px">' +
             evaluation.score +
           '</div>' +
           '<div class="score-label" style="font-size:14px;color:#A7ADB8">Puntuacion sobre 100</div>' +
@@ -1263,9 +1311,8 @@
   }
 
   function getDifficultyBadge(difficulty) {
-    var colors = { junior: { bg: '#4CAF7A', text: '#0F1115' }, mid: { bg: '#5B7CFA', text: '#E6E8EE' }, senior: { bg: '#D6A54A', text: '#0F1115' } };
-    var c = colors[difficulty] || colors.mid;
-    return '<span style="background:' + c.bg + ';color:' + c.text + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em">' + (difficulty || 'mid') + '</span>';
+    var level = difficulty || 'mid';
+    return '<span class="badge-difficulty badge-difficulty--' + level + '">' + level + '</span>';
   }
 
   function renderHistory(items, pagination) {
@@ -1289,18 +1336,19 @@
       if (item.status === 'abandoned') statusLabel = ' (abandonada)';
       var badge = getDifficultyBadge(item.difficulty_level);
       var typeLabel = item.type === 'quiz' ? 'Cuestionario' : 'Chat IA';
-      var typeColor = item.type === 'quiz' ? '#D6A54A' : '#5B7CFA';
-      var typeBg = item.type === 'quiz' ? 'rgba(214,165,74,0.15)' : 'rgba(91,124,250,0.15)';
+      var typeClass = 'badge-type badge-type--' + (item.type === 'quiz' ? 'quiz' : 'chat');
       div.innerHTML =
-        '<div class="history-info">' +
-          '<div class="history-area">' + escapeHTML(item.area_name) + statusLabel + '</div>' +
-          '<div class="history-date" style="margin-top:4px">' + date + ' ' + badge +
-          ' <span style="background:' + typeBg + ';color:' + typeColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em">' + typeLabel + '</span></div>' +
-        '</div>' +
-        '<div class="history-score">' + (item.score !== null ? item.score : '-') + '</div>' +
-        '<div style="display:flex;gap:6px">' +
-          '<button class="btn-view-session" data-id="' + item.id + '" style="background:transparent;color:#5B7CFA;border:1px solid #2B313C;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s">Detalle</button>' +
-          '<button class="btn-delete-interview" data-id="' + item.id + '" title="Eliminar" style="background:transparent;color:#D96B6B;border:1px solid #D96B6B;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s">Eliminar</button>' +
+        '<div class="history-item-inner">' +
+          '<div class="history-info" style="flex:1;min-width:0">' +
+            '<div class="history-area">' + escapeHTML(item.area_name) + statusLabel + '</div>' +
+            '<div class="history-date" style="margin-top:4px">' + date + ' ' + badge +
+            ' <span class="' + typeClass + '">' + typeLabel + '</span></div>' +
+          '</div>' +
+          '<div class="history-actions">' +
+            '<div class="history-score" style="text-align:right">' + (item.score !== null ? item.score : '-') + '</div>' +
+            '<button class="btn-view-session" data-id="' + item.id + '" style="background:transparent;color:#5B7CFA;border:1px solid #2B313C;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;white-space:nowrap">Detalle</button>' +
+            '<button class="btn-delete-interview" data-id="' + item.id + '" title="Eliminar" style="background:transparent;color:#D96B6B;border:1px solid #D96B6B;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;white-space:nowrap">Eliminar</button>' +
+          '</div>' +
         '</div>';
       if (item.status === 'in_progress') {
         div.addEventListener('click', function (e) {
@@ -1422,27 +1470,27 @@
     }
 
     document.getElementById('session-meta').innerHTML =
-      '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
-        '<div><span style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#7D8593;font-family:JetBrains Mono">Fecha</span><p style="color:#E6E8EE;font-size:16px;margin:2px 0 0">' + date + '</p></div>' +
-        '<div><span style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#7D8593;font-family:JetBrains Mono">Duracion</span><p style="color:#E6E8EE;font-size:16px;margin:2px 0 0">' + (duration || '—') + '</p></div>' +
-        '<div><span style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#7D8593;font-family:JetBrains Mono">Preguntas</span><p style="color:#E6E8EE;font-size:16px;margin:2px 0 0">' + (session.questions_answered || 0) + '</p></div>' +
-        '<div><span style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#7D8593;font-family:JetBrains Mono">Puntuacion</span><p style="color:#5B7CFA;font-size:16px;font-weight:600;margin:2px 0 0">' + (session.score !== null ? session.score + '/100' : '—') + '</p></div>' +
+      '<div class="meta-grid-responsive">' +
+        '<div class="meta-item"><span class="meta-item__label">Fecha</span><p class="meta-item__value">' + date + '</p></div>' +
+        '<div class="meta-item"><span class="meta-item__label">Duracion</span><p class="meta-item__value">' + (duration || '—') + '</p></div>' +
+        '<div class="meta-item"><span class="meta-item__label">Preguntas</span><p class="meta-item__value">' + (session.questions_answered || 0) + '</p></div>' +
+        '<div class="meta-item"><span class="meta-item__label">Puntuacion</span><p class="meta-item__value" style="color:#5B7CFA;font-weight:600">' + (session.score !== null ? session.score + '/100' : '—') + '</p></div>' +
       '</div>';
 
     // Evaluacion
     var evalDiv = document.getElementById('session-evaluation');
     if (session.feedback) {
-      var evalHtml = '<div style="background:#20242D;border:1px solid #2B313C;border-radius:8px;padding:16px;margin-bottom:16px">';
+      var evalHtml = '<div class="card-elevated card-elevated--sm" style="margin-bottom:16px">';
       evalHtml += '<h3 style="font-size:14px;font-weight:600;color:#E6E8EE;margin-bottom:8px">Sintesis del evaluador</h3>';
-      evalHtml += '<p style="font-size:14px;color:#A7ADB8;line-height:1.6">' + escapeHTML(session.feedback) + '</p>';
+      evalHtml += '<p class="eval-section__text">' + escapeHTML(session.feedback) + '</p>';
 
       if (session.strengths) {
-        evalHtml += '<div style="margin-top:12px;padding:10px 14px;background:#4CAF7A/10;border:1px solid #4CAF7A/20;border-radius:6px">' +
-          '<span style="color:#4CAF7A;font-size:12px;font-weight:600">Fortalezas:</span> ' +
+        evalHtml += '<div style="margin-top:12px;padding:10px 14px;background:rgba(76,175,122,0.1);border:1px solid rgba(76,175,122,0.2);border-radius:6px">' +
+          '<span class="score-color--high" style="font-size:12px;font-weight:600">Fortalezas:</span> ' +
           '<span style="color:#A7ADB8;font-size:13px">' + escapeHTML(session.strengths) + '</span></div>';
       }
       if (session.improvements) {
-        evalHtml += '<div style="margin-top:8px;padding:10px 14px;background:#D6A54A/10;border:1px solid #D6A54A/20;border-radius:6px">' +
+        evalHtml += '<div style="margin-top:8px;padding:10px 14px;background:rgba(214,165,74,0.1);border:1px solid rgba(214,165,74,0.2);border-radius:6px">' +
           '<span style="color:#D6A54A;font-size:12px;font-weight:600">Mejora:</span> ' +
           '<span style="color:#A7ADB8;font-size:13px">' + escapeHTML(session.improvements) + '</span></div>';
       }
@@ -1450,7 +1498,7 @@
       if (session.tags) {
         evalHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">';
         session.tags.forEach(function (tag) {
-          evalHtml += '<span style="background:#171A21;color:#A7ADB8;padding:3px 8px;border-radius:10px;font-size:11px;border:1px solid #2B313C">' + escapeHTML(tag) + '</span>';
+          evalHtml += '<span class="tag-chip">' + escapeHTML(tag) + '</span>';
         });
         evalHtml += '</div>';
       }
@@ -1477,15 +1525,15 @@
       if (quizResults && quizResults.length > 0) {
         var qHtml = '';
         quizResults.forEach(function (r, i) {
-          var borderColor = r.isCorrect ? '#4CAF7A' : '#D96B6B';
           var icon = r.isCorrect ? 'check_circle' : 'cancel';
           var iconColor = r.isCorrect ? '#4CAF7A' : '#D96B6B';
           var statusLabel = r.isCorrect ? 'Correcta' : 'Incorrecta';
+          var cardClass = r.isCorrect ? 'quiz-option--correct' : 'quiz-option--incorrect';
           qHtml +=
-            '<div style="border:1px solid ' + borderColor + ';border-radius:8px;padding:14px;margin-bottom:12px;background:#171A21">' +
+            '<div class="' + cardClass + '" style="border-radius:8px;padding:14px;margin-bottom:12px;background:#171A21">' +
               '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
                 '<span class="material-symbols-outlined" style="color:' + iconColor + ';font-size:16px">' + icon + '</span>' +
-                '<span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.03em;color:' + iconColor + '">Pregunta ' + (i + 1) + ' — ' + statusLabel + '</span>' +
+                '<span class="meta-item__label" style="color:' + iconColor + '">Pregunta ' + (i + 1) + ' — ' + statusLabel + '</span>' +
               '</div>' +
               '<p style="font-size:14px;color:#E6E8EE;margin-bottom:8px;line-height:1.4">' + escapeHTML(r.questionText) + '</p>' +
               '<div style="font-size:12px;margin-bottom:6px">' +
@@ -1493,7 +1541,7 @@
                 '<span style="color:' + (r.isCorrect ? '#4CAF7A' : '#D96B6B') + ';font-weight:600">' + escapeHTML(r.options[r.selected] || r.selected) + '</span>' +
               '</div>' +
               (!r.isCorrect ? '<div style="font-size:12px;margin-bottom:6px"><span style="color:#7D8593">Respuesta correcta: </span><span style="color:#4CAF7A;font-weight:600">' + escapeHTML(r.options[r.correctAnswer] || r.correctAnswer) + '</span></div>' : '') +
-              (r.explanation ? '<div style="padding:8px 10px;background:#20242D;border-radius:6px;border:1px solid #2B313C;margin-top:8px"><span style="font-size:10px;font-family:JetBrains Mono;text-transform:uppercase;letter-spacing:0.03em;color:#5B7CFA">Explicacion</span><p style="font-size:12px;color:#A7ADB8;margin:4px 0 0;line-height:1.4">' + escapeHTML(r.explanation) + '</p></div>' : '') +
+              (r.explanation ? '<div class="card-elevated card-elevated--sm" style="margin-top:8px"><span class="meta-item__label" style="color:#5B7CFA">Explicacion</span><p class="eval-section__text" style="margin:4px 0 0">' + escapeHTML(r.explanation) + '</p></div>' : '') +
             '</div>';
         });
         transcriptDiv.innerHTML = qHtml;
@@ -1561,10 +1609,7 @@
 
   function showToast(message) {
     var toast = document.createElement('div');
-    toast.style.cssText =
-      'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);' +
-      'background:#1e1e2e;color:#e0e0e0;padding:0.75rem 1.5rem;border-radius:8px;' +
-      'border:1px solid #2d2d3f;z-index:200;font-size:0.9rem;animation:fadeIn 0.3s ease;';
+    toast.className = 'toast-responsive';
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(function () {
@@ -1590,6 +1635,52 @@
   window.goLanding = function () {
     showLanding();
   };
+
+  // ─── Landing Mobile Menu ─────────────────────────
+
+  function closeLandingMobileMenu() {
+    var menu = document.getElementById('landing-mobile-menu');
+    var overlay = document.getElementById('landing-mobile-overlay');
+    if (menu) menu.classList.add('hidden');
+    if (overlay) overlay.classList.add('hidden');
+  }
+
+  window.closeLandingMobileMenu = closeLandingMobileMenu;
+
+  function initLandingMobileMenu() {
+    var btn = document.getElementById('btn-landing-mobile-nav');
+    var menu = document.getElementById('landing-mobile-menu');
+    var overlay = document.getElementById('landing-mobile-overlay');
+    if (!btn || !menu || !overlay) return;
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = !menu.classList.contains('hidden');
+      if (isOpen) {
+        menu.classList.add('hidden');
+        overlay.classList.add('hidden');
+      } else {
+        menu.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+      }
+    });
+
+    overlay.addEventListener('click', closeLandingMobileMenu);
+
+    document.addEventListener('click', function (e) {
+      if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        closeLandingMobileMenu();
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth >= 641) {
+        closeLandingMobileMenu();
+      }
+    });
+  }
+
+  initLandingMobileMenu();
 
   window.goHome = function () {
     showAppView('home');

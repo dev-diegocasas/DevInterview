@@ -190,7 +190,9 @@ async function forgotPassword(req, res) {
         }
       });
     } else {
-      sendJSON(res, 500, { success: false, error: 'No se pudo enviar el correo. Intenta de nuevo mas tarde.' });
+      var smtpReason = emailResult.reason || 'Error desconocido';
+      console.error('[ForgotPassword] SMTP fallo para ' + user.email + ': ' + smtpReason);
+      sendJSON(res, 500, { success: false, error: 'No se pudo enviar el correo. ' + smtpReason });
     }
   } catch (error) {
     sendJSON(res, 500, { success: false, error: error.message });

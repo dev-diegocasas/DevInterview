@@ -238,3 +238,147 @@ It should not feel childish, overly corporate, or excessively futuristic.
 ## Suggested Design Direction Summary
 A modern, dark-neutral, developer-inspired SaaS interface for a Spanish-language technical interview simulator. The design should feel like a premium productivity tool: calm, structured, readable, and reliable.
 
+---
+
+## Responsive Design System
+
+### Breakpoints
+| Token | Min-Width | Target |
+|---|---|---|
+| `xs` | ≤ 375px | Teléfonos pequeños |
+| `sm` | 376px – 640px | Teléfonos grandes |
+| `md` | 641px – 768px | Tablets vertical |
+| `lg` | 769px – 1024px | Tablets horizontal / laptops pequeños |
+| `xl` | 1025px – 1279px | Desktop estándar |
+| `xxl` | ≥ 1280px | Desktop grande (max 1536px contenido) |
+
+### Responsive Spacing
+- `--space-mobile`: `16px` — usado en `xs`, `sm`
+- `--space-tablet`: `24px` — usado en `md`
+- `--space-desktop`: `32px` — usado en `lg+`
+
+Implementado via clase `.container-responsive` que aplica padding lateral automático según breakpoint.
+
+### Responsive Typography
+| Element | xs | sm | md | lg+ |
+|---|---|---|---|---|
+| `h1` (hero) | 28px | 36px | 48px | 72px |
+| `h2` | 22px | 24px | 24px | 32px |
+| `h3` | 18px | 18px | 20px | 20px |
+| `body` | 14px | 14px | 16px | 16px |
+| `score` | 48px | 56px | 72px | 72px |
+
+Implementado via clases CSS: `.responsive-h1`, `.responsive-h2`, `.responsive-score`
+
+### Per-Component Responsive Specifications
+
+#### Navigation Bar
+- **Archivo:** `frontend/index.html:435`, `frontend/js/app.js`
+- **Desktop** (≥ 641px): Barra horizontal fija con links: Dashboard, Historial, Práctica. Avatar + notificaciones alineados a la derecha.
+- **Mobile** (< 641px): Botón hamburguesa (☰) visible a la izquierda del brand. Links de navegación ocultos. Slide-in panel lateral desde la izquierda (280px de ancho) con overlay semitransparente.
+- **Panel lateral:** Fondo `#171A21`, borde derecho `#2B313C`. Contiene: nombre de usuario, links de navegación (Dashboard, Historial, Práctica, Perfil), divider, y cerrar sesión. Se cierra al hacer clic en overlay, en un link, presionar Escape, o redimensionar a desktop.
+- **Clases CSS:** `.mobile-nav-overlay`, `.mobile-nav-panel`, `.nav-link`, `.nav-header`, `.nav-user-info`
+- **Breakpoint mobile:** `641px`
+
+#### Hero Section (Landing)
+- **Archivo:** `frontend/index.html:116`
+- **Mobile:** Altura `70vh` (vs 921px fijo en desktop). Heading 28-36px. CTA buttons en columna vertical.
+- **Desktop:** Altura 921px. Heading 72px. CTA buttons en fila horizontal.
+- **Clase CSS:** `.hero-responsive`, `.responsive-h1`
+
+#### Bento Grid (Características)
+- **Archivo:** `frontend/index.html:208`
+- **Mobile:** Una columna única, cada card ocupa todo el ancho. Cards con altura `320px` (`bento-card-tall`).
+- **Desktop:** Grid de 12 columnas. Cards pueden ocupar `md:col-span-4` o `md:col-span-8`.
+- **Clase CSS:** `.bento-grid-responsive`, `.bento-card-tall`
+
+#### Stats Cards (Dashboard)
+- **Archivo:** `frontend/index.html:468`
+- **Mobile:** 2 columnas (xs) → 3 columnas (sm) → 5 columnas (md+).
+- **Breakpoints:** `xs: 2 cols`, `sm: 3 cols`, `md+: 5 cols`
+- **Clase CSS:** `.responsive-grid-2-4-5`
+
+#### Mode Selector (Areas View)
+- **Archivo:** `frontend/index.html:525`
+- **Mobile:** Label y botones en fila, descripción debajo en bloque separado.
+- **Desktop:** Todo en una fila horizontal con `ml-auto` para la descripción.
+- **Clase CSS:** `.mode-selector-responsive`
+
+#### History Items
+- **Archivo:** `frontend/js/app.js:1294`
+- **Mobile:** Información (área, fecha, badges) arriba, score + botones (Detalle, Eliminar) abajo en fila separada.
+- **Desktop:** Todo en una fila horizontal. Info a la izquierda, score + botones a la derecha.
+- **Clase CSS:** `.history-item-inner`, `.history-actions`
+
+#### Chat Interface
+- **Archivo:** `frontend/index.html:542`, `frontend/js/app.js:818-845`
+- **Altura:** Usa `100dvh` (dynamic viewport height) con fallback a `100vh` para manejar teclado virtual en mobile.
+- **Mensajes:** `max-width: 85%` en mobile, `80%` en desktop.
+- **Input:** Textarea con 2 filas sugeridas en mobile, 3 en desktop.
+- **Clase CSS:** `.full-height-responsive`, `.message-feedback`
+
+#### Quiz Options
+- **Archivo:** `frontend/js/app.js:978`, `frontend/js/app.js:1125`
+- **Mobile:** Opciones en una columna única (`grid-template-columns: 1fr`).
+- **Desktop:** Opciones en dos columnas (`grid-template-columns: 1fr 1fr`).
+- **Clase CSS:** `.quiz-option-grid`, `.quiz-option`, `.quiz-option__circle`, `.quiz-option__letter`, `.quiz-option--selected`
+
+#### Evaluation Score
+- **Archivo:** `frontend/js/app.js:1211`
+- **Mobile:** Score `48px` (xs) → `56px` (sm).
+- **Desktop:** Score `72px`.
+- **Clase CSS:** `.responsive-score`
+
+#### History Filter Bar
+- **Archivo:** `frontend/index.html:640`
+- **Mobile:** Filtros en columna vertical.
+- **Desktop:** Filtros en fila horizontal con `flex-wrap`.
+- **Clase CSS:** `.filter-bar-responsive`
+
+#### Session Detail Metadata
+- **Archivo:** `frontend/js/app.js:1424`
+- **Mobile:** Metadatos en grid 2 columnas.
+- **Desktop:** Metadatos en fila horizontal.
+- **Clase CSS:** `.meta-grid-responsive`, `.meta-item`, `.meta-item__label`, `.meta-item__value`
+
+#### Toast Notifications
+- **Archivo:** `frontend/js/app.js:1562`
+- **Mobile:** `max-width: 90vw`, `bottom: 1rem`.
+- **Desktop:** `max-width: 400px`, `bottom: 2rem`.
+- **Clase CSS:** `.toast-responsive`
+
+#### Footer
+- **Archivo:** `frontend/index.html:289`
+- **Mobile:** Brand y copyright centrados arriba, links de navegación debajo.
+- **Desktop:** Brand a la izquierda, links a la derecha.
+- **Clase CSS:** `.footer-responsive`
+
+### Touch Target Guidelines
+- Mínimo tamaño táctil: `44×44px` para elementos interactivos principales.
+- Mínimo tamaño para elementos secundarios: `36×36px`.
+- Espaciado mínimo entre elementos táctiles: `8px`.
+- Implementado via clases: `.touch-target` (44px), `.touch-target-sm` (36px).
+
+### Viewport & Keyboard Handling
+- Usar `100dvh` (dynamic viewport height) en lugar de `100vh` para layouts full-height (chat).
+- Fallback con `@supports not (height: 100dvh)` para navegadores legacy.
+- El área de input del chat debe permanecer visible cuando el teclado mobile se abre.
+- Los formularios no deben quedar ocultos detrás del teclado virtual.
+
+### CSS File Architecture
+Los estilos responsive se organizan en 3 archivos:
+
+| Archivo | Propósito |
+|---|---|
+| `responsive.css` | Breakpoints, utilidades responsive (grid, flex, show/hide), tipografía responsive, animaciones |
+| `components.css` | Clases de componentes reutilizables (cards, botones, badges, opciones de quiz, etc.) |
+| `index.html <style>` | Estilos específicos de layout y overriding de Tailwind para casos no cubiertos |
+
+Archivo legacy eliminado: `styles.css` (sus reglas fueron consolidadas en los 3 archivos anteriores).
+
+### Orden de Carga de CSS
+1. Tailwind CDN (framework base)
+2. `responsive.css` (sistema responsive)
+3. `components.css` (componentes reutilizables)
+4. `<style>` inline en `index.html` (overrides específicos)
+
