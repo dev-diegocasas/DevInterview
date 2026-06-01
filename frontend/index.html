@@ -489,8 +489,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <button id="btn-view-all-notifications" class="w-full py-sm rounded-lg text-sm font-semibold transition-all" style="color:#5B7CFA;background:transparent;border:none;cursor:pointer">Ver todas las notificaciones</button>
                     </div>
                 </div>
-                <div id="avatar-trigger" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:border-primary transition-colors touch-target-sm">
-                    <img alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVKRZ5VxYMVoeJqcFC5L3UDCl8ffCCEWSbCQJqWEy9zxWFvUSb9ANUwzU4LQVZvtix9x8ia3d_Dq8oPcXEExHZ2uvP5RRy4AeSbl2l0Qeec9xA59yiLBLjmC4F7_4Jf_rLHKiJ2dcP9mMAPW1rYWKBpLNxzqdO-W5gxpLOuYyLYz6P9No9PPc30KcxHf8kZq42bx79NX_LIOBnt-rvHPHbv1ioN6R-4jHWyPeEKXneD2s1TKM8Yn2EVSb-f2VPiFGoNA484CYNir-J"/>
+                <div id="avatar-trigger" class="w-8 h-8 rounded-full cursor-pointer hover:opacity-80 transition-all touch-target-sm flex items-center justify-center" style="background:#5B7CFA">
+                    <span id="avatar-initials" class="font-bold text-on-surface select-none" style="font-size:12px;letter-spacing:0.5px;color:#E6E8EE">—</span>
                 </div>
                 <div id="profile-dropdown" class="hidden absolute top-full right-0 mt-2 w-48 bg-surface-container border border-outline-variant rounded-lg shadow-xl z-50 overflow-hidden" style="background:#171A21">
                     <div class="px-md py-sm border-b border-outline-variant" style="padding:10px 14px">
@@ -950,15 +950,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <!-- Notifications View -->
             <div id="view-notifications" class="view-hidden max-w-4xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-lg">
-                <header class="mb-lg flex items-center gap-md">
+                <header class="mb-lg flex flex-wrap items-center gap-md">
                     <button class="p-2 hover:bg-surface-bright rounded-lg transition-colors" onclick="window.goHome()">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
-                    <div class="flex-grow">
+                    <div class="flex-grow" style="min-width:180px">
                         <h1 class="font-h1 text-h1 text-on-surface mb-xs">Notificaciones</h1>
                         <p class="font-body-md text-body-md text-on-surface-variant" id="notif-page-subtitle">Todas tus notificaciones</p>
                     </div>
-                    <button id="btn-mark-all-read" class="bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-md py-sm rounded-lg transition-all duration-150 border border-outline-variant text-sm">Marcar todas leídas</button>
+                    <button id="btn-mark-all-read" class="whitespace-nowrap bg-surface-bright hover:bg-surface-variant text-on-surface font-semibold px-md py-sm rounded-lg transition-all duration-150 border border-outline-variant text-sm">Marcar todas leídas</button>
                 </header>
                 <div id="notifications-list" class="space-y-md" style="min-height:200px">
                     <div style="text-align:center;padding:40px;color:#7D8593;font-size:14px">Cargando notificaciones...</div>

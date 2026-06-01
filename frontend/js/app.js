@@ -363,6 +363,22 @@
     var emailEl = document.getElementById('dropdown-user-email');
     if (nameEl) nameEl.textContent = user.fullName;
     if (emailEl) emailEl.textContent = user.email;
+    updateAvatarInitials(user.fullName);
+  }
+
+  function updateAvatarInitials(fullName) {
+    if (!fullName) return;
+    var parts = fullName.trim().split(/\s+/);
+    var first = parts[0] ? parts[0].charAt(0).toUpperCase() : '';
+    var last = parts.length > 1 ? parts[parts.length - 1].charAt(0).toUpperCase() : '';
+    var initials = first + last;
+    var span = document.getElementById('avatar-initials');
+    var container = document.getElementById('avatar-trigger');
+    if (!span || !container) return;
+    span.textContent = initials || '—';
+    var colors = ['#5B7CFA', '#4CAF7A', '#D6A54A', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#A855F7'];
+    var idx = initials.charCodeAt(0) % colors.length;
+    container.style.background = colors[idx];
   }
 
   listen('avatar-trigger', 'click', function (e) {
