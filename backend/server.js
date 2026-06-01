@@ -192,12 +192,10 @@ const server = http.createServer(async (req, res) => {
 
   // Rutas especiales: servir archivos HTML standalone
   if (pathname === '/reset-password') {
-    filePath = path.join(FRONTEND_DIR, 'reset-password.html');
-    return serveStaticFile(res, filePath);
+    return serveStaticFile(res, path.join(FRONTEND_DIR, 'reset-password.html'));
   }
   if (pathname === '/verify-email') {
-    filePath = path.join(FRONTEND_DIR, 'verify-email.html');
-    return serveStaticFile(res, filePath);
+    return serveStaticFile(res, path.join(FRONTEND_DIR, 'verify-email.html'));
   }
 
   let filePath = path.join(FRONTEND_DIR, pathname === '/' ? 'index.html' : pathname);
