@@ -18,8 +18,9 @@ CREATE TABLE IF NOT EXISTS users (
     bio             TEXT,
     tech_level      VARCHAR(20)     NOT NULL DEFAULT 'junior'
                     CHECK (tech_level IN ('junior', 'mid', 'senior')),
-    account_status  VARCHAR(20)     NOT NULL DEFAULT 'active'
-                    CHECK (account_status IN ('active', 'inactive')),
+    account_status  VARCHAR(20)     NOT NULL DEFAULT 'pending'
+                    CHECK (account_status IN ('active', 'inactive', 'pending')),
+    email_verified  BOOLEAN         NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     last_login      TIMESTAMPTZ
 );
@@ -27,7 +28,8 @@ CREATE TABLE IF NOT EXISTS users (
 COMMENT ON TABLE users IS 'Cuentas de usuario con perfil y credenciales';
 COMMENT ON COLUMN users.password_hash IS 'Hash scrypt de la contraseña (salt:hash)';
 COMMENT ON COLUMN users.tech_level IS 'Nivel técnico: junior, mid, senior';
-COMMENT ON COLUMN users.account_status IS 'Estado: active, inactive';
+COMMENT ON COLUMN users.account_status IS 'Estado: active, inactive, pending';
+COMMENT ON COLUMN users.email_verified IS 'Indica si el usuario confirmo su correo electronico';
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_tech_level ON users (tech_level);
@@ -47,6 +49,21 @@ COMMENT ON COLUMN sessions.token IS 'Token UUID v4';
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions (token);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at);
+
+CREATE TABLE IF NOT EXISTS email_verifications (
+    id          SERIAL PRIMARY KEY,
+    user_id     INTEGER         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token       VARCHAR(255)    NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ     NOT NULL,
+    used        BOOLEAN         NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE email_verifications IS 'Tokens para verificación de correo electrónico';
+COMMENT ON COLUMN email_verifications.token IS 'Token UUID v4 de un solo uso';
+
+CREATE INDEX IF NOT EXISTS idx_email_verifications_user_id ON email_verifications (user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications (token);
 
 -- ====================================================================
 -- MÓDULO 2: Áreas técnicas

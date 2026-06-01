@@ -1,6 +1,6 @@
 const { parseRequestBody, sendJSON, extractToken } = require('./helpers');
 const { hashPassword, verifyPassword, generateToken } = require('../services/auth');
-const { sendPasswordResetEmail } = require('../services/email');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../services/email');
 const {
   createUser,
   getUserByEmail,
@@ -11,10 +11,17 @@ const {
   getRecentPasswordReset,
   createPasswordReset,
   getPasswordResetByToken,
-  markPasswordResetUsed
+  markPasswordResetUsed,
+  createEmailVerification,
+  getEmailVerificationByToken,
+  markEmailVerificationUsed,
+  verifyUserEmail,
+  markOldEmailVerificationsUsed,
+  getEmailVerificationByUserId
 } = require('../db/queries');
 
 const SESSION_DAYS = 7;
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 async function register(req, res) {
   try {
@@ -35,29 +42,53 @@ async function register(req, res) {
 
     const existing = await getUserByEmail(email);
     if (existing) {
+      if (!existing.email_verified) {
+        // Reenviar verificacion si ya existe pero no esta verificada
+        var existingToken = await getEmailVerificationByUserId(existing.id);
+        if (!existingToken) {
+          try { await sendVerificationEmail(existing.email, existing.full_name, 'dummy'); } catch (e) {}
+          const resendToken = generateToken();
+          const resendExpiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+          await createEmailVerification(existing.id, resendToken, resendExpiresAt);
+          await sendVerificationEmail(existing.email, existing.full_name, resendToken);
+        }
+        return sendJSON(res, 200, {
+          success: true,
+          data: { message: 'Esta cuenta no esta verificada. Te hemos enviado un nuevo enlace de verificacion a tu correo.' }
+        });
+      }
       return sendJSON(res, 409, { success: false, error: 'El email ya esta registrado' });
     }
 
     const passwordHash = hashPassword(password);
     const user = await createUser(fullName, email, passwordHash);
 
-    const token = generateToken();
-    const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-    await createSession(user.id, token, expiresAt);
-    await updateLastLogin(user.id);
+    // Generar token de verificacion
+    const verificationToken = generateToken();
+    const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    await createEmailVerification(user.id, verificationToken, expiresAt);
 
-    sendJSON(res, 201, {
-      success: true,
-      data: {
-        token,
-        user: {
-          id: user.id,
-          fullName: user.full_name,
-          email: user.email,
-          techLevel: user.tech_level
+    const emailResult = await sendVerificationEmail(user.email, user.full_name, verificationToken);
+
+    if (emailResult.sent) {
+      sendJSON(res, 201, {
+        success: true,
+        data: {
+          message: 'Cuenta creada. Revisa tu correo para verificar tu cuenta. El enlace expira en 24 horas.',
+          email: user.email
         }
-      }
-    });
+      });
+    } else {
+      var smtpReason = emailResult.reason || 'Error desconocido';
+      console.error('[Register] SMTP fallo para ' + user.email + ': ' + smtpReason);
+      sendJSON(res, 201, {
+        success: true,
+        data: {
+          message: 'Cuenta creada pero no se pudo enviar el correo de verificacion. Contacta al soporte.',
+          email: user.email
+        }
+      });
+    }
   } catch (error) {
     sendJSON(res, 500, { success: false, error: error.message });
   }
@@ -75,6 +106,10 @@ async function login(req, res) {
     const user = await getUserByEmail(email);
     if (!user) {
       return sendJSON(res, 401, { success: false, error: 'Credenciales invalidas' });
+    }
+
+    if (!user.email_verified) {
+      return sendJSON(res, 403, { success: false, error: 'Cuenta no verificada. Revisa tu correo para activar tu cuenta.' });
     }
 
     if (user.account_status !== 'active') {
@@ -156,6 +191,80 @@ async function requireAuth(req) {
 
 const RESET_TOKEN_EXPIRY_HOURS = 1;
 
+async function verifyEmail(req, res) {
+  try {
+    var parsedUrl = require('url').parse(req.url, true);
+    var token = parsedUrl.query.token;
+
+    if (!token) {
+      return sendJSON(res, 400, { success: false, error: 'Token de verificacion requerido' });
+    }
+
+    const verification = await getEmailVerificationByToken(token);
+    if (!verification) {
+      return sendJSON(res, 400, { success: false, error: 'Token invalido o expirado' });
+    }
+
+    await verifyUserEmail(verification.user_id);
+    await markEmailVerificationUsed(token);
+
+    sendJSON(res, 200, {
+      success: true,
+      data: { message: 'Correo verificado correctamente. Ahora puedes iniciar sesion.' }
+    });
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
+async function resendVerification(req, res) {
+  try {
+    const body = await parseRequestBody(req);
+    const { email } = body;
+
+    if (!email) {
+      return sendJSON(res, 400, { success: false, error: 'Email es requerido' });
+    }
+
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return sendJSON(res, 200, {
+        success: true,
+        data: { message: 'Si el email existe y no esta verificado, recibiras un nuevo enlace.' }
+      });
+    }
+
+    if (user.email_verified) {
+      return sendJSON(res, 200, {
+        success: true,
+        data: { message: 'Esta cuenta ya esta verificada. Puedes iniciar sesion.' }
+      });
+    }
+
+    // Invalidar tokens anteriores
+    await markOldEmailVerificationsUsed(user.id);
+
+    var newToken = generateToken();
+    var expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    await createEmailVerification(user.id, newToken, expiresAt);
+
+    var emailResult = await sendVerificationEmail(user.email, user.full_name, newToken);
+
+    if (emailResult.sent) {
+      sendJSON(res, 200, {
+        success: true,
+        data: { message: 'Te hemos enviado un nuevo enlace de verificacion a ' + user.email }
+      });
+    } else {
+      var smtpReason = emailResult.reason || 'Error desconocido';
+      console.error('[ResendVerification] SMTP fallo para ' + user.email + ': ' + smtpReason);
+      sendJSON(res, 500, { success: false, error: 'No se pudo enviar el correo. ' + smtpReason });
+    }
+  } catch (error) {
+    sendJSON(res, 500, { success: false, error: error.message });
+  }
+}
+
 async function forgotPassword(req, res) {
   try {
     const body = await parseRequestBody(req);
@@ -228,4 +337,4 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, login, logout, me, requireAuth, forgotPassword, resetPassword };
+module.exports = { register, login, logout, me, requireAuth, forgotPassword, resetPassword, verifyEmail, resendVerification };

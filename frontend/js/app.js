@@ -254,6 +254,21 @@
     } catch (err) {
       errorEl.textContent = err.message;
       errorEl.classList.remove('view-hidden');
+      // Si es error de verificacion, ofrecer reenviar
+      if (err.message && err.message.includes('no verificada')) {
+        var resendBtn = document.createElement('button');
+        resendBtn.textContent = 'Reenviar verificación';
+        resendBtn.style.cssText = 'margin-top:8px;background:transparent;color:#5B7CFA;border:1px solid #5B7CFA;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;width:100%';
+        resendBtn.onclick = async function () {
+          try {
+            await apiRequest('/auth/resend-verification', 'POST', { email: email });
+            errorEl.textContent = 'Te hemos enviado un nuevo enlace de verificación.';
+          } catch (rerr) {
+            errorEl.textContent = rerr.message;
+          }
+        };
+        errorEl.appendChild(resendBtn);
+      }
     } finally {
       hideLoading();
     }
@@ -264,7 +279,10 @@
   listen('form-register', 'submit', async function (e) {
     e.preventDefault();
     var errorEl = document.getElementById('register-error');
+    var successEl = document.getElementById('register-success');
+    var successText = document.getElementById('register-success-text');
     errorEl.classList.add('view-hidden');
+    successEl.classList.add('hidden');
 
     var fullName = document.getElementById('reg-name').value.trim();
     var email = document.getElementById('reg-email').value.trim();
@@ -277,7 +295,7 @@
     }
 
     if (password.length < 6) {
-      errorEl.textContent = 'La password debe tener al menos 6 caracteres.';
+      errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
       errorEl.classList.remove('view-hidden');
       return;
     }
@@ -289,23 +307,24 @@
         email: email,
         password: password
       });
-      state.token = data.token;
-      state.user = data.user;
-      state.difficultyLevel = data.user.techLevel || 'mid';
-      localStorage.setItem('token', data.token);
-      document.getElementById('nav-user-name').textContent = data.user.fullName;
-      document.getElementById('mobile-user-name').textContent = data.user.fullName;
-      fillDropdown(data.user);
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-email').value = '';
       document.getElementById('reg-password').value = '';
-      showApp();
+      successText.textContent = data.message || 'Cuenta creada. Revisa tu correo para verificar tu cuenta.';
+      successEl.classList.remove('hidden');
+      document.getElementById('form-register').classList.add('hidden');
     } catch (err) {
       errorEl.textContent = err.message;
       errorEl.classList.remove('view-hidden');
     } finally {
       hideLoading();
     }
+  });
+
+  listen('btn-go-to-login-after-register', 'click', function () {
+    showAuthView('login');
+    document.getElementById('form-register').classList.remove('hidden');
+    document.getElementById('register-success').classList.add('hidden');
   });
 
   // ─── AUTH: Logout ────────────────────────────────────

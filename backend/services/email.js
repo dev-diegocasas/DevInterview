@@ -3,7 +3,7 @@ const tls = require('tls');
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 465;
 const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
+const SMTP_PASS = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
 const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
@@ -59,13 +59,12 @@ function smtpSend(from, to, subject, html) {
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var code = parseInt(line.substring(0, 3), 10);
-        var isFinal = line[3] === ' ';  // true if space (final line) vs dash (continuation)
+        var isFinal = line[3] === ' ';
 
         if (step === 0 && code === 220) {
           step = 1;
           send('EHLO localhost');
         } else if (step === 1 && code === 250 && isFinal) {
-          // Wait for the final EHLO line (space, not dash) before sending AUTH
           step = 2;
           send('AUTH LOGIN');
         } else if (step === 2 && code === 334) {
@@ -115,10 +114,8 @@ function smtpSend(from, to, subject, html) {
   });
 }
 
-async function sendPasswordResetEmail(toEmail, userName, resetToken) {
-  var resetLink = APP_URL + '/reset-password?token=' + resetToken;
-
-  var html = '<!DOCTYPE html>' +
+function buildEmailHtml(title, userName, bodyText, ctaLink, ctaText, footerNote) {
+  return '<!DOCTYPE html>' +
   '<html><head><meta charset="utf-8"></head>' +
   '<body style="margin:0;padding:0;background-color:#0F1115;font-family:Geist,sans-serif">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0F1115;padding:40px 20px">' +
@@ -128,30 +125,53 @@ async function sendPasswordResetEmail(toEmail, userName, resetToken) {
             '<h1 style="color:#5B7CFA;font-size:24px;font-weight:700;margin:0">DevInterview</h1>' +
           '</td></tr>' +
           '<tr><td style="padding-bottom:16px">' +
-            '<h2 style="color:#E6E8EE;font-size:18px;font-weight:600;margin:0">Recupera tu contrase&ntilde;a</h2>' +
+            '<h2 style="color:#E6E8EE;font-size:18px;font-weight:600;margin:0">' + title + '</h2>' +
           '</td></tr>' +
           '<tr><td style="padding-bottom:16px">' +
             '<p style="color:#A7ADB8;font-size:14px;line-height:1.6;margin:0">Hola <strong style="color:#E6E8EE">' + escapeHtml(userName) + '</strong>,</p>' +
-            '<p style="color:#A7ADB8;font-size:14px;line-height:1.6;margin:8px 0 0">Recibimos una solicitud para restablecer tu contrase&ntilde;a. Haz clic en el bot&oacute;n de abajo para continuar:</p>' +
+            '<p style="color:#A7ADB8;font-size:14px;line-height:1.6;margin:8px 0 0">' + bodyText + '</p>' +
           '</td></tr>' +
           '<tr><td style="padding:16px 0;text-align:center">' +
-            '<a href="' + resetLink + '" style="display:inline-block;background:#5B7CFA;color:#E6E8EE;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:600">Restablecer contrase&ntilde;a</a>' +
+            '<a href="' + ctaLink + '" style="display:inline-block;background:#5B7CFA;color:#E6E8EE;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:600">' + ctaText + '</a>' +
           '</td></tr>' +
           '<tr><td style="padding:16px 0">' +
             '<p style="color:#7D8593;font-size:13px;line-height:1.5;margin:0">O copia este enlace en tu navegador:</p>' +
-            '<p style="color:#5B7CFA;font-size:12px;margin:4px 0 0;word-break:break-all">' + resetLink + '</p>' +
+            '<p style="color:#5B7CFA;font-size:12px;margin:4px 0 0;word-break:break-all">' + ctaLink + '</p>' +
           '</td></tr>' +
           '<tr><td style="padding-top:16px;border-top:1px solid #2B313C">' +
-            '<p style="color:#7D8593;font-size:12px;line-height:1.4;margin:0">Este enlace expira en 1 hora. Si no solicitaste este cambio, ignora este mensaje.</p>' +
+            '<p style="color:#7D8593;font-size:12px;line-height:1.4;margin:0">' + footerNote + '</p>' +
             '<p style="color:#7D8593;font-size:12px;margin:8px 0 0">&copy; 2026 DevInterview</p>' +
           '</td></tr>' +
         '</table>' +
       '</td></tr>' +
     '</table>' +
   '</body></html>';
+}
 
-  var subject = 'Recuperacion de contrasena — DevInterview';
-  return smtpSend(FROM_EMAIL, toEmail, subject, html);
+async function sendPasswordResetEmail(toEmail, userName, resetToken) {
+  var resetLink = APP_URL + '/reset-password?token=' + resetToken;
+  var html = buildEmailHtml(
+    'Recupera tu contrase\u00f1a',
+    userName,
+    'Recibimos una solicitud para restablecer tu contrase\u00f1a. Haz clic en el bot\u00f3n de abajo para continuar:',
+    resetLink,
+    'Restablecer contrase\u00f1a',
+    'Este enlace expira en 1 hora. Si no solicitaste este cambio, ignora este mensaje.'
+  );
+  return smtpSend(FROM_EMAIL, toEmail, 'Recuperacion de contrasena \u2014 DevInterview', html);
+}
+
+async function sendVerificationEmail(toEmail, userName, verificationToken) {
+  var verifyLink = APP_URL + '/verify-email?token=' + verificationToken;
+  var html = buildEmailHtml(
+    'Verifica tu correo electr\u00f3nico',
+    userName,
+    'Gracias por registrarte en DevInterview. Para activar tu cuenta, confirma tu direcci\u00f3n de correo haciendo clic en el bot\u00f3n de abajo:',
+    verifyLink,
+    'Verificar correo',
+    'Este enlace expira en 24 horas. Si no creaste esta cuenta, ignora este mensaje.'
+  );
+  return smtpSend(FROM_EMAIL, toEmail, 'Verifica tu correo \u2014 DevInterview', html);
 }
 
 function escapeHtml(str) {
@@ -159,4 +179,4 @@ function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-module.exports = { sendPasswordResetEmail };
+module.exports = { sendPasswordResetEmail, sendVerificationEmail };

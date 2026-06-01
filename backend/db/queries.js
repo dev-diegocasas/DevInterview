@@ -579,6 +579,53 @@ async function markPasswordResetUsed(token) {
 }
 
 // ====================================================================
+// VERIFICACION DE EMAIL
+// ====================================================================
+
+async function createEmailVerification(userId, token, expiresAt) {
+  const result = await pool.query(
+    'INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING *',
+    [userId, token, expiresAt]
+  );
+  return result.rows[0];
+}
+
+async function getEmailVerificationByToken(token) {
+  const result = await pool.query(
+    'SELECT * FROM email_verifications WHERE token = $1 AND used = false AND expires_at > NOW()',
+    [token]
+  );
+  return result.rows[0] || null;
+}
+
+async function markEmailVerificationUsed(token) {
+  await pool.query('UPDATE email_verifications SET used = true WHERE token = $1', [token]);
+}
+
+async function verifyUserEmail(userId) {
+  const result = await pool.query(
+    'UPDATE users SET email_verified = true, account_status = \'active\' WHERE id = $1 RETURNING id, full_name, email',
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function getEmailVerificationByUserId(userId) {
+  const result = await pool.query(
+    'SELECT * FROM email_verifications WHERE user_id = $1 AND used = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+    [userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function markOldEmailVerificationsUsed(userId) {
+  await pool.query(
+    'UPDATE email_verifications SET used = true WHERE user_id = $1 AND used = false',
+    [userId]
+  );
+}
+
+// ====================================================================
 // QUIZ (multiple choice, respaldo para IA agotada)
 // ====================================================================
 
@@ -729,6 +776,14 @@ module.exports = {
   createPasswordReset,
   getPasswordResetByToken,
   markPasswordResetUsed,
+
+  // Verificacion de email
+  createEmailVerification,
+  getEmailVerificationByToken,
+  markEmailVerificationUsed,
+  verifyUserEmail,
+  getEmailVerificationByUserId,
+  markOldEmailVerificationsUsed,
 
   // Quiz
   getQuizQuestions,

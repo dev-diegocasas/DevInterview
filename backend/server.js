@@ -12,7 +12,7 @@ const { historyRoute, deleteInterviewRoute, historyStatsRoute, sessionDetailRout
 const { dashboardStatsRoute } = require('./routes/dashboard');
 const { getProfile, updateProfile, changePassword } = require('./routes/user');
 const { getQuizRoute, startQuizRoute, submitQuizRoute } = require('./routes/quiz');
-const { register, login, logout, me, forgotPassword, resetPassword } = require('./routes/auth');
+const { register, login, logout, me, forgotPassword, resetPassword, verifyEmail, resendVerification } = require('./routes/auth');
 
 const PORT = parseInt(process.env.PORT, 10) || 8080;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
@@ -108,6 +108,14 @@ const server = http.createServer(async (req, res) => {
     return resetPassword(req, res);
   }
 
+  if (pathname === '/api/auth/verify-email' && req.method === 'GET') {
+    return verifyEmail(req, res);
+  }
+
+  if (pathname === '/api/auth/resend-verification' && req.method === 'POST') {
+    return resendVerification(req, res);
+  }
+
   if (pathname === '/api/areas' && req.method === 'GET') {
     return areasRoute(req, res);
   }
@@ -180,6 +188,16 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: false, error: 'Ruta API no encontrada' }));
     return;
+  }
+
+  // Rutas especiales: servir archivos HTML standalone
+  if (pathname === '/reset-password') {
+    filePath = path.join(FRONTEND_DIR, 'reset-password.html');
+    return serveStaticFile(res, filePath);
+  }
+  if (pathname === '/verify-email') {
+    filePath = path.join(FRONTEND_DIR, 'verify-email.html');
+    return serveStaticFile(res, filePath);
   }
 
   let filePath = path.join(FRONTEND_DIR, pathname === '/' ? 'index.html' : pathname);

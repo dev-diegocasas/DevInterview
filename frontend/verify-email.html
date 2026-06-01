@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Verificar correo — DevInterview</title>
+    <link rel="stylesheet" href="css/responsive.css"/>
+    <link rel="stylesheet" href="css/components.css"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: '#5B7CFA', 'on-surface': '#E6E8EE', 'on-surface-variant': '#A7ADB8', 'surface-dim': '#0F1115', 'surface-container': '#171A21', 'surface-container-low': '#1A1E26', 'surface-container-high': '#20242D', 'surface-bright': '#2B313C', 'outline-variant': '#2B313C', error: '#D96B6B' } } }
+        };
+    </script>
+</head>
+<body class="bg-surface-dim min-h-screen flex items-center justify-center p-4" style="background-color:#0F1115;color:#E6E8EE;font-family:Geist,sans-serif">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="font-bold" style="color:#5B7CFA;font-size:28px">DevInterview</h1>
+            <p class="mt-2" style="color:#A7ADB8;font-size:14px">Verificación de correo electrónico</p>
+        </div>
+
+        <div class="rounded-xl p-8 border text-center" style="background-color:#171A21;border-color:#2B313C">
+            <div id="verify-loading" class="mb-4" style="color:#A7ADB8;font-size:14px">
+                <span class="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style="border-color:#5B7CFA;border-top-color:transparent;margin-bottom:8px"></span>
+                <p>Verificando tu correo...</p>
+            </div>
+            <div id="verify-success" class="hidden" style="color:#4CAF7A;font-size:14px;line-height:1.6">
+                <span class="material-symbols-outlined" style="font-size:48px;color:#4CAF7A;display:block;margin-bottom:12px">check_circle</span>
+                <p id="verify-success-text">Correo verificado correctamente.</p>
+                <a href="/login" class="inline-block mt-4 px-6 py-3 rounded-lg font-semibold" style="background-color:#5B7CFA;color:#E6E8EE;text-decoration:none">Ir a iniciar sesión</a>
+            </div>
+            <div id="verify-error" class="hidden" style="color:#D96B6B;font-size:14px;line-height:1.6">
+                <span class="material-symbols-outlined" style="font-size:48px;color:#D96B6B;display:block;margin-bottom:12px">cancel</span>
+                <p id="verify-error-text">Token inválido o expirado.</p>
+                <a href="/" class="inline-block mt-4 px-6 py-3 rounded-lg font-semibold" style="background-color:#5B7CFA;color:#E6E8EE;text-decoration:none">Ir a la página principal</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+            var loadingEl = document.getElementById('verify-loading');
+            var successEl = document.getElementById('verify-success');
+            var errorEl = document.getElementById('verify-error');
+            var successText = document.getElementById('verify-success-text');
+            var errorText = document.getElementById('verify-error-text');
+
+            if (!token) {
+                loadingEl.classList.add('hidden');
+                errorText.textContent = 'Token de verificación no encontrado. Revisa el enlace de tu correo.';
+                errorEl.classList.remove('hidden');
+            } else {
+                fetch('/api/auth/verify-email?token=' + encodeURIComponent(token))
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        loadingEl.classList.add('hidden');
+                        if (data.success) {
+                            successText.textContent = data.data.message || 'Correo verificado correctamente. Ya puedes iniciar sesión.';
+                            successEl.classList.remove('hidden');
+                        } else {
+                            errorText.textContent = data.error || 'Error al verificar el correo. El token podría estar expirado.';
+                            errorEl.classList.remove('hidden');
+                        }
+                    })
+                    .catch(function () {
+                        loadingEl.classList.add('hidden');
+                        errorText.textContent = 'Error de conexión. Intenta de nuevo más tarde.';
+                        errorEl.classList.remove('hidden');
+                    });
+            }
+        })();
+    </script>
+</body>
+</html>
