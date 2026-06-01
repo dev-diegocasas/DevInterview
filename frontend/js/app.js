@@ -44,7 +44,8 @@
     session: document.getElementById('view-session-detail'),
     profile: document.getElementById('view-profile'),
     quiz: document.getElementById('view-quiz'),
-    quizResults: document.getElementById('view-quiz-results')
+    quizResults: document.getElementById('view-quiz-results'),
+    notifications: document.getElementById('view-notifications')
   };
 
   var loadingOverlay = document.getElementById('loading-overlay');
@@ -111,6 +112,10 @@
   }
 
   function showAppView(viewName) {
+    if (quizState.active && viewName !== 'quiz' && viewName !== 'quizResults') {
+      attemptLeaveQuiz();
+      return;
+    }
     Object.keys(appViews).forEach(function (key) {
       if (appViews[key]) {
         appViews[key].classList.remove('view-active');
@@ -155,6 +160,7 @@
     appMain.classList.add('view-active');
     showAppView('home');
     loadDashboardStats();
+    startNotifPolling();
   }
 
   async function apiRequest(endpoint, method, body) {
@@ -300,6 +306,13 @@
       return;
     }
 
+    var privacyCheck = document.getElementById('reg-privacy');
+    if (!privacyCheck || !privacyCheck.checked) {
+      errorEl.textContent = 'Debes aceptar las políticas de privacidad y el tratamiento de tus datos.';
+      errorEl.classList.remove('view-hidden');
+      return;
+    }
+
     try {
       showLoading('Creando cuenta...');
       var data = await apiRequest('/auth/register', 'POST', {
@@ -335,6 +348,7 @@
     state.user = null;
     localStorage.removeItem('token');
     hideDropdown();
+    stopNotifPolling();
     showAuthView('login');
   }
 
@@ -375,6 +389,12 @@
     showAppView('profile');
   });
 
+  listen('btn-go-notifications', 'click', function () {
+    hideDropdown();
+    loadNotifications(1);
+    showAppView('notifications');
+  });
+
   // ─── Mobile Navigation ────────────────────────────
 
   function openMobileNav() {
@@ -395,6 +415,7 @@
 
   document.querySelectorAll('.mobile-nav-link').forEach(function (btn) {
     btn.addEventListener('click', function () {
+      if (quizState.active && !attemptLeaveQuiz()) return;
       closeMobileNav();
       var view = this.getAttribute('data-view');
       if (view === 'history') {
@@ -404,6 +425,8 @@
         loadAreas();
       } else if (view === 'profile') {
         loadProfile();
+      } else if (view === 'notifications') {
+        loadNotifications(1);
       }
       if (view) showAppView(view);
     });
@@ -651,11 +674,126 @@
     try {
       var stats = await apiRequest('/dashboard/stats');
       document.getElementById('stat-total').textContent = stats.totalInterviews;
+      document.getElementById('stat-total').title = (stats.completedChats || 0) + ' chats, ' + (stats.completedQuizzes || 0) + ' cuestionarios';
+      var totalSub = document.getElementById('stat-total-sub');
+      if (!totalSub) {
+        var parent = document.getElementById('stat-total').parentNode;
+        var sub = document.createElement('div');
+        sub.id = 'stat-total-sub';
+        sub.style.cssText = 'font-size:11px;color:#7D8593;margin-top:2px';
+        parent.appendChild(sub);
+      }
+      document.getElementById('stat-total-sub').textContent = (stats.completedChats || 0) + ' chats, ' + (stats.completedQuizzes || 0) + ' quiz';
       document.getElementById('stat-quizzes').textContent = stats.completedQuizzes || 0;
       document.getElementById('stat-avg').textContent = stats.avgScore;
       document.getElementById('stat-streak').textContent = stats.currentStreak + ' dias';
       if (stats.weeklyTarget) {
         document.getElementById('stat-weekly').textContent = stats.weeklyProgress + '/' + stats.weeklyTarget;
+      }
+
+      // ── Sesiones activas ──
+      var inProgressList = document.getElementById('in-progress-list');
+      var sectionInProgress = document.getElementById('section-in-progress');
+      if (stats.inProgress && stats.inProgress.length > 0) {
+        sectionInProgress.classList.remove('hidden');
+        inProgressList.innerHTML = stats.inProgress.map(function (s) {
+          var label = s.type === 'quiz' ? 'Cuestionario' : 'Chat IA';
+          var diffColor = s.difficulty_level === 'senior' ? '#D96B6B' : s.difficulty_level === 'mid' ? '#D6A54A' : '#4CAF7A';
+          var progressText = (s.questions_answered || 0) + ' de ' + (s.questions_total || 5);
+          return '<div class="flex items-center justify-between p-sm rounded-lg" style="background:#1A1E26;border:1px solid #2B313C">' +
+            '<div class="flex items-center gap-md">' +
+              '<span class="material-symbols-outlined" style="color:' + diffColor + ';font-size:20px">' + (s.type === 'quiz' ? 'quiz' : 'chat') + '</span>' +
+              '<div><div style="font-size:14px;color:#E6E8EE;font-weight:500">' + escapeHTML(s.area_name) + ' <span style="font-size:11px;color:' + diffColor + '">' + s.difficulty_level + '</span></div>' +
+              '<div style="font-size:12px;color:#7D8593">' + label + ' — ' + progressText + '</div></div></div>' +
+            '<button class="resume-session-btn px-md py-xs rounded-lg text-sm font-semibold" data-area-id="' + s.area_id + '" data-area-name="' + escapeHTML(s.area_name) + '" data-type="' + (s.type || 'chat') + '" style="background:#5B7CFA;color:#E6E8EE;border:none;cursor:pointer">Reanudar</button></div>';
+        }).join('');
+        // Click handlers for resume buttons
+        document.querySelectorAll('.resume-session-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var areaId = parseInt(this.getAttribute('data-area-id'), 10);
+            var areaName = this.getAttribute('data-area-name');
+            var type = this.getAttribute('data-type');
+            if (type === 'quiz') {
+              startQuizDirect(areaId, areaName);
+            } else {
+              startInterview(areaId, areaName);
+            }
+          });
+        });
+      } else {
+        sectionInProgress.classList.add('hidden');
+      }
+
+      // ── Grafica por area ──
+      var byAreaChart = document.getElementById('byarea-chart');
+      var sectionByArea = document.getElementById('section-byarea');
+      if (stats.byArea && stats.byArea.length > 0) {
+        sectionByArea.classList.remove('hidden');
+        byAreaChart.innerHTML = stats.byArea.map(function (area) {
+          var chatScore = area.chat_avg_score;
+          var quizScore = area.quiz_avg_score;
+          var html = '<div style="margin-bottom:12px"><div style="font-size:13px;color:#A7ADB8;font-weight:500;margin-bottom:6px">' + escapeHTML(area.area_name) + '</div>';
+          if (chatScore != null) {
+            var chatColor = chatScore >= 70 ? '#4CAF7A' : chatScore >= 40 ? '#D6A54A' : '#D96B6B';
+            html += '<div class="flex items-center gap-sm mb-xs"><span style="font-size:11px;color:#7D8593;min-width:32px">Chat</span>' +
+              '<div style="flex-grow;height:6px;background:#2B313C;border-radius:3px;overflow:hidden">' +
+              '<div style="height:100%;width:' + chatScore + '%;background:' + chatColor + ';border-radius:3px"></div></div>' +
+              '<span style="font-size:12px;color:' + chatColor + ';font-weight:600;min-width:30px;text-align:right">' + chatScore + '</span></div>';
+          }
+          if (quizScore != null) {
+            var quizColor = quizScore >= 70 ? '#4CAF7A' : quizScore >= 40 ? '#D6A54A' : '#D96B6B';
+            html += '<div class="flex items-center gap-sm"><span style="font-size:11px;color:#7D8593;min-width:32px">Quiz</span>' +
+              '<div style="flex-grow;height:6px;background:#2B313C;border-radius:3px;overflow:hidden">' +
+              '<div style="height:100%;width:' + quizScore + '%;background:' + quizColor + ';border-radius:3px"></div></div>' +
+              '<span style="font-size:12px;color:' + quizColor + ';font-weight:600;min-width:30px;text-align:right">' + quizScore + '</span></div>';
+          }
+          if (chatScore == null && quizScore == null) {
+            html += '<div style="font-size:12px;color:#7D8593;padding:4px 0">Sin datos</div>';
+          }
+          html += '</div>';
+          return html;
+        }).join('');
+      } else {
+        sectionByArea.classList.add('hidden');
+      }
+
+      // ── Score history ──
+      var scoreHistoryChart = document.getElementById('scorehistory-chart');
+      var sectionScoreHistory = document.getElementById('section-scorehistory');
+      if (stats.scoreHistory && stats.scoreHistory.length > 0) {
+        sectionScoreHistory.classList.remove('hidden');
+        var totalSessions = stats.scoreHistory.length;
+        scoreHistoryChart.innerHTML = stats.scoreHistory.map(function (item, idx) {
+          var score = item.score || 0;
+          var date = new Date(item.started_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+          var color = score >= 70 ? '#4CAF7A' : score >= 40 ? '#D6A54A' : '#D96B6B';
+          var typeIcon = item.type === 'quiz' ? 'quiz' : 'chat';
+          return '<div class="flex items-center gap-md p-xs rounded-lg" style="background:#171A21">' +
+            '<span class="material-symbols-outlined" style="font-size:16px;color:' + color + '">' + typeIcon + '</span>' +
+            '<div class="flex-grow"><div style="height:6px;background:#2B313C;border-radius:3px;overflow:hidden">' +
+            '<div style="height:100%;width:' + score + '%;background:' + color + ';border-radius:3px"></div></div></div>' +
+            '<span style="font-size:11px;color:#7D8593;min-width:40px;text-align:right">' + date + '</span>' +
+            '<span style="font-size:13px;color:' + color + ';font-weight:600;min-width:32px;text-align:right">' + score + '</span></div>';
+        }).join('');
+      } else {
+        sectionScoreHistory.classList.add('hidden');
+      }
+
+      // ── Progreso semanal ──
+      var sectionWeekly = document.getElementById('section-weekly');
+      if (stats.weeklyTarget) {
+        sectionWeekly.classList.remove('hidden');
+        var progress = stats.weeklyProgress || 0;
+        var target = stats.weeklyTarget || 5;
+        var pct = Math.min(100, (progress / target) * 100);
+        var circumference = 2 * Math.PI * 34;
+        var offset = circumference - (pct / 100) * circumference;
+        document.getElementById('weekly-arc').setAttribute('stroke-dasharray', circumference);
+        document.getElementById('weekly-arc').setAttribute('stroke-dashoffset', offset);
+        document.getElementById('weekly-label').textContent = progress + '/' + target;
+        document.getElementById('weekly-text').textContent = progress >= target ? 'Meta semanal cumplida. ¡Buen trabajo!' : 'Te faltan ' + (target - progress) + ' sesiones para cumplir tu meta semanal.';
+      } else {
+        sectionWeekly.classList.add('hidden');
       }
     } catch (e) {}
   }
@@ -1045,7 +1183,7 @@
 
   // ─── Quiz ───────────────────────────────────────────
 
-  var quizState = { questions: [], currentIndex: 0, answers: {}, area: '', difficulty: '', interviewId: null, timerInterval: null, startTime: null };
+  var quizState = { questions: [], currentIndex: 0, answers: {}, area: '', difficulty: '', interviewId: null, timerInterval: null, startTime: null, active: false };
 
   function startQuiz(quizData) {
     quizState.questions = quizData.questions || [];
@@ -1054,6 +1192,7 @@
     quizState.area = quizData.area || '';
     quizState.difficulty = quizData.difficulty || 'mid';
     quizState.interviewId = quizData.interviewId || null;
+    quizState.active = true;
 
     if (quizState.timerInterval) clearInterval(quizState.timerInterval);
     quizState.startTime = Date.now();
@@ -1063,8 +1202,33 @@
 
     document.getElementById('quiz-area-badge').textContent = quizData.area + ' [' + difficultyLabel(quizData.difficulty) + ']';
 
+    window.addEventListener('beforeunload', beforeunloadQuizHandler);
+
     showAppView('quiz');
     renderQuizQuestion();
+  }
+
+  function beforeunloadQuizHandler(e) {
+    if (quizState.active) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  }
+
+  function attemptLeaveQuiz() {
+    if (!quizState.active) return true;
+    document.getElementById('quiz-leave-modal').classList.remove('hidden');
+    return false;
+  }
+
+  function cleanupQuiz() {
+    quizState.active = false;
+    if (quizState.timerInterval) {
+      clearInterval(quizState.timerInterval);
+      quizState.timerInterval = null;
+    }
+    window.removeEventListener('beforeunload', beforeunloadQuizHandler);
+    document.getElementById('quiz-leave-modal').classList.add('hidden');
   }
 
   function updateQuizTimer() {
@@ -1166,7 +1330,17 @@
     }
   });
 
+  listen('btn-cancel-leave-quiz', 'click', function () {
+    document.getElementById('quiz-leave-modal').classList.add('hidden');
+  });
+
+  listen('btn-confirm-leave-quiz', 'click', function () {
+    document.getElementById('quiz-leave-modal').classList.add('hidden');
+    submitQuizAnswers();
+  });
+
   async function submitQuizAnswers() {
+    cleanupQuiz();
     if (quizState.timerInterval) clearInterval(quizState.timerInterval);
     var answers = quizState.questions.map(function (q) {
       return { questionId: q.id, selected: quizState.answers[q.id] || '' };
@@ -1443,9 +1617,15 @@
         div.addEventListener('click', function (e) {
           if (e.target.classList.contains('btn-delete-interview') || e.target.classList.contains('btn-view-session')) return;
           var areaName = item.area_name;
-          getAreaIdByName(areaName, function (id) {
-            if (id) startInterview(id, areaName);
-          });
+          if (item.type === 'quiz') {
+            getAreaIdByName(areaName, function (id) {
+              if (id) { loadAreas(); showAppView('areas'); showToast('Inicia un nuevo cuestionario de ' + areaName + '.'); }
+            });
+          } else {
+            getAreaIdByName(areaName, function (id) {
+              if (id) startInterview(id, areaName);
+            });
+          }
         });
       }
       list.appendChild(div);
@@ -1719,6 +1899,166 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  var notifPollInterval = null;
+
+  async function loadUnreadCount() {
+    try {
+      var data = await apiRequest('/notifications/unread-count');
+      var badge = document.getElementById('notif-badge');
+      var count = data.unread || 0;
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    } catch (e) {}
+  }
+
+  async function loadNotifications(page) {
+    page = page || 1;
+    var limit = 20;
+    var offset = (page - 1) * limit;
+    try {
+      var data = await apiRequest('/notifications?limit=' + limit + '&offset=' + offset);
+      var list = document.getElementById('notifications-list');
+      var total = data.total || 0;
+      var notifs = data.notifications || [];
+      var subtitle = document.getElementById('notif-page-subtitle');
+      subtitle.textContent = total + ' notificacion' + (total !== 1 ? 'es' : '');
+
+      if (notifs.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#7D8593;font-size:14px">No tienes notificaciones a\u00fan.</div>';
+      } else {
+        list.innerHTML = notifs.map(function (n) {
+          var icon = { welcome: 'handshake', interview_started: 'chat', interview_completed: 'check_circle', quiz_started: 'quiz', quiz_completed: 'check_circle', system: 'info' }[n.type] || 'notifications';
+          var borderColor = n.read ? '#2B313C' : '#5B7CFA';
+          var bgColor = n.read ? '#171A21' : '#1A1F2E';
+          var date = new Date(n.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+          return '<div class="flex items-start gap-md p-md rounded-lg" style="background:' + bgColor + ';border:1px solid ' + borderColor + ';cursor:' + (n.read ? 'default' : 'pointer') + '" data-id="' + n.id + '" data-read="' + n.read + '">' +
+            '<span class="material-symbols-outlined" style="font-size:20px;color:#5B7CFA;margin-top:2px">' + icon + '</span>' +
+            '<div class="flex-grow"><div style="font-size:14px;color:#E6E8EE;font-weight:' + (n.read ? '400' : '600') + '">' + escapeHTML(n.title) + '</div>' +
+            '<div style="font-size:13px;color:#A7ADB8;margin-top:2px">' + escapeHTML(n.message) + '</div>' +
+            '<div style="font-size:11px;color:#7D8593;margin-top:4px">' + date + '</div></div></div>';
+        }).join('');
+
+        // Click to mark as read
+        list.querySelectorAll('[data-read="false"]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            var id = this.getAttribute('data-id');
+            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function () {});
+            this.setAttribute('data-read', 'true');
+            this.style.borderColor = '#2B313C';
+            this.style.background = '#171A21';
+            loadUnreadCount();
+          });
+        });
+      }
+
+      // Pagination
+      var totalPages = Math.ceil(total / limit);
+      var paginationEl = document.getElementById('notif-pagination');
+      if (totalPages <= 1) {
+        paginationEl.innerHTML = '';
+      } else {
+        var pHtml = '<div class="flex justify-center gap-md">';
+        for (var p = 1; p <= totalPages; p++) {
+          pHtml += '<button class="notif-page-btn px-md py-xs rounded-lg text-sm font-semibold" data-page="' + p + '" style="background:' + (p === page ? '#5B7CFA' : '#2B313C') + ';color:#E6E8EE;border:none;cursor:pointer">' + p + '</button>';
+        }
+        pHtml += '</div>';
+        paginationEl.innerHTML = pHtml;
+        paginationEl.querySelectorAll('.notif-page-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            loadNotifications(parseInt(this.getAttribute('data-page'), 10));
+          });
+        });
+      }
+    } catch (e) {
+      document.getElementById('notifications-list').innerHTML = '<div style="text-align:center;padding:40px;color:#D96B6B;font-size:14px">Error al cargar notificaciones.</div>';
+    }
+  }
+
+  // Toggle notifications dropdown
+  listen('btn-notifications', 'click', function (e) {
+    e.stopPropagation();
+    var dd = document.getElementById('notif-dropdown');
+    dd.classList.toggle('hidden');
+    if (!dd.classList.contains('hidden')) {
+      loadNotifDropdown();
+    }
+  });
+
+  async function loadNotifDropdown() {
+    try {
+      var data = await apiRequest('/notifications?limit=5&offset=0');
+      var notifs = data.notifications || [];
+      var list = document.getElementById('notif-dropdown-list');
+      if (notifs.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:#7D8593;font-size:13px">No hay notificaciones recientes.</div>';
+      } else {
+        list.innerHTML = notifs.map(function (n) {
+          var icon = { welcome: 'handshake', interview_started: 'chat', interview_completed: 'check_circle', quiz_started: 'quiz', quiz_completed: 'check_circle', system: 'info' }[n.type] || 'notifications';
+          var dotColor = n.read ? 'transparent' : '#5B7CFA';
+          var date = new Date(n.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+          return '<div class="flex items-start gap-sm px-md py-sm" style="border-bottom:1px solid #2B313C;cursor:' + (n.read ? 'default' : 'pointer') + '" data-id="' + n.id + '" data-read="' + n.read + '">' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-top:5px;flex-shrink:0"></span>' +
+            '<span class="material-symbols-outlined" style="font-size:16px;color:#A7ADB8">' + icon + '</span>' +
+            '<div class="flex-grow" style="min-width:0"><div style="font-size:13px;color:#E6E8EE;font-weight:' + (n.read ? '400' : '600') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHTML(n.title) + '</div>' +
+            '<div style="font-size:11px;color:#7D8593">' + date + '</div></div></div>';
+        }).join('');
+
+        list.querySelectorAll('[data-read="false"]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            var id = this.getAttribute('data-id');
+            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function () {});
+            this.setAttribute('data-read', 'true');
+            this.querySelector('span').style.background = 'transparent';
+            loadUnreadCount();
+          });
+        });
+      }
+    } catch (e) {}
+  }
+
+  // Mark all read
+  listen('btn-mark-all-read', 'click', async function () {
+    try {
+      await apiRequest('/notifications/read-all', 'PUT');
+      loadUnreadCount();
+      loadNotifications(1);
+    } catch (e) {}
+  });
+
+  // View all notifications
+  listen('btn-view-all-notifications', 'click', function () {
+    document.getElementById('notif-dropdown').classList.add('hidden');
+    loadNotifications(1);
+    showAppView('notifications');
+  });
+
+  // Start polling for unread count when logged in
+  function startNotifPolling() {
+    if (notifPollInterval) clearInterval(notifPollInterval);
+    loadUnreadCount();
+    notifPollInterval = setInterval(loadUnreadCount, 30000);
+  }
+
+  function stopNotifPolling() {
+    if (notifPollInterval) {
+      clearInterval(notifPollInterval);
+      notifPollInterval = null;
+    }
+  }
+
+  // Close dropdown on outside click
+  document.addEventListener('click', function (e) {
+    var dd = document.getElementById('notif-dropdown');
+    var trigger = document.getElementById('btn-notifications');
+    if (!dd.classList.contains('hidden') && !dd.contains(e.target) && !trigger.contains(e.target)) {
+      dd.classList.add('hidden');
+    }
+  });
 
   function showToast(message) {
     var toast = document.createElement('div');

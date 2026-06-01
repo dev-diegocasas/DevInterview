@@ -445,12 +445,44 @@ async function getDashboardByArea(userId) {
   const result = await pool.query(
     `SELECT ta.name AS area_name, ta.icon AS area_icon,
             COUNT(i.id) AS total,
-            ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score
+            ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed'), 1) AS avg_score,
+            ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed' AND i.type = 'chat'), 1) AS chat_avg_score,
+            ROUND(AVG(i.score) FILTER (WHERE i.status = 'completed' AND i.type = 'quiz'), 1) AS quiz_avg_score,
+            COUNT(i.id) FILTER (WHERE i.type = 'chat') AS chat_total,
+            COUNT(i.id) FILTER (WHERE i.type = 'quiz') AS quiz_total
      FROM technical_areas ta
      LEFT JOIN interviews i ON i.area_id = ta.id AND i.user_id = $1
      GROUP BY ta.id, ta.name, ta.icon
      HAVING COUNT(i.id) > 0
      ORDER BY total DESC`,
+    [userId]
+  );
+  return result.rows;
+}
+
+async function getScoreHistory(userId, limit) {
+  const result = await pool.query(
+    `SELECT i.score, i.started_at, i.finished_at, i.type, ta.name AS area_name
+     FROM interviews i
+     JOIN technical_areas ta ON ta.id = i.area_id
+     WHERE i.user_id = $1 AND i.status = 'completed' AND i.score IS NOT NULL
+     ORDER BY i.finished_at DESC
+     LIMIT $2`,
+    [userId, limit || 10]
+  );
+  return result.rows;
+}
+
+async function getInProgressInterviews(userId) {
+  const result = await pool.query(
+    `SELECT i.id, i.type, i.difficulty_level, i.started_at, i.questions_total,
+            ta.name AS area_name, ta.id AS area_id,
+            (SELECT COUNT(*) FROM questions q WHERE q.interview_id = i.id) AS questions_asked,
+            (SELECT COUNT(*) FROM questions q JOIN answers a ON a.question_id = q.id WHERE q.interview_id = i.id) AS questions_answered
+     FROM interviews i
+     JOIN technical_areas ta ON ta.id = i.area_id
+     WHERE i.user_id = $1 AND i.status = 'in_progress'
+     ORDER BY i.started_at DESC`,
     [userId]
   );
   return result.rows;
@@ -626,6 +658,61 @@ async function markOldEmailVerificationsUsed(userId) {
 }
 
 // ====================================================================
+// NOTIFICACIONES
+// ====================================================================
+
+async function createNotification(userId, type, title, message, link) {
+  const result = await pool.query(
+    'INSERT INTO notifications (user_id, type, title, message, link) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+    [userId, type || 'system', title, message || '', link || null]
+  );
+  return result.rows[0];
+}
+
+async function getNotifications(userId, limit, offset) {
+  const result = await pool.query(
+    `SELECT id, type, title, message, link, read, created_at
+     FROM notifications
+     WHERE user_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit || 20, offset || 0]
+  );
+  return result.rows;
+}
+
+async function countNotifications(userId) {
+  const result = await pool.query(
+    'SELECT COUNT(*) AS total FROM notifications WHERE user_id = $1',
+    [userId]
+  );
+  return parseInt(result.rows[0].total, 10);
+}
+
+async function getUnreadNotificationCount(userId) {
+  const result = await pool.query(
+    'SELECT COUNT(*) AS count FROM notifications WHERE user_id = $1 AND read = false',
+    [userId]
+  );
+  return parseInt(result.rows[0].count, 10);
+}
+
+async function markNotificationRead(notificationId, userId) {
+  const result = await pool.query(
+    'UPDATE notifications SET read = true WHERE id = $1 AND user_id = $2 RETURNING *',
+    [notificationId, userId]
+  );
+  return result.rows[0] || null;
+}
+
+async function markAllNotificationsRead(userId) {
+  await pool.query(
+    'UPDATE notifications SET read = true WHERE user_id = $1 AND read = false',
+    [userId]
+  );
+}
+
+// ====================================================================
 // QUIZ (multiple choice, respaldo para IA agotada)
 // ====================================================================
 
@@ -758,9 +845,19 @@ module.exports = {
   getSessionDetail,
   deleteInterview,
 
+  // Verificacion de email
+  createEmailVerification,
+  getEmailVerificationByToken,
+  markEmailVerificationUsed,
+  verifyUserEmail,
+  getEmailVerificationByUserId,
+  markOldEmailVerificationsUsed,
+
   // Dashboard
   getDashboardStats,
   getDashboardByArea,
+  getScoreHistory,
+  getInProgressInterviews,
 
   // Metas y rachas
   getUserGoals,
@@ -777,13 +874,13 @@ module.exports = {
   getPasswordResetByToken,
   markPasswordResetUsed,
 
-  // Verificacion de email
-  createEmailVerification,
-  getEmailVerificationByToken,
-  markEmailVerificationUsed,
-  verifyUserEmail,
-  getEmailVerificationByUserId,
-  markOldEmailVerificationsUsed,
+  // Notificaciones
+  createNotification,
+  getNotifications,
+  countNotifications,
+  getUnreadNotificationCount,
+  markNotificationRead,
+  markAllNotificationsRead,
 
   // Quiz
   getQuizQuestions,
