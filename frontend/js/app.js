@@ -159,8 +159,8 @@
     appMain.classList.remove('view-hidden');
     appMain.classList.add('view-active');
     showAppView('home');
-    loadDashboardStats();
     startNotifPolling();
+    try { loadDashboardStats(); } catch (e) { console.error('[App] Error en showApp dashboard:', e); }
   }
 
   async function apiRequest(endpoint, method, body) {
@@ -811,7 +811,10 @@
       } else {
         sectionWeekly.classList.add('hidden');
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Dashboard] Error loadDashboardStats:', e);
+      try { showToast('Error al cargar estadísticas del dashboard.'); } catch (t) {}
+    }
   }
 
   // ─── Areas ──────────────────────────────────────────
@@ -1929,7 +1932,9 @@
       } else {
         badge.classList.add('hidden');
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Notif] Error loadUnreadCount:', e);
+    }
   }
 
   async function loadNotifications(page) {
@@ -1963,7 +1968,7 @@
         list.querySelectorAll('[data-read="false"]').forEach(function (el) {
           el.addEventListener('click', function () {
             var id = this.getAttribute('data-id');
-            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function () {});
+            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function (e) { console.error('[Notif] Error markRead:', e); });
             this.setAttribute('data-read', 'true');
             this.style.borderColor = '#2B313C';
             this.style.background = '#171A21';
@@ -2027,14 +2032,16 @@
         list.querySelectorAll('[data-read="false"]').forEach(function (el) {
           el.addEventListener('click', function () {
             var id = this.getAttribute('data-id');
-            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function () {});
+            apiRequest('/notifications/' + id + '/read', 'PUT').catch(function (e) { console.error('[Notif] Error markRead dropdown:', e); });
             this.setAttribute('data-read', 'true');
             this.querySelector('span').style.background = 'transparent';
             loadUnreadCount();
           });
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Notif] Error loadNotifDropdown:', e);
+    }
   }
 
   // Mark all read
@@ -2043,7 +2050,9 @@
       await apiRequest('/notifications/read-all', 'PUT');
       loadUnreadCount();
       loadNotifications(1);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Notif] Error markAllRead:', e);
+    }
   });
 
   // View all notifications

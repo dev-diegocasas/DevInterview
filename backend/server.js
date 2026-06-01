@@ -13,6 +13,7 @@ const { dashboardStatsRoute } = require('./routes/dashboard');
 const { getProfile, updateProfile, changePassword } = require('./routes/user');
 const { getQuizRoute, startQuizRoute, submitQuizRoute } = require('./routes/quiz');
 const { register, login, logout, me, forgotPassword, resetPassword, verifyEmail, resendVerification } = require('./routes/auth');
+const { getNotificationsRoute, getUnreadCountRoute, markNotificationRead, markAllNotificationsRead } = require('./routes/notifications');
 
 const PORT = parseInt(process.env.PORT, 10) || 8080;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
@@ -84,6 +85,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/debug/smtp-status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      smtp_configured: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+      smtp_host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      smtp_port: process.env.SMTP_PORT || '465',
+      from_email: process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-configurado',
+      app_url: process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:3000'),
+      node_env: process.env.NODE_ENV || 'no-configurado'
+    }));
+    return;
+  }
+
+  if (pathname === '/api/debug/info' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'ok',
+      node_version: process.version,
+      port: PORT,
+      production: isProd,
+      routes: ['notifications', 'auth', 'dashboard', 'history', 'quiz', 'interview', 'verify-email', 'reset-password'],
+      db_pool: 'pg',
+      app_url: process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:3000')
+    }));
+    return;
+  }
+
   if (pathname === '/api/auth/register' && req.method === 'POST') {
     return register(req, res);
   }
@@ -114,6 +142,22 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/auth/resend-verification' && req.method === 'POST') {
     return resendVerification(req, res);
+  }
+
+  if (pathname === '/api/notifications' && req.method === 'GET') {
+    return getNotificationsRoute(req, res);
+  }
+
+  if (pathname === '/api/notifications/unread-count' && req.method === 'GET') {
+    return getUnreadCountRoute(req, res);
+  }
+
+  if (pathname.startsWith('/api/notifications/') && pathname.endsWith('/read') && req.method === 'PUT') {
+    return markNotificationRead(req, res);
+  }
+
+  if (pathname === '/api/notifications/read-all' && req.method === 'PUT') {
+    return markAllNotificationsRead(req, res);
   }
 
   if (pathname === '/api/areas' && req.method === 'GET') {
