@@ -8,7 +8,8 @@ const FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
 // ─── OpenRouter API ──────────────────────────────────
 
-function callOpenRouter(messages, model, apiKey) {
+function callOpenRouter(messages, model, apiKey, retries) {
+  retries = retries || 2;
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ model: model, messages: messages });
     const options = {
@@ -19,32 +20,62 @@ function callOpenRouter(messages, model, apiKey) {
         'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'Entrevistas Tecnicas'
       }
     };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (c) => data += c);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          if (json.error) {
-            var msg = (json.error.message || '').toLowerCase();
-            if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many requests') || msg.includes('quota') || msg.includes('free-models-per-day')) {
-              reject(new Error('RATE_LIMIT'));
+    const TIMEOUT_MS = 30000;
+
+    function attempt(attemptsLeft) {
+      var req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (c) => data += c);
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            if (json.error) {
+              var msg = (json.error.message || '').toLowerCase();
+              if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many requests') || msg.includes('quota') || msg.includes('free-models-per-day')) {
+                reject(new Error('RATE_LIMIT'));
+              } else if (attemptsLeft > 0 && (msg.includes('timeout') || msg.includes('internal server') || msg.includes('5') && msg.includes('error'))) {
+                console.log('Error transitorio, reintentando... (' + attemptsLeft + ' intentos restantes)');
+                setTimeout(function () { attempt(attemptsLeft - 1); }, 1000);
+              } else {
+                reject(new Error(json.error.message));
+              }
+            } else if (json.choices && json.choices[0]) {
+              resolve(json.choices[0].message.content.trim());
             } else {
-              reject(new Error(json.error.message));
+              reject(new Error('Respuesta inesperada'));
             }
-          } else if (json.choices && json.choices[0]) {
-            resolve(json.choices[0].message.content.trim());
-          } else {
-            reject(new Error('Respuesta inesperada'));
+          } catch (e) {
+            if (attemptsLeft > 0) {
+              console.log('Error parseando respuesta, reintentando... (' + attemptsLeft + ' intentos restantes)');
+              setTimeout(function () { attempt(attemptsLeft - 1); }, 1000);
+            } else {
+              reject(new Error('Error parseando respuesta'));
+            }
           }
-        } catch (e) {
-          reject(new Error('Error parseando respuesta'));
+        });
+      });
+      req.on('error', (e) => {
+        if (attemptsLeft > 0) {
+          console.log('Error de red, reintentando... (' + attemptsLeft + ' intentos restantes)');
+          setTimeout(function () { attempt(attemptsLeft - 1); }, 1500);
+        } else {
+          reject(new Error('Error de red: ' + e.message));
         }
       });
-    });
-    req.on('error', (e) => reject(new Error('Error de red: ' + e.message)));
-    req.write(body);
-    req.end();
+      req.setTimeout(TIMEOUT_MS, function () {
+        req.destroy();
+        if (attemptsLeft > 0) {
+          console.log('Timeout de red, reintentando... (' + attemptsLeft + ' intentos restantes)');
+          setTimeout(function () { attempt(attemptsLeft - 1); }, 1000);
+        } else {
+          reject(new Error('Timeout de conexion con OpenRouter'));
+        }
+      });
+      req.write(body);
+      req.end();
+    }
+
+    attempt(retries);
   });
 }
 
@@ -59,6 +90,7 @@ function callHuggingFace(prompt) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     };
+    const TIMEOUT_MS = 20000;
     const req = https.request(options, (res) => {
       let data = '';
       res.on('data', (c) => data += c);
@@ -79,6 +111,10 @@ function callHuggingFace(prompt) {
       });
     });
     req.on('error', (e) => reject(new Error('HF: ' + e.message)));
+    req.setTimeout(TIMEOUT_MS, function () {
+      req.destroy();
+      reject(new Error('HF: timeout'));
+    });
     req.write(body);
     req.end();
   });
@@ -376,13 +412,21 @@ async function generateFollowUpQuestion(areaName, difficulty, previousAnswer, us
 
 async function evaluateAnswer(question, answer, areaName) {
   var messages = [
-    { role: 'system', content: 'Eres un evaluador tecnico. Responde UNICAMENTE en JSON valido: {"score": 0-100, "feedback": "..."}.' },
-    { role: 'user', content: 'Pregunta: "' + question + '"\nRespuesta: "' + answer + '"\nEvalua claridad, precision y profundidad. Devuelve JSON.' }
+    { role: 'system', content: 'Eres un evaluador tecnico. Responde UNICAMENTE en JSON valido SIN texto fuera del JSON. Formato exacto: {"score": 0-100, "strengths": "...", "weaknesses": "...", "improvements": "..."}. Los campos strengths, weaknesses, improvements deben ser texto constructivo en español.' },
+    { role: 'user', content: 'Pregunta: "' + question + '"\nRespuesta: "' + answer + '"\nEvalua claridad, precision y profundidad. Identifica fortalezas, debilidades y aspectos a mejorar. Devuelve SOLO JSON valido.' }
   ];
   try {
     var result = await callWithFallback(messages, areaName);
     var cleaned = result.text.replace(/```json\s*|\s*```/g, '').trim();
-    return JSON.parse(cleaned);
+    var jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) cleaned = jsonMatch[0];
+    var parsed = JSON.parse(cleaned);
+    return {
+      score: typeof parsed.score === 'number' ? parsed.score : 50,
+      strengths: parsed.strengths || '',
+      weaknesses: parsed.weaknesses || '',
+      improvements: parsed.improvements || ''
+    };
   } catch (e) {
     return localEvaluateAnswer(question, answer);
   }
@@ -397,7 +441,18 @@ async function generateFinalEvaluation(questionsAndAnswers, areaName) {
   try {
     var result = await callWithFallback(messages, areaName);
     var cleaned = result.text.replace(/```json\s*|\s*```/g, '').trim();
-    return JSON.parse(cleaned);
+    // Intentar extraer solo el objeto JSON si hay texto alrededor
+    var jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) cleaned = jsonMatch[0];
+    var parsed = JSON.parse(cleaned);
+    return {
+      score: typeof parsed.score === 'number' ? parsed.score : 50,
+      feedback: parsed.feedback || parsed.strengths || 'Evaluacion completada.',
+      strengths: parsed.strengths || '',
+      improvements: parsed.improvements || '',
+      criteriaScores: parsed.criteriaScores || null,
+      tags: parsed.tags || null
+    };
   } catch (e) {
     return localFinalEvaluation(questionsAndAnswers, areaName);
   }
@@ -419,7 +474,7 @@ function extractKeywords(question) {
 
 function localEvaluateAnswer(question, answer) {
   if (!answer || answer.trim().length < 10) {
-    return { score: 20, feedback: 'Respuesta demasiado corta. Intenta desarrollar mas tu respuesta con ejemplos concretos.' };
+    return { score: 20, strengths: '', weaknesses: 'Respuesta demasiado corta. Necesitas desarrollar mas tu respuesta con ejemplos concretos.', improvements: 'Intenta estructurar tu respuesta con introduccion, desarrollo y ejemplos practicos.' };
   }
 
   var keywords = extractKeywords(question);
@@ -453,27 +508,39 @@ function localEvaluateAnswer(question, answer) {
 
   var totalScore = Math.min(100, Math.max(5, lengthScore + kwScore + techScore + structScore));
 
-  // Feedback generado localmente
-  var feedback = '';
-  if (totalScore < 30) {
-    feedback = 'La respuesta necesita mas desarrollo. Incluye conceptos tecnicos, ejemplos y estructura.';
-  } else if (totalScore < 50) {
-    feedback = 'Respuesta basica. Para mejorarla, profundiza en los conceptos clave y agrega ejemplos practicos.';
-  } else if (totalScore < 70) {
-    feedback = 'Respuesta adecuada con algunos conceptos correctos. Puedes mejorar incluyendo ejemplos de codigo y casos de uso.';
-  } else if (totalScore < 85) {
-    feedback = 'Buena respuesta. Demuestras comprension del tema. Considera mencionar variantes o casos limites.';
-  } else {
-    feedback = 'Excelente respuesta. Cubres los conceptos con claridad y profundidad.';
-  }
+  // Fortalezas
+  var strengths = [];
+  if (matchedKw.length >= keywords.length * 0.5) strengths.push('Cubriste los conceptos clave de la pregunta.');
+  if (hasCode) strengths.push('Incluiste ejemplos de codigo, lo que demuestra practica.');
+  if (answer.length > 200) strengths.push('Respuesta elaborada y con desarrollo.');
+  if (matchedTech.length >= 3) strengths.push('Usaste terminologia tecnica adecuada.');
+  if (hasStructure) strengths.push('Buena organizacion y estructura en tu respuesta.');
+  if (strengths.length === 0) strengths.push('Intentaste responder la pregunta.');
 
-  // Afinar feedback segun keywords faltantes
+  // Debilidades
+  var weaknesses = [];
   var missingKw = keywords.filter(function (kw) { return !ans.includes(kw); });
-  if (missingKw.length > 0 && totalScore < 70) {
-    feedback += ' No se mencionaron aspectos como: ' + missingKw.slice(0, 3).join(', ') + '.';
-  }
+  if (missingKw.length > 0 && missingKw.length >= keywords.length * 0.4) weaknesses.push('No abordaste conceptos importantes como: ' + missingKw.slice(0, 3).join(', ') + '.');
+  if (answer.length < 100) weaknesses.push('Respuesta muy breve, necesitas profundizar mas.');
+  if (!hasCode && totalScore < 70) weaknesses.push('Faltaron ejemplos de codigo para respaldar tu explicacion.');
+  if (matchedTech.length < 2) weaknesses.push('Usaste poca terminologia tecnica especializada.');
+  if (weaknesses.length === 0 && totalScore < 80) weaknesses.push('La respuesta es correcta pero puede beneficiarse de mas detalle.');
 
-  return { score: totalScore, feedback: feedback };
+  // Aspectos a mejorar
+  var improvements = [];
+  if (totalScore < 40) improvements.push('Estudia los fundamentos de este tema y practica con ejercicios basicos.');
+  if (totalScore >= 40 && totalScore < 70) improvements.push('Profundiza en los conceptos clave y practica con ejemplos del mundo real.');
+  if (totalScore >= 70) improvements.push('Sigue practicando con casos mas complejos y variantes del tema.');
+  if (!hasCode) improvements.push('Incluye fragmentos de codigo en tus respuestas para demostrar aplicacion practica.');
+  if (missingKw.length > 0) improvements.push('Revisa los terminos: ' + missingKw.slice(0, 3).join(', ') + ' para fortalecer tu vocabulario tecnico.');
+  if (improvements.length > 2) improvements.length = 2;
+
+  return {
+    score: totalScore,
+    strengths: strengths.join(' '),
+    weaknesses: weaknesses.join(' '),
+    improvements: improvements.join(' ')
+  };
 }
 
 function localFinalEvaluation(qaPairs, areaName) {
@@ -491,7 +558,6 @@ function localFinalEvaluation(qaPairs, areaName) {
   });
 
   var avgScore = Math.round(perQuestion.reduce(function (s, e) { return s + e.score; }, 0) / perQuestion.length);
-  var allFeedbacks = perQuestion.map(function (e) { return e.feedback; });
 
   // Determinar fortalezas y mejoras
   var strengths = [];

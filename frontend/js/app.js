@@ -829,6 +829,15 @@
         result.questionsAndAnswers.forEach(function (qa) {
           addSystemMessage(qa.question);
           addUserMessage(qa.answer);
+          if (qa.ai_feedback) {
+            try {
+              var parsed = JSON.parse(qa.ai_feedback);
+              parsed.score = qa.ai_score;
+              addFeedbackMessage(parsed);
+            } catch (e) {
+              addFeedbackMessage({ score: qa.ai_score, strengths: '', weaknesses: qa.ai_feedback, improvements: '' });
+            }
+          }
         });
         addSystemMessage(result.currentQuestion.text);
         updateQuestionCounter();
@@ -904,16 +913,38 @@
     scrollToBottom();
   }
 
-  function addFeedbackMessage(feedback, score) {
-    if (!feedback) return;
-    var msg = document.createElement('div');
-    msg.className = 'message feedback';
+  function addFeedbackMessage(data) {
+    if (!data) return;
+    var score = data.score;
     var scoreColor = score >= 70 ? '#4CAF7A' : score >= 40 ? '#D6A54A' : '#D96B6B';
-    msg.innerHTML =
-      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:' + scoreColor + ';margin-bottom:4px;font-family:JetBrains Mono">Feedback IA — <strong>' + score + '/100</strong></div>' +
-      '<p style="font-size:13px;color:#7D8593">' + escapeHTML(feedback) + '</p>';
+
+    var html = '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:' + scoreColor + ';margin-bottom:8px;font-family:JetBrains Mono">Feedback IA — <strong>' + score + '/100</strong></div>';
+
+    if (data.strengths) {
+      html += '<div style="margin-bottom:6px;padding:8px 10px;background:rgba(76,175,122,0.1);border-left:3px solid #4CAF7A;border-radius:4px">' +
+        '<span style="font-size:11px;font-weight:600;color:#4CAF7A">Fortalezas</span>' +
+        '<p style="font-size:13px;color:#A7ADB8;margin:4px 0 0">' + escapeHTML(data.strengths) + '</p></div>';
+    }
+    if (data.weaknesses) {
+      html += '<div style="margin-bottom:6px;padding:8px 10px;background:rgba(214,165,74,0.1);border-left:3px solid #D6A54A;border-radius:4px">' +
+        '<span style="font-size:11px;font-weight:600;color:#D6A54A">Debilidades</span>' +
+        '<p style="font-size:13px;color:#A7ADB8;margin:4px 0 0">' + escapeHTML(data.weaknesses) + '</p></div>';
+    }
+    if (data.improvements) {
+      html += '<div style="margin-bottom:6px;padding:8px 10px;background:rgba(91,124,250,0.1);border-left:3px solid #5B7CFA;border-radius:4px">' +
+        '<span style="font-size:11px;font-weight:600;color:#5B7CFA">Aspectos a mejorar</span>' +
+        '<p style="font-size:13px;color:#A7ADB8;margin:4px 0 0">' + escapeHTML(data.improvements) + '</p></div>';
+    }
+
+    if (!data.strengths && !data.weaknesses && !data.improvements) {
+      // Fallback para feedback plano (de sesiones anteriores)
+      html += '<p style="font-size:13px;color:#7D8593">' + escapeHTML(data) + '</p>';
+    }
+
+    var msg = document.createElement('div');
     msg.className = 'message-feedback';
     msg.style.borderLeft = '3px solid ' + scoreColor;
+    msg.innerHTML = html;
     document.getElementById('chat-messages').appendChild(msg);
     scrollToBottom();
   }
@@ -963,7 +994,7 @@
       });
 
       if (result.lastFeedback) {
-        addFeedbackMessage(result.lastFeedback.feedback, result.lastFeedback.score);
+        addFeedbackMessage(result.lastFeedback);
       }
 
       if (result.finished) {
@@ -1312,6 +1343,10 @@
     showAppView('areas');
   });
 
+  listen('btn-view-full-session', 'click', function () {
+    loadSessionDetail(state.interviewId);
+  });
+
   // ─── History ────────────────────────────────────────
 
   async function loadHistory(page) {
@@ -1596,13 +1631,37 @@
                   '<p>' + escapeHTML(turn.answer_text) + '</p>' +
                 '</div>'
               : '<div style="max-width:85%;padding:8px 12px;color:#7D8593;font-size:13px;font-style:italic">Sin respuesta</div>') +
-            (turn.ai_feedback
-              ? '<div style="margin-left:16px;padding:8px 12px;background:#171A21;border:1px solid #2B313C;border-left:3px solid #5B7CFA;border-radius:6px;max-width:75%">' +
-                  '<span style="font-size:10px;text-transform:uppercase;color:#5B7CFA;font-family:JetBrains Mono">Feedback IA' +
-                    (turn.ai_score ? ' — ' + turn.ai_score + '/100' : '') + '</span>' +
-                  '<p style="font-size:13px;color:#7D8593;margin:4px 0 0">' + escapeHTML(turn.ai_feedback) + '</p>' +
-                '</div>'
-              : '') +
+            (function (feedback, score) {
+              if (!feedback) return '';
+              var evalData = null;
+              try { evalData = JSON.parse(feedback); } catch (e) {}
+              var sc = score ? ' — ' + score + '/100' : '';
+              if (evalData && (evalData.strengths || evalData.weaknesses || evalData.improvements)) {
+                var feedbackHtml = '<div style="margin-left:16px;padding:8px 12px;background:#171A21;border:1px solid #2B313C;border-radius:6px;max-width:85%">' +
+                  '<span style="font-size:10px;text-transform:uppercase;color:#5B7CFA;font-family:JetBrains Mono;margin-bottom:6px;display:block">Feedback IA' + sc + '</span>';
+                if (evalData.strengths) {
+                  feedbackHtml += '<div style="margin-bottom:4px;padding:6px 8px;background:rgba(76,175,122,0.1);border-left:3px solid #4CAF7A;border-radius:4px">' +
+                    '<span style="font-size:10px;font-weight:600;color:#4CAF7A">Fortalezas</span>' +
+                    '<p style="font-size:12px;color:#A7ADB8;margin:2px 0 0">' + escapeHTML(evalData.strengths) + '</p></div>';
+                }
+                if (evalData.weaknesses) {
+                  feedbackHtml += '<div style="margin-bottom:4px;padding:6px 8px;background:rgba(214,165,74,0.1);border-left:3px solid #D6A54A;border-radius:4px">' +
+                    '<span style="font-size:10px;font-weight:600;color:#D6A54A">Debilidades</span>' +
+                    '<p style="font-size:12px;color:#A7ADB8;margin:2px 0 0">' + escapeHTML(evalData.weaknesses) + '</p></div>';
+                }
+                if (evalData.improvements) {
+                  feedbackHtml += '<div style="padding:6px 8px;background:rgba(91,124,250,0.1);border-left:3px solid #5B7CFA;border-radius:4px">' +
+                    '<span style="font-size:10px;font-weight:600;color:#5B7CFA">Aspectos a mejorar</span>' +
+                    '<p style="font-size:12px;color:#A7ADB8;margin:2px 0 0">' + escapeHTML(evalData.improvements) + '</p></div>';
+                }
+                feedbackHtml += '</div>';
+                return feedbackHtml;
+              }
+              return '<div style="margin-left:16px;padding:8px 12px;background:#171A21;border:1px solid #2B313C;border-left:3px solid #5B7CFA;border-radius:6px;max-width:75%">' +
+                '<span style="font-size:10px;text-transform:uppercase;color:#5B7CFA;font-family:JetBrains Mono">Feedback IA' + sc + '</span>' +
+                '<p style="font-size:13px;color:#7D8593;margin:4px 0 0">' + escapeHTML(feedback) + '</p>' +
+              '</div>';
+            })(turn.ai_feedback, turn.ai_score) +
           '</div>';
       });
       transcriptDiv.innerHTML = tHtml;

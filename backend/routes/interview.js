@@ -115,7 +115,7 @@ async function startInterview(req, res) {
       const questions = await getInterviewQuestions(existing.id);
       const answered = questions.filter(q => q.answer_text);
       const unanswered = questions.filter(q => !q.answer_text);
-      const qaPairs = answered.map(q => ({ question: q.question_text, answer: q.answer_text }));
+      const qaPairs = answered.map(q => ({ question: q.question_text, answer: q.answer_text, ai_feedback: q.ai_feedback, ai_score: q.ai_score }));
 
       if (questions.length === 0) {
         const interview = await createInterview(areaId, session.user_id, difficulty);
@@ -216,11 +216,23 @@ async function submitAnswer(req, res) {
       aiEval = { score: null, feedback: null };
     }
 
+    // Guardar feedback estructurado como JSON en ai_feedback
+    var feedbackJson = null;
+    var feedbackPlain = null;
+    if (aiEval && aiEval.score != null) {
+      feedbackJson = JSON.stringify({
+        strengths: aiEval.strengths || '',
+        weaknesses: aiEval.weaknesses || '',
+        improvements: aiEval.improvements || ''
+      });
+      feedbackPlain = 'Puntuacion: ' + Math.round(aiEval.score) + '/100. Fortalezas: ' + (aiEval.strengths || '') + '. Debilidades: ' + (aiEval.weaknesses || '') + '. Mejoras: ' + (aiEval.improvements || '');
+    }
+
     await saveAnswerWithFeedback(
       questionId,
       answer,
-      aiEval.feedback || null,
-      aiEval.score != null ? Math.round(aiEval.score) : null
+      feedbackJson || null,
+      aiEval && aiEval.score != null ? Math.round(aiEval.score) : null
     );
 
     const currentQ = questionNumber || 0;
@@ -248,7 +260,12 @@ async function submitAnswer(req, res) {
       data: {
         finished: false,
         question: { id: newQuestion.id, text: followUpResult.text, order: currentQ + 1 },
-        lastFeedback: aiEval.score != null ? { score: Math.round(aiEval.score), feedback: aiEval.feedback } : null,
+        lastFeedback: aiEval && aiEval.score != null ? {
+          score: Math.round(aiEval.score),
+          strengths: aiEval.strengths || '',
+          weaknesses: aiEval.weaknesses || '',
+          improvements: aiEval.improvements || ''
+        } : null,
         model: followUpResult.model
       }
     });
